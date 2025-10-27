@@ -1,95 +1,20 @@
 import { BaseWebComponent, Property, WebComponent } from '@xendar/core'
-
-@WebComponent('xendar-button')
-export class XendarTextButton extends BaseWebComponent {}
+import { INTERNAL_OBSERVED_ATTRIBUTES } from 'packages/core/src/costants';
 
 @WebComponent('xendar-text-input')
 export class XendarTextInput extends BaseWebComponent {
 
   @Property
-  public name = '';
+  public name = 'Xendar';
   
-  public get value(): string {
-    return this.inputElement.value;
-  }
-  public set value(val: string) {
-    this.setAttribute("value", val ?? "");
-  }
+  @Property
+  public cazzo = 'Cazzo';
 
-  private readonly inputElement: HTMLInputElement;
+  @Property
+  public culo = 'Cazzo';
 
-  private readonly labelElement: HTMLLabelElement;
-
-  constructor() {
+   constructor() {
     super();
-    
-    const container = document.createElement("div");
-    container.innerHTML = `
-      <style>
-        :host {
-          di3splay: flex;
-          flex-direction: column;
-          gap: 4px;
-          font-family: sans-serif;
-        }
-
-        label {
-          font-size: 14px;
-          color: #33;
-        }
-
-        input {
-          padding: 8px 10px;
-          border: 1px solid #aaa;
-          border-radius: 6px;
-          font-size: 14px;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-
-        input:focus {
-          border-color: #0078ff;
-        }
-      </style>
-
-      <label></label>
-      <input type="text" />
-    `;
-
-    this.shadowRoot!.appendChild(container);
-
-    this.labelElement = this.shadowRoot!.querySelector("label")!;
-    this.inputElement = this.shadowRoot!.querySelector("input")!;
-
-    this.inputElement.addEventListener("input", () => {
-      this.value = this.inputElement.value;
-      this.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-  }
-
-  public attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
-    switch (name) {
-      case "label":
-        this.labelElement.textContent = newValue ?? '';
-        break;
-      case "placeholder":
-        this.inputElement.placeholder = newValue ?? '';
-        break;
-      case "value":
-        this.inputElement.value = newValue ?? '';
-        break;
-    }
-  }
-
-  public connectedCallback(): void {
-    this.applyAttribute("label");
-    this.applyAttribute("placeholder");
-    this.applyAttribute("value");
-  }
-
-  private applyAttribute(attr: string): void {
-    if (this.hasAttribute(attr)) {
-      this.attributeChangedCallback(attr, null, this.getAttribute(attr));
-    }
-  }
+    console.log((XendarTextInput as any)['observedAttributes']);
+   }
 }

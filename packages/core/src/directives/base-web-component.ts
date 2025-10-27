@@ -4,4 +4,8 @@ export class BaseWebComponent extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
   }
+
+  public render(): void {
+    console.log('Base render method called');
+  }
 }

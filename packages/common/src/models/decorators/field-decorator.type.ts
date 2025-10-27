@@ -1,1 +1,1 @@
-export type FieldDecorator<Class, Field> = (field: Field, context: ClassFieldDecoratorContext<Class, Field>) => (value: Field) => Field | void;
+export type FieldDecorator<Class, Field> = (field: undefined, context: ClassFieldDecoratorContext<Class, Field>) => (value: Field) => Field;

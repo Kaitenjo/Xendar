@@ -1,19 +1,32 @@
-import { Constructor, FieldDecorator } from "@xendar/common";
+import { FieldDecorator } from "@xendar/common";
+import { INTERNAL_OBSERVED_ATTRIBUTES, INTERNAL_PREFIX } from "../costants";
 import { BaseWebComponent } from "../directives/base-web-component";
 
-export function Property<Class extends BaseWebComponent>(_value: undefined, context: ClassFieldDecoratorContext<Class, unknown>): ReturnType<FieldDecorator<Class, any>> {
-  return function (_value: any): void {
-    const klass = context.constructor as Constructor<Class>;
+export function Property<
+  Class extends BaseWebComponent, 
+  Field = unknown
+>(_value: undefined, context: ClassFieldDecoratorContext<Class, Field>): ReturnType<FieldDecorator<Class, Field>> {
+  context.metadata![INTERNAL_OBSERVED_ATTRIBUTES] ??= new Array<string>;
+  (context.metadata![INTERNAL_OBSERVED_ATTRIBUTES] as string[]).push(context.name as string);
+
+  return function (this: Class, value: Field): Field {
     const propertyKey = context.name as string;
-    Object.defineProperty(klass, propertyKey, {
+
+    Object.defineProperty(Object.getPrototypeOf(this), propertyKey, {
       get() {
-        return this[`__${propertyKey}`];
+        return this[`${INTERNAL_PREFIX}${propertyKey}`];
       },
       set(value) {
-        const old = this[`__${propertyKey}`];
-        if (old === value) return;
-        this[`__${propertyKey}`] = value;
-      }
+        const old = this[`${INTERNAL_PREFIX}${propertyKey}`];
+        if (old !== value) {
+          this[`${INTERNAL_PREFIX}${propertyKey}`] = value;
+        }
+        this.render();
+      },
+      enumerable: true,
+      configurable: true
     });
+
+    return value;
   };
 }

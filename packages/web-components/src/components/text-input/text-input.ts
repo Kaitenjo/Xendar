@@ -1,18 +1,13 @@
-import { BaseWebComponent, WebComponent } from '@xendar/core'
+import { BaseWebComponent, Property, WebComponent } from '@xendar/core'
 
-@WebComponent({
-  selectors: 'xendar-button',
-  attributes: ['text']
-})
+@WebComponent('xendar-button')
 export class XendarTextButton extends BaseWebComponent {}
 
-@WebComponent({
-  selectors: 'xendar-text-input',
-  attributes: ['label']
-})
+@WebComponent('xendar-text-input')
 export class XendarTextInput extends BaseWebComponent {
 
-  public name = 123;
+  @Property
+  public name = '';
   
   public get value(): string {
     return this.inputElement.value;
@@ -30,7 +25,7 @@ export class XendarTextInput extends BaseWebComponent {
     
     const container = document.createElement("div");
     container.innerHTML = `
-      <style>npms t
+      <style>
         :host {
           di3splay: flex;
           flex-direction: column;

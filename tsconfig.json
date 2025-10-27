@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "esnext",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "emitDecoratorMetadata": false,
+    "useDefineForClassFields": true,
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "@xendar/common": ["packages/common/src/public-api"],
+      "@xendar/core": ["packages/core/src/public-api"],
+      "@xendar/web-components": ["packages/web-components/src/public-api"]
+    },
+    "moduleResolution": "node",
+    "lib": [
+      "ES2024", 
+      "dom"
+    ],
+  },
+  "include": ["src/**/*.ts"],
+}

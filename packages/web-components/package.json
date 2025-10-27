@@ -1,0 +1,11 @@
+{
+  "name": "@xendar/components",
+  "version": "1.0.0",
+  "description": "A library of web components.",
+  "scripts": {
+    "build": "vite build --emptyOutDir"
+  },
+  "keywords": [],
+  "author": "Kaitenjo",
+  "license": "MIT"
+}

@@ -1,0 +1,19 @@
+{
+  "name": "xendar",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build:all": "npm run build:components && npm run build:xendar",
+    "build:components": "cd packages/web-components && npm run build",
+    "build:xendar": "vite build --emptyOutDir",
+    "start": "npm run build:all && vite"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}

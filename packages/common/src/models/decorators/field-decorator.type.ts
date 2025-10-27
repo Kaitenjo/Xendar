@@ -1,0 +1,1 @@
+export type FieldDecorator<Class, Field> = (field: Field, context: ClassFieldDecoratorContext<Class, Field>) => ((this: Class, value: Field) => Field) | void;

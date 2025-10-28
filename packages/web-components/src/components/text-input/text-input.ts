@@ -5,13 +5,13 @@ import { INTERNAL_OBSERVED_ATTRIBUTES } from 'packages/core/src/costants';
 export class XendarTextInput extends BaseWebComponent {
 
   @Property
-  public name = 'Xendar';
+  public accessor name = 'Xendar';
   
   @Property
-  public cazzo = 'Cazzo';
+  public accessor cazzo = 'Cazzo';
 
   @Property
-  public culo = 'Cazzo';
+  public accessor culo = 'Cazzo';
 
    constructor() {
     super();

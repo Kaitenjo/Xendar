@@ -1,8 +1,11 @@
-import { defineConfig } from 'vite';
+import babel from "@rollup/plugin-babel";
 import path from 'path';
+import { defineConfig } from 'vite';
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   build: {
+    target: 'esnext',
     lib: {
       entry: path.resolve(__dirname, 'src/public-api.ts'),
       name: 'XendarComponents',
@@ -18,5 +21,22 @@ export default defineConfig({
         '@xendar/core'
       ]
     }
-  }
+  },
+  esbuild: {
+    target: 'esnext'
+  },
+  plugins: [
+    tsconfigPaths(),
+    babel({
+      extensions: [".ts", ".tsx", ".js", ".jsx"],
+      babelHelpers: "bundled",
+      include: ["src/**/*"],
+      plugins: [
+        ["@babel/plugin-proposal-decorators", { version: "2023-11" }],
+        ["@babel/plugin-proposal-class-properties", { loose: false }],
+        ["@babel/plugin-proposal-private-methods", { loose: false }],
+        ["@babel/plugin-transform-class-static-blocks", { loose: false }]
+      ]
+    })
+  ]
 });

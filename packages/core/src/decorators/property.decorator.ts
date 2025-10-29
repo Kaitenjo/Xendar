@@ -22,10 +22,12 @@ export function Property<
       const oldValue = classInstance[internalPropertyKey]!;
       if (oldValue !== value) {
         classInstance[internalPropertyKey] = value;
-        classInstance.render();
+        classInstance.internalRender();
       }
     },
     init(initialValue: Field) {
+      const classInstance = (this as BaseWebComponent & Record<typeof internalPropertyKey, Field>);
+      classInstance[internalPropertyKey] = initialValue;
       return initialValue;
     }
   };

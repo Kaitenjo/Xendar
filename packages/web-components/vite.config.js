@@ -23,20 +23,9 @@ export default defineConfig({
     }
   },
   esbuild: {
-    target: 'esnext'
+    target: 'es2022'
   },
   plugins: [
-    tsconfigPaths(),
-    babel({
-      extensions: [".ts", ".tsx", ".js", ".jsx"],
-      babelHelpers: "bundled",
-      include: ["src/**/*"],
-      plugins: [
-        ["@babel/plugin-proposal-decorators", { version: "2023-11" }],
-        ["@babel/plugin-proposal-class-properties", { loose: false }],
-        ["@babel/plugin-proposal-private-methods", { loose: false }],
-        ["@babel/plugin-transform-class-static-blocks", { loose: false }]
-      ]
-    })
+    tsconfigPaths()
   ]
 });

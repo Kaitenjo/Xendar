@@ -1,20 +1,30 @@
-import { BaseWebComponent, Property, WebComponent } from '@xendar/core'
-import { INTERNAL_OBSERVED_ATTRIBUTES } from 'packages/core/src/costants';
+import { BaseWebComponent, Property, WebComponent } from '@xendar/core';
 
 @WebComponent('xendar-text-input')
 export class XendarTextInput extends BaseWebComponent {
 
   @Property
+  public accessor id = '';
+
+  @Property
   public accessor name = 'Xendar';
   
   @Property
-  public accessor cazzo = 'Cazzo';
+  public accessor value = '';
 
   @Property
-  public accessor culo = 'Cazzo';
+  public accessor placeholder = 'Type here...';
 
-   constructor() {
-    super();
-    console.log((XendarTextInput as any)['observedAttributes']);
-   }
+  public render(): void {
+    this.innerHTML = `
+      <input 
+        for="${this.name}"
+        type="text" 
+        name="${this.name}" 
+        value="${this.value}" 
+        placeholder="${this.placeholder}" 
+      />
+      <label id="${this.name}">${this.name}</label>
+    `
+  }
 }

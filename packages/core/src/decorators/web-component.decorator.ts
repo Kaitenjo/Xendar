@@ -1,6 +1,6 @@
 import { ClassDecorator, Constructor } from "@xendar/common";
+import { INTERNAL_OBSERVED_ATTRIBUTES } from "../costants";
 import { BaseWebComponent } from "../directives/base-web-component";
-import { INTERNAL_OBSERVED_ATTRIBUTES, INTERNAL_PREFIX } from "../costants";
 
 /**
  * Decorator to define a web component
@@ -25,7 +25,9 @@ export function WebComponent<T extends BaseWebComponent>(selector: string | stri
  */
 function defineObservedAttributes<T extends BaseWebComponent>(klass: Constructor<T>, context: ClassDecoratorContext<Constructor<T>>): void {
   Object.defineProperty(klass, 'observedAttributes', {
-    get: () => context.metadata![INTERNAL_OBSERVED_ATTRIBUTES]
+    get: () => context.metadata![INTERNAL_OBSERVED_ATTRIBUTES],
+    configurable: false,
+    enumerable: false
   });
 }
 

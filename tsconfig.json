@@ -7,6 +7,7 @@
     "declarationMap": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": false,
+    "resolveJsonModule": true,
     "strict": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,

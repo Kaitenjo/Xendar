@@ -1,3 +1,6 @@
+import { INTERNAL_SELECTORS } from "../costants";
+import { BaseWebComponentConstructor } from "../models/base-web-component-constructor.type";
+
 /**
  * Base class for all Web Components in the framework
  * 
@@ -18,14 +21,47 @@ export abstract class BaseWebComponent extends HTMLElement {
    * Otherwise the render function would be called N times where N is the
    * number of properties decorated with @Property and specified as attributes
    * on the CustomElement tag in the HTML
+  */
+ private _initialized = false;
+ 
+ private readonly _root: ShadowRoot;
+ 
+ public static rendererTimes = 0;
+
+ constructor() {
+   super();
+   this.addHostClass()
+   this._root = this.attachShadow({ mode: 'open' });
+  }
+  
+  public abstract render(): string;
+ 
+  public abstract css(): string;
+  
+  /**
+   * Method called by the @Property decorator to
+   * update the rendering of the component
+   * @internal 
    */
-  private _initialized = false;
+  public internalRender(): void {
+    if (this._initialized) {
+      console.warn('Render times:', ++BaseWebComponent.rendererTimes);
+      this._root.innerHTML = `${this.render()} <style>${this.css()}</style>`;
+    }
+  }
 
-  private readonly _root: ShadowRoot;
-
-  constructor() {
-    super();
-    this._root = this.attachShadow({ mode: 'open' });
+  /**
+   * Retrieve the selectors defined on the class through the @WebComponent decorator
+   * and add them as class(es) on the host element
+   * 
+   * This allows to use the selector as CSS class root in the `css` method 
+   * and support BEM methodology
+   */
+  private addHostClass(): void {
+    const selectors = (this.constructor as BaseWebComponentConstructor)[INTERNAL_SELECTORS];
+    Array.isArray(selectors)
+      ? this.classList.add(...selectors)
+      : this.classList.add(selectors);
   }
 
   /**
@@ -39,7 +75,7 @@ export abstract class BaseWebComponent extends HTMLElement {
    * @param _oldValue Old value of the attribute
    * @param newValue New value of the attribute
    */
-  public attributeChangedCallback(name: string, _oldValue: unknown, newValue: unknown): void {
+  private attributeChangedCallback(name: string, _oldValue: unknown, newValue: unknown): void {
     /*
       Since the 'Property Decorator add the property key to the ObservedAttributes
       We are sure that the property with the given name exists on the instance of the subclass
@@ -54,7 +90,7 @@ export abstract class BaseWebComponent extends HTMLElement {
    * 
    * This method is called EVERY time the element is added
    */
-  public connectedCallback(): void {
+  private connectedCallback(): void {
     this._initialized = true;
     this.internalRender();
   }
@@ -69,23 +105,7 @@ export abstract class BaseWebComponent extends HTMLElement {
    * so that if the element is re-added to the DOM
    * the properties initialization won't call the render method
    */
-  public disconnectedCallback(): void {
+  private disconnectedCallback(): void {
     this._initialized = false
   }
-
-  /**
-   * Method called by the @Property decorator to
-   * update the rendering of the component
-   * @internal 
-   */
-  public internalRender(): void {
-    if (this._initialized) {
-      console.warn('Render times:', ++BaseWebComponent.rendererTimes);
-      this._root.innerHTML = this.render();
-    }
-  }
-
-  public static rendererTimes = 0;
-
-  public abstract render(): string;
 }

@@ -1,6 +1,6 @@
 {
   "name": "@xaendar/build-tools",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "type": "module",
   "author": "Kaitenjo",
   "license": "MIT",
@@ -9,7 +9,7 @@
     ".": "./src/public-api.ts"
   },
   "dependencies": {
-    "@xaendar/compiler": "0.5.2",
+    "@xaendar/compiler": "0.5.3",
     "vite": "^8.0.14"
   },
   "xaendar": {

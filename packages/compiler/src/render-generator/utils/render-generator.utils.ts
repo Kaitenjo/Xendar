@@ -249,10 +249,8 @@ export const ROOT_NODE = 'this._root';
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: string | Expression, context: Context): string {
-  return typeof expression === 'string'
-    ? context.getIdentifier(expression) ?? `this.${expression}`
-    : emitNode(expression, expression, context);
+export function resolveExpression(expression: Expression, context: Context): string {
+  return emitNode(expression, expression, context);
 }
 
 /**

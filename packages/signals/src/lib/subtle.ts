@@ -1,7 +1,8 @@
-import { GLOBAL_STATE } from './utils/globals/globals';
 import { Computed } from './models/computed/computed';
 import { State } from './models/state/state';
 import { Watcher } from './models/watcher/watcher';
+import { isDevMode } from './utils/dev-mode/dev-mode';
+import { GLOBAL_STATE } from './utils/globals/globals';
 import { PRIVATE } from './utils/private-symbol/private-symbol';
 
 /**
@@ -15,6 +16,12 @@ export function untrack<T>(fn: () => T): T {
 
   try {
     return fn();
+  } catch (error) {
+    // This log is not present in the TC39 spec, could be removed in next versions
+    if (isDevMode()) {
+      console.error('Error thrown while running an Untracked signal:', error);
+    }
+    throw error;
   } finally {
     GLOBAL_STATE.computing = prevComputing;
   }

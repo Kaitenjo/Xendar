@@ -328,6 +328,10 @@ export class Computed<T = any> {
     try {
       newValue = this.#callback.call(this);
     } catch (error) {
+      // This log is not present in the TC39 spec, could be removed in next versions
+      if (isDevMode()) {
+        console.error('Error thrown while computing a Computed signal:', error);
+      }
       newValue = { isError: true, value: error as Error };
     } finally {
       popComputed();

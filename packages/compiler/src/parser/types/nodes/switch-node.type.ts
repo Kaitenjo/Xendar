@@ -1,3 +1,4 @@
+import { Expression } from 'typescript';
 import { ASTNodeType } from '../node.enum.js';
 import { CaseNode } from './case-node.type.js';
 
@@ -12,7 +13,7 @@ export type SwitchNode = {
   /**
    * The switch expression string.
    */
-  expression: string;
+  expression: Expression;
   /**
    * The list of `@case` and `@default` branches.
    */

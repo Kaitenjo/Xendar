@@ -11,7 +11,7 @@ import { processSwitch } from "./states/process-switch.state.js";
 import { processTextAndInterpolation } from "./states/process-text-and-interpolation.state.js";
 import { getElementIdentifier, getTextIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
 
-const nodeToProcess = new Map<string, { fn: NoArgsFunction<string[]> } | { fn: Function<[index: string], string[]>, args: [index: string] }>();
+const nodeToProcess = new Map<string, { fn: NoArgsFunction<string[]> } | { fn: Function<[items: string, index: string], string[]>, args: [items: string, index: string] }>();
 
 /**
  * Generates the TypeScript body of a render function from an AST.

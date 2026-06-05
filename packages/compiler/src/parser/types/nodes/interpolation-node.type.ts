@@ -1,3 +1,4 @@
+import { Expression } from 'typescript';
 import { ASTNodeType } from '../node.enum.js';
 
 /**
@@ -11,5 +12,5 @@ export type InterpolationNode = {
   /**
    * The interpolated JavaScript expression string.
    */
-  expression: string;
+  expression: Expression;
 }

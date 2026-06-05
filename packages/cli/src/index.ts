@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { generateCommand } from './commands/generate/generate.command.js';
 import { newCommand } from './commands/new/new.command.js';
 
-const version = JSON.parse(readFileSync(resolve(import.meta.filename, '..', 'package.json'), 'utf-8')).version;
+const version = JSON.parse(readFileSync(resolve(import.meta.filename, '..', '../package.json'), 'utf-8')).version;
 
 program
   .name('xd')

@@ -6,6 +6,7 @@ import { ASTNode } from '../types/ast.type.js';
 import { ASTNodeType } from '../types/node.enum.js';
 import { CaseNode } from '../types/nodes/case-node.type.js';
 import { SwitchNode } from '../types/nodes/switch-node.type.js';
+import { validateExpression } from '../utils/expression-validator.js';
 import { parseBlockChildren } from './parse-block-children.state.js';
 
 /**
@@ -26,7 +27,7 @@ export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFu
     throw new Error(`[Parser] Expected CONDITION after SWITCH, got ${TokenType[conditionToken.type]}`);
   }
 
-  const expression = conditionToken.parts[0];
+  const expression = validateExpression(conditionToken.parts[0]).node;
   // consume CONDITION and BLOCK_OPEN
   cursor.advance(2);
 

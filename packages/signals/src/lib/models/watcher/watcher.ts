@@ -213,12 +213,18 @@ export class Watcher {
    */
   public notify(symbol: symbol): void {
     assertPrivateContext(symbol);
-    
+
     GLOBAL_STATE.frozen = true;
 
     try {
       this.setState('pending', PRIVATE)
       this.#notifyCallback.call(this);
+    } catch (error) {
+      // This log is not present in the TC39 spec, could be removed in next versions
+      if (isDevMode()) {
+        console.error('Error thrown while running a Watcher notify callback:', error);
+      }
+      throw error;
     } finally {
       this.setState('waiting', PRIVATE);
       GLOBAL_STATE.frozen = false;

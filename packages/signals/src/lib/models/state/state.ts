@@ -1,8 +1,9 @@
 import { NoArgsVoidFunction } from '@xaendar/types';
-import { GLOBAL_STATE } from '../../utils/globals/globals';
-import { PRIVATE, assertPrivateContext } from '../../utils/private-symbol/private-symbol';
 import { SignalEqual } from '../../types/signal-equal.type';
 import { SignalOptions } from '../../types/signal-options.type';
+import { isDevMode } from '../../utils/dev-mode/dev-mode';
+import { GLOBAL_STATE } from '../../utils/globals/globals';
+import { PRIVATE, assertPrivateContext } from '../../utils/private-symbol/private-symbol';
 import { Computed } from '../computed/computed';
 import { Watcher } from '../watcher/watcher';
 
@@ -173,6 +174,12 @@ export class State<T = any> {
       GLOBAL_STATE.frozen = true;
       try {
         this.#watched();
+      } catch (error) {
+        // This log is not present in the TC39 spec, could be removed in next versions
+        if (isDevMode()) {
+          console.error('Error thrown while running a State Signal watched callback:', error);
+        }
+        throw error;
       } finally {
         GLOBAL_STATE.frozen = false;
       }
@@ -200,6 +207,12 @@ export class State<T = any> {
       GLOBAL_STATE.frozen = true;
       try {
         this.#unwatched();
+      } catch (error) {
+        // This log is not present in the TC39 spec, could be removed in next versions
+        if (isDevMode()) {
+          console.error('Error thrown while running a State Signal unwatched callback:', error);
+        }
+        throw error;
       } finally {
         GLOBAL_STATE.frozen = false;
       }

@@ -46,13 +46,6 @@ export function processSwitch(node: SwitchNode, nodeName: string, parentNode: st
       '(() => {',
       ...indent(
         'let localUnwatchFns = []',
-        'const checkAndUpdateState = (newState, fn) => {',
-        ...indent(
-          'unwatch();',
-          'localUnwatchFns = Signal.subtle.untrack(fn);',
-          'unwatchFns.push(...localUnwatchFns);'
-        ),
-        '};',
         'const unwatch = () => {',
         ...indent(
           'localUnwatchFns?.forEach(fn => fn());',

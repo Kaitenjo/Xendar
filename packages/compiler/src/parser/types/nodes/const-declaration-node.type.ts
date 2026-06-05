@@ -1,3 +1,4 @@
+import { Expression } from 'typescript';
 import { ASTNodeType } from '../node.enum.js';
 
 /**
@@ -15,5 +16,5 @@ export type ConstDeclarationNode = {
   /**
    * The initializer expression string.
    */
-  expression: string;
+  expression: Expression;
 }

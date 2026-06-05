@@ -5,6 +5,7 @@ import { ParserCursor } from '../models/parser-cursor.model.js';
 import { ASTNode } from '../types/ast.type.js';
 import { ASTNodeType } from '../types/node.enum.js';
 import { InterpolationNode } from '../types/nodes/interpolation-node.type.js';
+import { validateExpression } from '../utils/expression-validator.js';
 
 /**
  * Parses an interpolation expression or literal token into an `InterpolationNode`.
@@ -19,6 +20,6 @@ export function parseInterpolation(cursor: ParserCursor, _parseNode: NoArgsFunct
   
   return {
     type: ASTNodeType.Interpolation,
-    expression: token.parts[0]
+    expression: validateExpression(token.parts[0]).node
   };
 }

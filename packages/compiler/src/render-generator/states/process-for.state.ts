@@ -37,9 +37,9 @@ import { getTextIdentifier } from '../utils/render-generator.utils.js';
  * @param parentContext - The enclosing scope context.
  * @returns Array of generated code lines.
  */
-export function processFor(node: ForNode, nodeName: string, parentNode: string, parentContext: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [index: string] }> } {
+export function processFor(node: ForNode, nodeName: string, parentNode: string, parentContext: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [items: string, index: string] }> } {
   const mainBlock = new Array<string>;
-  const functionsToProcess = new Map<string, { code: string[], args: [index: string] }>();
+  const functionsToProcess = new Map<string, { code: string[], args: [items: string, index: string] }>();
 
   const iterableSource = node.iterableSource;
   const iterableExpr = parentContext.getIdentifier(iterableSource) ?? `this.${iterableSource}`;
@@ -62,9 +62,9 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
       `const ${lastName} = ${counterName} === ${itemsName}.length - 1;`,
       `const ${evenName} = ${counterName} % 2 === 0;`,
       `const ${oddName} = !${evenName};`,
-      ...node.children.flatMap((child, i) => indent(...processNode(child, `${nodeName}_${i}`, parentNode, forContext)))
+      ...node.children.flatMap((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, forContext))
     ],
-    args: [counterName]
+    args: [itemsName, counterName]
   });
 
   mainBlock.push(
@@ -88,7 +88,7 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
           ...indent(
             `for (let ${counterName} = 0; ${counterName} < ${itemsName}.length; ${counterName}++) {`,
             ...indent(
-              `localUnwatchFns.push(...this.for_${nodeName}(${counterName}));`,
+              `localUnwatchFns.push(...this.for_${nodeName}(${itemsName}, ${counterName}));`,
               'unwatchFns.push(...localUnwatchFns);'
             ),
             '}',

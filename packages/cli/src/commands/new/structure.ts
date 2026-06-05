@@ -71,7 +71,7 @@ export type Entry = {
  */
 function readCliVersion(): string {
   try {
-    const cliPackageJson: PackageJson = JSON.parse(readFileSync(resolve(import.meta.filename , '..', './package.json'), 'utf8'));
+    const cliPackageJson: PackageJson = JSON.parse(readFileSync(resolve(import.meta.filename , '..', '../package.json'), 'utf8'));
     
     /*
       This should never happen since the CLI's own package.json must have a version field

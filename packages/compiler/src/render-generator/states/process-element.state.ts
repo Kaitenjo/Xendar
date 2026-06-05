@@ -1,8 +1,7 @@
-import { indent } from '../../../../common/src/utils/index.js';
 import { ElementNode } from '../../parser/types/nodes/element-node.type.js';
 import { Context } from '../models/render-context.model.js';
 import { processNode } from '../render-generator.js';
-import { getElementIdentifier, resolveExpression } from '../utils/render-generator.utils.js';
+import { resolveExpression } from '../utils/render-generator.utils.js';
 
 /**
  * Generates code for an HTML element node: creates the DOM element, sets attributes,

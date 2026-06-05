@@ -32,6 +32,7 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
         
         if (deep === 0) {
           cursor.advance();
+          interpolation = interpolation.trimEnd();
           /*
             After an interpolation we have to understanad where to transite
             The next state depends from the previous state

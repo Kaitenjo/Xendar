@@ -4,6 +4,7 @@ import { ParserCursor } from '../models/parser-cursor.model.js';
 import { ASTNode } from '../types/ast.type.js';
 import { ASTNodeType } from '../types/node.enum.js';
 import { ConstDeclarationNode } from '../types/nodes/const-declaration-node.type.js';
+import { validateExpression } from '../utils/expression-validator.js';
 
 /**
  * Parses a CONST_DECLARATION token into a `ConstDeclarationNode`.
@@ -19,6 +20,6 @@ export function parseConstDeclaration(cursor: ParserCursor, _parseNode: NoArgsFu
   return {
     type: ASTNodeType.ConstDeclaration,
     varName: token.parts[0],
-    expression: token.parts[1]
+    expression: validateExpression(token.parts[1]).node
   };
 }

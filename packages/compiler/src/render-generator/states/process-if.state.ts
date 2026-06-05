@@ -76,8 +76,8 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
         '};',
         'const unwatch = () => {',
         ...indent(
-          'localUnwatchFns?.forEach(fn => fn());',
           'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
+          'localUnwatchFns?.forEach(fn => fn());',
           'localUnwatchFns = [];'
         ),
         '}',

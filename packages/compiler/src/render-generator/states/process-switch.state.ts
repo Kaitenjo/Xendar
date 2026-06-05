@@ -15,17 +15,64 @@ import { resolveExpression } from '../utils/render-generator.utils.js';
  * @param processNode Recursive node processor function.
  * @returns Array of generated code lines.
  */
-export function processSwitch(node: SwitchNode, nodeName: string, parentNode: string, context: Context): string[] {
-  return [
-    `switch (${resolveExpression(node.expression, context)}) {`,
-    ...node.cases.map(caseNode => ([
+export function processSwitch(node: SwitchNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, string[]> } {
+  const mainBlock = new Array<string>;
+  const functionsToProcess = new Map<string, string[]>;
+
+  mainBlock.push(`switch (${resolveExpression(node.expression, context)}) {`);
+
+  node.cases.forEach((caseNode, i) => {
+    const caseContext = new Context([], context);
+    const caseName = caseNode.condition ? `case_${nodeName}_${i}` : `default_${nodeName}`;
+
+    functionsToProcess.set(caseName, caseNode.children.map((child, i) => processNode(child, `${nodeName}_${i}_${i}`, parentNode, caseContext)).flat());
+    mainBlock.push(
       ...indent(
         ...(!caseNode.condition ? ['default: {'] : caseNode.condition.map((cond, i, arr) => `case ${cond}:${i === arr.length - 1 ? ' {' : ''}`)),
-        ...caseNode.children.map((child, i) => indent(...processNode(child, `${nodeName}_${i}_${i}`, parentNode, new Context([], context)))).flat(),
-        `${indent('break;')}`,
-        `}`
+        ...indent(
+          `localUnwatchFns = Signal.subtle.untrack(this.${caseName}.bind(this));`,
+          'unwatchFns.push(...localUnwatchFns);',
+          'break;'
+        ),
+        '}'
       )
-    ])).flat(),
-    '}'
-  ];
+    );
+  });
+
+  mainBlock.push('}');
+
+  return {
+    mainBlock: [
+      '(() => {',
+      ...indent(
+        'let localUnwatchFns = []',
+        'const checkAndUpdateState = (newState, fn) => {',
+        ...indent(
+          'unwatch();',
+          'localUnwatchFns = Signal.subtle.untrack(fn);',
+          'unwatchFns.push(...localUnwatchFns);'
+        ),
+        '};',
+        'const unwatch = () => {',
+        ...indent(
+          'localUnwatchFns?.forEach(fn => fn());',
+          'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
+          'localUnwatchFns = [];'
+        ),
+        '}',
+        'unwatchFns.push(',
+        ...indent(
+          'effect(() => {',
+          ...indent(
+            'unwatch();',
+            ...mainBlock
+          ),
+          '})',
+        ),
+        ');'
+      ),
+      '})();',
+    ],
+    fns: functionsToProcess
+  };
 }

@@ -1,3 +1,4 @@
+import { NoArgsVoidFunction } from "@xaendar/types";
 import { INPUT_SIGNAL_SET_SYMBOL } from "../signals/input/input-set.symbol";
 import { InputSignal } from "../signals/input/input.model";
 
@@ -9,6 +10,11 @@ import { InputSignal } from "../signals/input/input.model";
  * It won't appear by intellisense but it's there.
  */
 export class BaseWebComponent extends HTMLElement {
+  /**
+   * Array of functions to unwatch all the signals used in the component
+   */
+  protected unwatchFns = new Array<NoArgsVoidFunction>;
+
   /**
    * The root of the Web Component, where the content is rendered
    */
@@ -24,7 +30,9 @@ export class BaseWebComponent extends HTMLElement {
    * update the rendering of the component
    * @internal 
    */
-  private _render(): void { }
+  private _render(): NoArgsVoidFunction[] { 
+    return [];
+  }
 
   /**
    * Method automatically called by the JavascriptEngine when an attribute
@@ -67,7 +75,7 @@ export class BaseWebComponent extends HTMLElement {
    * This method is called EVERY time the element is added
    */
   private connectedCallback(): void {
-    this._render();
+    this.unwatchFns = this._render();
   }
 
   /**
@@ -81,5 +89,7 @@ export class BaseWebComponent extends HTMLElement {
    * the properties initialization won't call the render method
    */
   private disconnectedCallback(): void {
+    this.unwatchFns.forEach(unwatch => unwatch());
+    this.unwatchFns = [];
   }
 }

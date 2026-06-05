@@ -17,39 +17,84 @@ import { resolveExpression } from '../utils/render-generator.utils.js';
  * @param context Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processIf(node: IfNode, nodeName: string, parentNode: string, context: Context): string[] {
+export function processIf(node: IfNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, string[]> } {
   const ifContext = new Context([], context);
+  const functionsToProcess = new Map<string, string[]>;
+  const mainBlock = new Array<string>;
 
-  const code = [
+  const ifKey = `if_${nodeName}`;
+  mainBlock.push(
     `if (${resolveExpression(node.conditionNode, context)}) {`,
-    ...processConsequent(node, nodeName, parentNode, ifContext),
+    ...indent(`checkAndUpdateState(0, this.${ifKey}.bind(this));`),
     '}'
-  ];
+  );
+  functionsToProcess.set(ifKey, processConsequent(node, nodeName, parentNode, ifContext));
 
   let alt = node.alternate;
+  let index = 0;
   while (alt?.type === ASTNodeType.ElseIf) {
     const elseIfContext = new Context([], context);
 
-    code[code.length - 1] += ` else if (${resolveExpression(alt.conditionNode, context)}) {`
-    code.push(
-      ...processConsequent(alt, nodeName, parentNode, elseIfContext),
+    const keyElseIf = `elseIf_${nodeName}_${index}`;
+    mainBlock[mainBlock.length - 1] += ` else if (${resolveExpression(alt.conditionNode, context)}) {`;
+    mainBlock.push(
+      ...indent(`checkAndUpdateState(${++index}, this.${keyElseIf}.bind(this));`),
       '}'
     );
+    functionsToProcess.set(keyElseIf, processConsequent(alt, nodeName, parentNode, elseIfContext));
     alt = alt.alternate;
   }
-  
+
   if (alt) {
     const elseContext = new Context([], context);
-    code[code.length - 1] += ' else {';
-    code.push(
-      ...processConsequent(alt, nodeName, parentNode, elseContext),
+    const keyElse = `else_${nodeName}`;
+    mainBlock[mainBlock.length - 1] += ' else {';
+    mainBlock.push(
+      ...indent(`checkAndUpdateState(${++index}, this.${keyElse}.bind(this));`),
       '}'
     );
+
+    functionsToProcess.set(keyElse, processConsequent(alt, nodeName, parentNode, elseContext));
   }
 
-  return code;
+  return {
+    mainBlock: [
+      '(() => {',
+      ...indent(
+        'let state;',
+        'let localUnwatchFns = []',
+        'const checkAndUpdateState = (newState, fn) => {',
+        ...indent(
+          'if (state === newState) {',
+          ...indent('return;'),
+          '}',
+          'state = newState;',
+          'unwatch();',
+          'localUnwatchFns = Signal.subtle.untrack(fn);',
+          'unwatchFns.push(...localUnwatchFns);'
+        ),
+        '};',
+        'const unwatch = () => {',
+        ...indent(
+          'localUnwatchFns?.forEach(fn => fn());',
+          'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
+          'localUnwatchFns = [];'
+        ),
+        '}',
+        'unwatchFns.push(',
+        ...indent(
+          'effect(() => {',
+          ...indent(...mainBlock),
+          '})',
+        ),
+        ');'
+      ),
+      '})();',
+    ],
+    fns: functionsToProcess
+  };
 }
 
 function processConsequent(node: IfNode | ElseIfNode | ElseNode, nodeName: string, parentNode: string, context: Context): string[] {
-  return node.consequent.map((child, i) => indent(...processNode(child, `${nodeName}_${i}`, parentNode, context))).flat();
+  return node.consequent.map((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, context)).flat();
 }

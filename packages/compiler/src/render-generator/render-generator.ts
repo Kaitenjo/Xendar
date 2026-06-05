@@ -1,5 +1,5 @@
 import { indent } from "@xaendar/common";
-import { NoArgsFunction } from "@xaendar/types";
+import { NoArgsFunction, Function } from "@xaendar/types";
 import { ASTNode } from "../parser/types/ast.type.js";
 import { ASTNodeType } from "../parser/types/node.enum.js";
 import { Context } from "./models/render-context.model.js";
@@ -11,7 +11,7 @@ import { processSwitch } from "./states/process-switch.state.js";
 import { processTextAndInterpolation } from "./states/process-text-and-interpolation.state.js";
 import { getElementIdentifier, getTextIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
 
-const nodeToProcess = new Map<string, NoArgsFunction<string[]>>;
+const nodeToProcess = new Map<string, { fn: NoArgsFunction<string[]> } | { fn: Function<[index: string], string[]>, args: [index: string] }>();
 
 /**
  * Generates the TypeScript body of a render function from an AST.
@@ -25,20 +25,38 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
 
   const renderFunctions = [
     '_render() {',
-    ...indent(
-      ...[cssVariableName ? `this._root.adoptedStyleSheets = [${cssVariableName}];` : undefined].filter((line): line is string => !!line),
-      ...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, context)]).flat()
-    ),
-    '}',
   ]
 
+  if (cssVariableName) {
+    renderFunctions.push(`  this._root.adoptedStyleSheets = [${cssVariableName}];`);
+  }
+  
+  renderFunctions.push(
+    '  let unwatchFns = [];',
+    ...indent(...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, context)]).flat()),
+    '  return unwatchFns;',
+    '}'
+  )
+
   while (nodeToProcess.size > 0) {
-    const [key, fn] = nodeToProcess.entries().next().value!;
-    renderFunctions.push(
-      `${key} {`,
-      ...indent(...fn()),
-      '}',
-    );
+    const [key, fnData] = nodeToProcess.entries().next().value!;
+    if ('args' in fnData) {      
+      renderFunctions.push(
+        `${key}(${fnData.args.join(', ')}) {`,
+        '  let unwatchFns = [];',
+        ...indent(...fnData.fn(...fnData.args)),
+        '  return unwatchFns;',
+        '}',
+      );
+    } else {
+      renderFunctions.push(
+        `${key}() {`,
+        '  let unwatchFns = [];',
+        ...indent(...fnData.fn()),
+        '  return unwatchFns;',
+        '}',
+      );
+    }
     nodeToProcess.delete(key);
   }
 
@@ -60,19 +78,19 @@ export function processNode(node: ASTNode, nodeName: string, parentNode: string,
       return processElement(node, getElementIdentifier(node, parentNode, nodeName), parentNode, context);
 
     case ASTNodeType.If:
-      const keyIf = `if_${nodeName}()`
-      nodeToProcess.set(keyIf, () => processIf(node, nodeName, parentNode, context));
-      return [`this.${keyIf};`];
+      const conditionalBlockData = processIf(node, nodeName, parentNode, context);
+      conditionalBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody }));
+      return conditionalBlockData.mainBlock;
 
     case ASTNodeType.For:
-      const keyFor = `for_${nodeName}()`
-      nodeToProcess.set(keyFor, () => processFor(node, nodeName, parentNode, context));
-      return [`this.${keyFor};`];
+      const forBlockData = processFor(node, nodeName, parentNode, context);
+      forBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody.code, args: fnBody.args }));
+      return forBlockData.mainBlock;
 
     case ASTNodeType.Switch:
-      const keySwitch = `switch_${nodeName}()`
-      nodeToProcess.set(keySwitch, () => processSwitch(node, nodeName, parentNode, context));
-      return [`this.${keySwitch};`];
+      const switchBlockData = processSwitch(node, nodeName, parentNode, context);
+      switchBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody }));
+      return switchBlockData.mainBlock;
 
     case ASTNodeType.ConstDeclaration:
       return processConstDeclaration(node, nodeName, parentNode, context);

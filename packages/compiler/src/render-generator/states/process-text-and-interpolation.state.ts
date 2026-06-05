@@ -21,6 +21,6 @@ export function processTextAndInterpolation(node: TextNode | InterpolationNode, 
   return [
     `const ${nodeName} = document.createTextNode(${textValue});`,
     `${parentNode}.appendChild(${nodeName});`,
-    `effect(() => ${nodeName}.textContent = ${textValue});`
+    `unwatchFns.push(effect(() => ${nodeName}.textContent = ${textValue}));`
   ];
 }

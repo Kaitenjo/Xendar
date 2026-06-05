@@ -1,3 +1,4 @@
+import { EffectOptions } from "@xaendar/signals";
 import { NoArgsVoidFunction } from "@xaendar/types";
 
 /**
@@ -35,7 +36,7 @@ import { NoArgsVoidFunction } from "@xaendar/types";
  *   is tracked as a dependency.
  * @returns A disposer function that, when called, permanently stops the effect.
  */
-export function effect(fn: NoArgsVoidFunction): NoArgsVoidFunction {
+export function effect(fn: NoArgsVoidFunction, options?: EffectOptions): NoArgsVoidFunction {
   /**
    * Wrap the user callback in a Computed so that automatic dependency
    * tracking (via pushComputed / popComputed) works for free.
@@ -57,15 +58,19 @@ export function effect(fn: NoArgsVoidFunction): NoArgsVoidFunction {
       needsEnqueue = false;
       queueMicrotask(() => {
         needsEnqueue = true;
+        options?.onBeforeRun?.();
         watcher.getPending().forEach(computed => computed.get());
+        options?.onAfterRun?.();
         watcher.watch();
       });
     }
   });
 
   // Initial synchronous execution + first subscription.
+  options?.onBeforeRun?.();
   watcher.watch(computed);
   computed.get();
+  options?.onAfterRun?.();
 
   /**
    * Disposer — call this to permanently stop the effect.
@@ -74,5 +79,8 @@ export function effect(fn: NoArgsVoidFunction): NoArgsVoidFunction {
    * (Watcher → Computed → all sources), preventing any further
    * notifications and allowing GC.
    */
-  return () => watcher.unwatch(computed);
+  return () => {
+    options?.onCleanup?.();
+    watcher.unwatch(computed)
+  };
 }

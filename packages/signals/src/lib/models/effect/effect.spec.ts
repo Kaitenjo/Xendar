@@ -124,6 +124,111 @@ describe('effect', () => {
     });
   });
 
+  describe('options', () => {
+
+    describe('onBeforeRun', () => {
+      it('is called before the initial execution', () => {
+        const order: string[] = [];
+        effect(
+          () => { order.push('fn'); },
+          { onBeforeRun: () => order.push('before') }
+        );
+        expect(order).toEqual(['before', 'fn']);
+      });
+
+      it('is called before each re-run', async () => {
+        const state = new State(0);
+        const order: string[] = [];
+
+        effect(
+          () => { order.push(`fn(${state.get()})`); },
+          { onBeforeRun: () => order.push('before') }
+        );
+
+        order.length = 0; // ignore initial run
+        state.set(1);
+        await flushMicrotasks();
+
+        expect(order).toEqual(['before', 'fn(1)']);
+      });
+    });
+
+    describe('onAfterRun', () => {
+      it('is called after the initial execution', () => {
+        const order: string[] = [];
+        effect(
+          () => { order.push('fn'); },
+          { onAfterRun: () => order.push('after') }
+        );
+        expect(order).toEqual(['fn', 'after']);
+      });
+
+      it('is called after each re-run', async () => {
+        const state = new State(0);
+        const order: string[] = [];
+
+        effect(
+          () => { order.push(`fn(${state.get()})`); },
+          { onAfterRun: () => order.push('after') }
+        );
+
+        order.length = 0; // ignore initial run
+        state.set(1);
+        await flushMicrotasks();
+
+        expect(order).toEqual(['fn(1)', 'after']);
+      });
+    });
+
+    describe('onBeforeRun + onAfterRun together', () => {
+      it('wraps each run with before and after hooks in the correct order', async () => {
+        const state = new State(0);
+        const order: string[] = [];
+
+        effect(
+          () => { order.push(`fn(${state.get()})`); },
+          {
+            onBeforeRun: () => order.push('before'),
+            onAfterRun: () => order.push('after'),
+          }
+        );
+
+        expect(order).toEqual(['before', 'fn(0)', 'after']);
+
+        order.length = 0;
+        state.set(1);
+        await flushMicrotasks();
+
+        expect(order).toEqual(['before', 'fn(1)', 'after']);
+      });
+    });
+
+    describe('onCleanup', () => {
+      it('is called when the disposer is invoked', () => {
+        const spy = vi.fn();
+        const dispose = effect(() => {}, { onCleanup: spy });
+
+        expect(spy).not.toHaveBeenCalled();
+        dispose();
+        expect(spy).toHaveBeenCalledOnce();
+      });
+
+      it('is not called before disposal', async () => {
+        const state = new State(0);
+        const spy = vi.fn();
+
+        const dispose = effect(() => { state.get(); }, { onCleanup: spy });
+        state.set(1);
+        await flushMicrotasks();
+
+        expect(spy).not.toHaveBeenCalled();
+
+        dispose();
+        expect(spy).toHaveBeenCalledOnce();
+      });
+    });
+  });
+
   describe('disposal', () => {
     it('returns a disposer function', () => {
       const dispose = effect(() => {});

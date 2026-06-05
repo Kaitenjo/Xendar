@@ -1,3 +1,4 @@
+import { indent } from '../../../../common/src/utils/index.js';
 import { ElementNode } from '../../parser/types/nodes/element-node.type.js';
 import { Context } from '../models/render-context.model.js';
 import { processNode } from '../render-generator.js';
@@ -21,12 +22,13 @@ export function processElement(node: ElementNode, nodeName: string, parentNode: 
     `const ${nodeName} = document.createElement("${tagName}");`,
     ...(node.attributes?.map(attr => {
       const value = attr.value;
-      return typeof value === "string" 
+      return typeof value === "string"
         ? `${nodeName}.setAttribute('${attr.name}', ${value});`
-        : `effect(() => ${nodeName}.setAttribute('${attr.name}', ${resolveExpression(value.expression, context)}));`
+        : `unwatchFns.push(effect(() => ${nodeName}.setAttribute('${attr.name}', ${resolveExpression(value.expression, context)})));`
     }) || []),
     ...(node.events?.map(event => `${nodeName}.addEventListener("${event.name}", ($event) => this.${event.handler});`) || []),
     `${parentNode}.appendChild(${nodeName});`,
+    `unwatchFns.push(() => ${parentNode}.removeChild(${nodeName}));`,
     ...(node.children.map((child, i) => processNode(child, i.toString(), nodeName, childrenContext)).flat())
   ];
 }

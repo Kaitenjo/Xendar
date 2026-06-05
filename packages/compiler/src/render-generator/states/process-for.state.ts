@@ -1,4 +1,5 @@
 import { indent } from '@xaendar/common';
+import { Function } from '@xaendar/types';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables.js';
 import { ForNode } from '../../parser/types/nodes/for-node.type.js';
 import { Context } from '../models/render-context.model.js';
@@ -36,7 +37,10 @@ import { getTextIdentifier } from '../utils/render-generator.utils.js';
  * @param parentContext - The enclosing scope context.
  * @returns Array of generated code lines.
  */
-export function processFor(node: ForNode, nodeName: string, parentNode: string, parentContext: Context): string[] {
+export function processFor(node: ForNode, nodeName: string, parentNode: string, parentContext: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [index: string] }> } {
+  const mainBlock = new Array<string>;
+  const functionsToProcess = new Map<string, { code: string[], args: [index: string] }>();
+
   const iterableSource = node.iterableSource;
   const iterableExpr = parentContext.getIdentifier(iterableSource) ?? `this.${iterableSource}`;
 
@@ -50,19 +54,58 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
   const oddName = resolveImplicit(node, '$odd');
   const forContext = new Context([node.itemAlias, indexName, firstName, lastName, evenName, oddName], parentContext);
 
-  return [
-    `const ${itemsName} = ${iterableExpr};`,
-    `for (let ${counterName} = 0; ${counterName} < ${itemsName}.length; ${counterName}++) {`,
-    ...indent(`const ${node.itemAlias} = ${itemsName}[${counterName}];`,
+  functionsToProcess.set(`for_${nodeName}`, {
+    code: [
+      `const ${node.itemAlias} = ${itemsName}[${counterName}];`,
       `const ${indexName} = ${counterName};`,
       `const ${firstName} = ${counterName} === 0;`,
       `const ${lastName} = ${counterName} === ${itemsName}.length - 1;`,
       `const ${evenName} = ${counterName} % 2 === 0;`,
-      `const ${oddName} = ${counterName} % 2 !== 0;`
+      `const ${oddName} = !${evenName};`,
+      ...node.children.flatMap((child, i) => indent(...processNode(child, `${nodeName}_${i}`, parentNode, forContext)))
+    ],
+    args: [counterName]
+  });
+
+  mainBlock.push(
+    '(() => {',
+    ...indent(
+      'let localUnwatchFns = [];',
+      'const unwatch = () => {',
+      ...indent(
+        'localUnwatchFns?.forEach(fn => fn());',
+        'localUnwatchFns = [];',
+        'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
+      ),
+      '};',
+      'unwatchFns.push(',
+      ...indent(
+        'effect(() => {',
+        ...indent(
+          'unwatch();',
+          `const ${itemsName} = ${iterableExpr};`,
+          'Signal.subtle.untrack(() => {',
+          ...indent(
+            `for (let ${counterName} = 0; ${counterName} < ${itemsName}.length; ${counterName}++) {`,
+            ...indent(
+              `localUnwatchFns.push(...this.for_${nodeName}(${counterName}));`,
+              'unwatchFns.push(...localUnwatchFns);'
+            ),
+            '}',
+          ),
+          '});'
+        ),
+        '})'
+      ),
+      ');',
     ),
-    ...node.children.flatMap((child, i) => indent(...processNode(child, `${nodeName}_${i}`, parentNode, forContext))),
-    '}',
-  ];
+    '})();'
+  );
+
+  return {
+    mainBlock,
+    fns: functionsToProcess
+  }
 }
 
 /**

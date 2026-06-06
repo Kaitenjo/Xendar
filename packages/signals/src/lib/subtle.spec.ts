@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GLOBAL_STATE } from './utils/globals/globals';
+import { setDevMode } from './utils/dev-mode/dev-mode';
 import { loadSignals } from './load-signals';
 import { Computed } from './models/computed/computed';
 import { State } from './models/state/state';
@@ -14,8 +15,6 @@ beforeEach(() => {
 });
 
 describe('subtle', () => {
-
-  // ─── untrack ──────────────────────────────────────────────────────────────
 
   describe('untrack()', () => {
     it('returns the value produced by the function', () => {
@@ -66,9 +65,34 @@ describe('subtle', () => {
       expect(() => untrack(() => { throw new Error('boom'); })).toThrow('boom');
       expect(GLOBAL_STATE.computing).toBe(prevComputing);
     });
-  });
 
-  // ─── currentComputed ──────────────────────────────────────────────────────
+    it('logs the error to console.error when the callback throws in dev mode', () => {
+      setDevMode(true);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const error = new Error('boom');
+        expect(() => untrack(() => { throw error; })).toThrow('boom');
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Error thrown while running an Untracked signal:',
+          error
+        );
+      } finally {
+        consoleSpy.mockRestore();
+        setDevMode(false);
+      }
+    });
+
+    it('does not log to console.error when the callback throws outside dev mode', () => {
+      setDevMode(false);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        expect(() => untrack(() => { throw new Error('boom'); })).toThrow('boom');
+        expect(consoleSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleSpy.mockRestore();
+      }
+    });
+  });
 
   describe('currentComputed()', () => {
     it('returns null when no Computed is being evaluated', () => {
@@ -94,8 +118,6 @@ describe('subtle', () => {
       expect(currentComputed()).toBeNull();
     });
   });
-
-  // ─── introspectSources ────────────────────────────────────────────────────
 
   describe('introspectSources()', () => {
     it('returns an empty array for a Computed that has never been evaluated', () => {
@@ -128,8 +150,6 @@ describe('subtle', () => {
       expect(introspectSources(watcher)).toHaveLength(0);
     });
   });
-
-  // ─── introspectSinks ──────────────────────────────────────────────────────
 
   describe('introspectSinks()', () => {
     it('returns an empty array for a State with no dependents', () => {
@@ -164,8 +184,6 @@ describe('subtle', () => {
     });
   });
 
-  // ─── hasSinks ─────────────────────────────────────────────────────────────
-
   describe('hasSinks()', () => {
     it('returns false for a State with no dependents', () => {
       expect(hasSinks(new State(0))).toBe(false);
@@ -193,8 +211,6 @@ describe('subtle', () => {
       expect(hasSinks(computed)).toBe(true);
     });
   });
-
-  // ─── hasSources ───────────────────────────────────────────────────────────
 
   describe('hasSources()', () => {
     it('returns false for a Computed that has never been evaluated', () => {

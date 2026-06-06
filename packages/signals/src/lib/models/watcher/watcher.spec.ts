@@ -164,6 +164,39 @@ describe('Watcher', () => {
       expect(GLOBAL_STATE.frozen).toBe(false);
     });
 
+    it('logs the error to console.error when the callback throws in dev mode', () => {
+      setDevMode(true);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const error = new Error('boom');
+        const cb = vi.fn(() => { throw error; });
+        const watcher = new Watcher(cb);
+        watcher.watch();
+        expect(() => watcher.notify(PRIVATE)).toThrow('boom');
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Error thrown while running a Watcher notify callback:',
+          error
+        );
+      } finally {
+        consoleSpy.mockRestore();
+        setDevMode(false);
+      }
+    });
+
+    it('does not log to console.error when the callback throws outside dev mode', () => {
+      setDevMode(false);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const cb = vi.fn(() => { throw new Error('boom'); });
+        const watcher = new Watcher(cb);
+        watcher.watch();
+        expect(() => watcher.notify(PRIVATE)).toThrow('boom');
+        expect(consoleSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleSpy.mockRestore();
+      }
+    });
+
     it('transitions to ~watching~ after the callback runs', () => {
       const watcher = new Watcher(vi.fn());
       watcher.watch(new State(1));

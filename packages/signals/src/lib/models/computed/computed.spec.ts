@@ -94,6 +94,35 @@ describe('Computed', () => {
       expect(result).toMatchObject({ isError: true, value: err });
     });
 
+    it('logs the error to console.error when the callback throws in dev mode', () => {
+      setDevMode(true);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const error = new Error('boom');
+        const computed = new Computed(() => { throw error; });
+        computed.get();
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Error thrown while computing a Computed signal:',
+          error
+        );
+      } finally {
+        consoleSpy.mockRestore();
+        setDevMode(false);
+      }
+    });
+
+    it('does not log to console.error when the callback throws outside dev mode', () => {
+      setDevMode(false);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const computed = new Computed(() => { throw new Error('boom'); });
+        computed.get();
+        expect(consoleSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleSpy.mockRestore();
+      }
+    });
+
     it('is clean after evaluation (watched path)', () => {
       const watcher = makeMockWatcher();
       const computed = new Computed(() => 1);

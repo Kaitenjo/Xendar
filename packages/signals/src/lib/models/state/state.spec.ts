@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GLOBAL_STATE } from '../../utils/globals/globals';
 import { PRIVATE } from '../../utils/private-symbol/private-symbol';
+import { setDevMode } from '../../utils/dev-mode/dev-mode';
 import { Computed } from '../computed/computed';
 import { State } from './state';
 
@@ -198,6 +199,35 @@ describe('State', () => {
       expect(() => state.addSink(makeMockWatcher(), PRIVATE)).toThrow('boom');
       expect(GLOBAL_STATE.frozen).toBe(false);
     });
+
+    it('logs the error to console.error when the watched callback throws in dev mode', () => {
+      setDevMode(true);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const error = new Error('boom');
+        const state = new State(0, { watched() { throw error; } });
+        expect(() => state.addSink(makeMockWatcher(), PRIVATE)).toThrow('boom');
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Error thrown while running a State Signal watched callback:',
+          error
+        );
+      } finally {
+        consoleSpy.mockRestore();
+        setDevMode(false);
+      }
+    });
+
+    it('does not log to console.error when the watched callback throws outside dev mode', () => {
+      setDevMode(false);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const state = new State(0, { watched() { throw new Error('boom'); } });
+        expect(() => state.addSink(makeMockWatcher(), PRIVATE)).toThrow('boom');
+        expect(consoleSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleSpy.mockRestore();
+      }
+    });
   });
 
   describe('removeSink()', () => {
@@ -257,6 +287,39 @@ describe('State', () => {
       state.addSink(watcher, PRIVATE);
       expect(() => state.removeSink(watcher, PRIVATE)).toThrow('boom');
       expect(GLOBAL_STATE.frozen).toBe(false);
+    });
+
+    it('logs the error to console.error when the unwatched callback throws in dev mode', () => {
+      setDevMode(true);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const error = new Error('boom');
+        const state = new State(0, { unwatched() { throw error; } });
+        const watcher = makeMockWatcher();
+        state.addSink(watcher, PRIVATE);
+        expect(() => state.removeSink(watcher, PRIVATE)).toThrow('boom');
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Error thrown while running a State Signal unwatched callback:',
+          error
+        );
+      } finally {
+        consoleSpy.mockRestore();
+        setDevMode(false);
+      }
+    });
+
+    it('does not log to console.error when the unwatched callback throws outside dev mode', () => {
+      setDevMode(false);
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const state = new State(0, { unwatched() { throw new Error('boom'); } });
+        const watcher = makeMockWatcher();
+        state.addSink(watcher, PRIVATE);
+        expect(() => state.removeSink(watcher, PRIVATE)).toThrow('boom');
+        expect(consoleSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleSpy.mockRestore();
+      }
     });
 
     it('no longer notifies a removed sink on set()', () => {

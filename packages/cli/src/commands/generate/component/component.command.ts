@@ -1,6 +1,7 @@
+import { assertIsValidElementName } from '@xaendar/common';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { toKebabCase, toPascalCase } from '../../../utils/case.utils';
+import { toPascalCase } from '../../../utils/case.utils';
 
 /**
  * Scaffolds a new Xaendar component inside a dedicated folder.
@@ -36,6 +37,7 @@ export function generateComponent(name: string, path: string, force?: boolean, s
   }
 
   mkdirSync(dir, { recursive: true });
+  assertIsValidElementName(name);
 
   const files: [string, string][] = [
     [`${name}.xd.component.ts`, tsTemplate(name, style)],
@@ -67,7 +69,7 @@ function tsTemplate(name: string, style: string): string {
   return `import { BaseWebComponent, WebComponent } from '@xaendar/core';
 
 @WebComponent({
-  selector: '${toKebabCase(name)}',
+  selector: '${name}',
   styleUrl: './${name}.xd.component.${style}',
   templateUrl: './${name}.xd.component.html'
 })

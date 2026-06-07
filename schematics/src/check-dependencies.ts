@@ -50,17 +50,16 @@ const deepCheckOptions = {
  *
  * Exits with code `1` if any violation is found, `0` otherwise.
  *
- * @returns {Promise<void>}
+ * @returns
  */
 async function checkDependencies(): Promise<void> {
   let hasError = false;
   const projectPaths = getProjectPaths();
+  const mainPackageJsonDependencies = getMainPackageJsonDependencies();
 
   for (const projectPath of projectPaths) {
     const packageJson = getPackageJson(projectPath);
     const depCheckResult = await depcheck(projectPath, deepCheckOptions);
-
-    const packageDependenciesUsedNames = Object.keys(packageJson.dependencies ?? {});
 
     // Rule 1 – invalid files
     const realAllInvalidFiles = Object.keys(depCheckResult.invalidFiles);
@@ -84,17 +83,63 @@ async function checkDependencies(): Promise<void> {
     }
 
     // Rule 3 – unused dependencies
-    packageDependenciesUsedNames
-      .filter(depName => realAllDependenciesUsedNames.indexOf(depName) < 0)
-      .forEach(depName => {
-        console.log([`Package ${packageJson.name} import unused library {item}\nIt will be removed automatically`]);
-        delete packageJson.dependencies![depName]
-      });
+    const dependenciesNames = packageJson.dependencies ? Object.keys(packageJson.dependencies) : undefined;
+    if (dependenciesNames?.length) {
+      dependenciesNames
+        .filter(depName => realAllDependenciesUsedNames.indexOf(depName) < 0)
+        .forEach(depName => {
+          console.log([`Package ${packageJson.name} import unused library ${depName}\nIt will be removed automatically`]);
+          delete packageJson.dependencies![depName]
+        });
+    }
 
     // Rule 4 – missing dependencies
-    if (Object.keys(depCheckResult.missing).length) {
-      console.log(`Package ${packageJson.name} has missing dependencies!`, Object.keys(depCheckResult.missing).join(', '));
-      process.exit(1);
+    const missingDepsNames = Object.keys(depCheckResult.missing);
+    if (missingDepsNames.length) {
+      missingDepsNames.forEach(depName => {
+        const version = depName.includes('@xaendar') ? mainPackageJsonDependencies.self : mainPackageJsonDependencies[depName];
+
+        /*
+          This branch checks if a package uses a dependency not declared in the root `package.json`. 
+          This should never happen, but check just in case, to avoid adding undeclared dependencies by mistake.
+        */
+        if (!version) {
+          console.error(`Package ${packageJson.name} is missing dependency ${depName}, but it was not found in the root package.json. Please add it manually.`);
+          process.exit(1);
+        }
+
+        console.log(`Package ${packageJson.name} is missing dependency ${depName}@${version}\nIt will be added automatically`);
+
+        /*
+          If the missing dependency is the first dependency of the package, the dependencies field might be undefined, 
+          so we need to initialize it before adding the new dependency.
+        */
+        packageJson.dependencies ??= {};
+        packageJson.dependencies![depName] = version
+      });
+    }
+
+    // Rule 5 - Update depedencies if main package.json has a different version for an already declared dependency
+    const dependencies = packageJson.dependencies;
+    const dependenciesEntries = dependencies ? Object.entries(dependencies) : undefined;
+    if (dependenciesEntries?.length) {
+      dependenciesEntries.forEach(([depName, depVersion]) => {
+        const mainVersion = depName.includes('@xaendar') ? mainPackageJsonDependencies.self : mainPackageJsonDependencies[depName];
+
+        /*
+          This branch checks if a package uses a dependency not declared in the root `package.json`. 
+          This should never happen, but check just in case, to avoid adding undeclared dependencies by mistake.
+        */
+        if (!mainVersion) {
+          console.error(`Dependency ${depName} declared in ${packageJson.name} package.json is not declared in the root package.json`);
+          process.exit(1);
+        }
+
+        if (mainVersion !== depVersion) {
+          console.log(`Package ${packageJson.name} has a different version for dependency ${depName} (${depVersion}) than the root package.json (${mainVersion})\nIt will be updated automatically`);
+          dependencies![depName] = mainVersion;
+        }
+      });
     }
 
     writeFileSync(`${projectPath}/package.json`, JSON.stringify(packageJson, null, 2));
@@ -104,7 +149,7 @@ async function checkDependencies(): Promise<void> {
 /**
  * Returns the absolute paths of all packages inside `../packages`.
  *
- * @returns {string[]} An array of absolute directory paths, one per package.
+ * @returns An array of absolute directory paths, one per package.
  *
  * @example
  * getProjectPaths();
@@ -121,10 +166,10 @@ function getProjectPaths(): string[] {
  * Pass an empty string to read the root `package.json`
  * (i.e. the one located at the current working directory).
  *
- * @param {string} projectPath - Absolute or relative path to the project folder.
- * @returns {PackageJson} The parsed contents of the `package.json` file.
+ * @param projectPath - Absolute or relative path to the project folder.
+ * @returns The parsed contents of the `package.json` file.
  *
- * @throws {Error} If the file does not exist or contains invalid JSON.
+ * @throws If the file does not exist or contains invalid JSON.
  *
  * @example
  * getPackageJson('/repo/packages/core');
@@ -135,6 +180,17 @@ function getProjectPaths(): string[] {
 function getPackageJson(projectPath: string): PackageJson {
   const packageJsonPath = join(projectPath, 'package.json');
   return JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+}
+
+function getMainPackageJsonDependencies(): Partial<Record<string, string>> & { self: string } {
+  const mainPackageJsonPath = resolve('..', 'package.json');
+  const mainPackageJson: PackageJson = JSON.parse(readFileSync(mainPackageJsonPath, 'utf-8'));
+
+  return {
+    ...mainPackageJson.dependencies ?? {},
+    ...mainPackageJson.devDependencies ?? {},
+    self: mainPackageJson.version!
+  };
 }
 
 checkDependencies();

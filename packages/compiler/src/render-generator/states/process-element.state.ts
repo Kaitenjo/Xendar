@@ -1,4 +1,3 @@
-import { assertIsValidElementName } from '@xaendar/common';
 import { ElementNode } from '../../parser/types/nodes/element-node.type.js';
 import { Context } from '../models/render-context.model.js';
 import { processNode } from '../render-generator.js';
@@ -17,8 +16,6 @@ import { resolveExpression } from '../utils/render-generator.utils.js';
 export function processElement(node: ElementNode, nodeName: string, parentNode: string, context: Context): string[] {
   const childrenContext = new Context([], context);
   const tagName = node.tagName;
-
-  assertIsValidElementName(tagName);
 
   return [
     `const ${nodeName} = document.createElement("${tagName}");`,

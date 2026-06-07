@@ -1,4 +1,3 @@
-import { HTML_TAGS } from '../../costants/base-tags.constants.js';
 import { NOT_ALLOWED_TAGS } from '../../costants/not-alllowed-tags.constants.js';
 
 /**
@@ -14,36 +13,27 @@ import { NOT_ALLOWED_TAGS } from '../../costants/not-alllowed-tags.constants.js'
  * @param tagName The tag name to validate.
  * @throws Will throw an error if the tag name is invalid.
  */
-export function assertIsValidElementName(tagName: string): void {
+export function assertIsValidElementName(tagName: string): boolean {
   if (!/^[a-z][a-z0-9._\-]*-[a-z0-9._\-]*$/.test(tagName)) {
-    throw new Error(`Tag <${tagName}> is not a valid custom element name. Custom element names must:
+    console.error(`Tag <${tagName}> is not a valid custom element name. Custom element names must:
 - contain a hyphen
-- no spaces. 
-- start with a lowercase letter. 
-- not contain uppercase letters. 
+- no spaces.
+- start with a lowercase letter.
+- not contain uppercase letters.
+- not to be a native HTML tag name.
 - not contain the following chars: '@', '#', '$', '%', '&', '*', '!', '?', '/', '\\', '|', "'", '"', '<', '>', '='
 `);
-  }
-
-  if (isNativeHTMLTag(tagName)) {
-    throw new Error(`Tag <${tagName}> is a native HTML tag and cannot be used as a custom element name.`);
+    return false;
   }
 
   if (isReservedTagName(tagName)) {
-    throw new Error(`Tag <${tagName}> is a reserved tag name and cannot be used as a custom element name.
+    console.error(`Tag <${tagName}> is a reserved tag name and cannot be used as a custom element name.
 Reserved names are: 
 - ${NOT_ALLOWED_TAGS.join('\n- ')}`);
+    return false;
   }
-}
 
-/**
- * Checks if a tag name is a native HTML tag.
- * 
- * @param tagName - The tag name to check.
- * @returns `true` if the tag name is a standard HTML tag, `false` otherwise.
- */
-function isNativeHTMLTag(tagName: string): boolean {
-  return HTML_TAGS.includes(tagName);
+  return true;
 }
 
 /**

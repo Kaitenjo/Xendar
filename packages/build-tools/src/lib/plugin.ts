@@ -41,6 +41,12 @@ export function xaendarPlugin(): Plugin {
         return null;
       }
 
+      const selectors = code.match(/selector\s*:\s*['"](.+?)['"]/);
+      if (!selectors) {
+        this.warn(`Xaendar: no selector found in ${id}`);
+        return null;
+      }
+      
       const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
       if (!templatePath || !host.fileExists(templatePath)) {
         this.warn(`Xaendar: could not find template at ${templatePath}`);

@@ -21,6 +21,10 @@ import { toPascalCase } from '../../../utils/case.utils';
  *   current working directory).
  */
 export function generateComponent(name: string, path: string, force?: boolean, style?: string): void {
+  if (!assertIsValidElementName(name)) {
+    process.exit(1);
+  }
+  
   const dir = join(path, name);
   // Fallback we should read form xaendar config file
   style ??= 'css';
@@ -37,7 +41,6 @@ export function generateComponent(name: string, path: string, force?: boolean, s
   }
 
   mkdirSync(dir, { recursive: true });
-  assertIsValidElementName(name);
 
   const files: [string, string][] = [
     [`${name}.xd.component.ts`, tsTemplate(name, style)],

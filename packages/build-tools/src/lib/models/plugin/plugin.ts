@@ -1,8 +1,9 @@
 import { compile } from '@xaendar/compiler';
+import { isValidCustomElementName } from '@xaendar/common';
 import { dirname, resolve } from 'node:path';
 import type { Plugin } from 'vite';
-import { COMPONENT_FILE_RE } from './costants.js';
-import { NodeCompilerHost } from './node-compiler-host.model.js';
+import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex.js';
+import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model.js';
 
 /**
  * Vite plugin that compiles Xaendar DSL template files (`.xd.component.html`)
@@ -41,12 +42,8 @@ export function xaendarPlugin(): Plugin {
         return null;
       }
 
-      const selectors = code.match(/selector\s*:\s*['"](.+?)['"]/);
-      if (!selectors) {
-        this.warn(`Xaendar: no selector found in ${id}`);
-        return null;
-      }
-      
+      assertValidCustomElementName(code, id);
+
       const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
       if (!templatePath || !host.fileExists(templatePath)) {
         this.warn(`Xaendar: could not find template at ${templatePath}`);
@@ -64,25 +61,25 @@ export function xaendarPlugin(): Plugin {
 
       if (stylePath && host.fileExists(stylePath)) {
         this.addWatchFile(stylePath);
-        cssContent = host.readFile(stylePath) ?? "";
+        cssContent = host.readFile(stylePath);
       }
 
       let compiledMethods!: string;
       const varName = cssContent ? `__${extractClassName(id)}_sheet` : undefined;
-      
+
       try {
         compiledMethods = compile(templateSource, varName);
       } catch (err) {
         this.error(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
       }
-      
+
       let transformed!: string;
       try {
         transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
       } catch (err) {
         this.error(String(err));
       }
-      
+
       return {
         code: transformed
       };
@@ -90,6 +87,47 @@ export function xaendarPlugin(): Plugin {
   };
 }
 
+/**
+ * Asserts that every selector declared in the `@WebComponent` decorator of
+ * the given source file is a valid custom-element name according to the HTML
+ * spec (must contain a hyphen and satisfy other naming constraints).
+ *
+ * @param code - The raw TypeScript source of the component file.
+ * @param id - The resolved file path, used only for error messages.
+ * @throws {Error} When no selector is found, or when any selector is not a
+ *   valid custom-element name.
+ */
+function assertValidCustomElementName(code: string, id: string): void {
+  const selectorRegex = /selector:\s*('[^']*'|"[^"]*"|\[[^\]]*\])/;
+  const match = code.match(selectorRegex);
+
+  if (!match) {
+    throw new Error(`Xaendar: no selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`);
+  }
+
+  const raw = match[1]!;
+  const selectors = raw.startsWith('[')
+    ? [...raw.matchAll(/'([^']*)'|"([^"]*)"/g)].map(match => (match[1] ?? match[2])!)
+    : [raw.slice(1, -1)];
+
+  for (const selector of selectors) {
+    if (!isValidCustomElementName(selector)) {
+      throw new Error(`Xaendar: invalid custom element name "${selector}" in component ${id}`);
+    }
+  }
+}
+
+/**
+ * Extracts the `templateUrl` and `styleUrl` values from the `@WebComponent`
+ * decorator in the component source and resolves them to absolute paths.
+ *
+ * @param jsSource - The raw TypeScript source of the component file.
+ * @param componentDir - The directory containing the component file, used as
+ *   base for resolving relative decorator paths.
+ * @returns An object with the resolved `templatePath` and `stylePath`.
+ *   Either field may be `undefined` when the corresponding decorator
+ *   property is absent.
+ */
 function extractDecoratorPaths(jsSource: string, componentDir: string): { templatePath?: string, stylePath?: string } {
   const templateUrl = jsSource.match(/templateUrl\s*:\s*["'](.+?)["']/)?.[1];
   const styleUrl = jsSource.match(/styleUrl\s*:\s*["'](.+?)["']/)?.[1];
@@ -139,11 +177,11 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
   if (!lastStaticBlock.test(result)) {
     throw new Error('Xaendar: could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.');
   }
- 
+
   result = `import { effect } from "@xaendar/signals";
 
 ${result}`;
-  
+
   return result.replace(lastStaticBlock, (_, indent, initFn) => `${compiledMethods}\n  static {\n${indent}${initFn}();\n  }`);;
 }
 /**
@@ -162,7 +200,7 @@ function extractClassName(jsSource: string): string {
   const match = jsSource.match(/class\s+(\w+)\s+extends/);
   return match?.[1] ?? '__Component';
 }
- 
+
 /**
  * Builds the JS snippet that declares and populates the shared
  * `CSSStyleSheet` for the component class.
@@ -186,10 +224,15 @@ function buildStyleSnippet(varName: string, css: string): string {
 }
 
 /**
- * esbuild bug workaround — quando transpila decorator stage 3 con export,
- * produce `export @Decorator class Foo {}` invece di
- * `@Decorator\nexport class Foo {}`.
- * Riordina i token per produrre sintassi valida.
+ * Workaround for an esbuild bug where stage-3 decorators combined with
+ * `export` are emitted as `export @Decorator class Foo {}` instead of the
+ * valid form `@Decorator\nexport class Foo {}`.
+ *
+ * Reorders the tokens so that the decorator always precedes the `export`
+ * keyword, producing syntactically valid output.
+ *
+ * @param code - The transpiled source code to fix.
+ * @returns The source code with corrected decorator/export ordering.
  */
 function fixDecoratorExport(code: string): string {
   return code.replace(/^export\s+(@\w+[\s\S]*?)\s+(class\s)/gm, '$1\nexport $2');

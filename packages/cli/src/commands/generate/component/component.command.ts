@@ -1,4 +1,4 @@
-import { assertIsValidElementName } from '@xaendar/common';
+import { isValidCustomElementName } from '@xaendar/common';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { toPascalCase } from '../../../utils/case.utils';
@@ -21,7 +21,7 @@ import { toPascalCase } from '../../../utils/case.utils';
  *   current working directory).
  */
 export function generateComponent(name: string, path: string, force?: boolean, style?: string): void {
-  if (!assertIsValidElementName(name)) {
+  if (!isValidCustomElementName(name)) {
     process.exit(1);
   }
   

@@ -9,8 +9,9 @@
     ".": "./src/public-api.ts"
   },
   "dependencies": {
+    "@xaendar/common": "0.5.6",
     "@xaendar/compiler": "0.5.6",
-    "vite": "^8.0.14"
+    "vite": "^8.0.16"
   },
   "xaendar": {
     "target": "node",

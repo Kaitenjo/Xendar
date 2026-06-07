@@ -1,28 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { assertIsValidElementName } from './tags.utils';
+import { isValidCustomElementName } from './tags.utils';
 
 
-describe('assertIsValidElementName()', () => {
+describe('isValidCustomElementName()', () => {
 
   describe('valid custom element names', () => {
     it('returns true for a basic hyphenated name', () => {
-      expect(assertIsValidElementName('my-element')).toBe(true);
+      expect(isValidCustomElementName('my-element')).toBe(true);
     });
 
     it('returns true for a name with multiple hyphens', () => {
-      expect(assertIsValidElementName('my-custom-element')).toBe(true);
+      expect(isValidCustomElementName('my-custom-element')).toBe(true);
     });
 
     it('returns true for a name with digits', () => {
-      expect(assertIsValidElementName('my-element-1')).toBe(true);
+      expect(isValidCustomElementName('my-element-1')).toBe(true);
     });
 
     it('returns true for a name with dots', () => {
-      expect(assertIsValidElementName('my.element-x')).toBe(true);
+      expect(isValidCustomElementName('my.element-x')).toBe(true);
     });
 
     it('returns true for a name starting with a single letter followed by a hyphen', () => {
-      expect(assertIsValidElementName('x-tag')).toBe(true);
+      expect(isValidCustomElementName('x-tag')).toBe(true);
     });
   });
 
@@ -36,44 +36,44 @@ describe('assertIsValidElementName()', () => {
     });
 
     it('returns false when the name has no hyphen', () => {
-      expect(assertIsValidElementName('myelement')).toBe(false);
+      expect(isValidCustomElementName('myelement')).toBe(false);
     });
 
     it('returns false when the name starts with a digit', () => {
-      expect(assertIsValidElementName('1my-element')).toBe(false);
+      expect(isValidCustomElementName('1my-element')).toBe(false);
     });
 
     it('returns false when the name contains uppercase letters', () => {
-      expect(assertIsValidElementName('My-element')).toBe(false);
+      expect(isValidCustomElementName('My-element')).toBe(false);
     });
 
     it('returns false when the name contains spaces', () => {
-      expect(assertIsValidElementName('my element')).toBe(false);
+      expect(isValidCustomElementName('my element')).toBe(false);
     });
 
     it('returns false when the name starts with a hyphen', () => {
-      expect(assertIsValidElementName('-my-element')).toBe(false);
+      expect(isValidCustomElementName('-my-element')).toBe(false);
     });
 
     it('returns false when the name contains @', () => {
-      expect(assertIsValidElementName('my@-element')).toBe(false);
+      expect(isValidCustomElementName('my@-element')).toBe(false);
     });
 
     it('returns false when the name contains #', () => {
-      expect(assertIsValidElementName('my#-element')).toBe(false);
+      expect(isValidCustomElementName('my#-element')).toBe(false);
     });
 
     it('returns false when the name is an empty string', () => {
-      expect(assertIsValidElementName('')).toBe(false);
+      expect(isValidCustomElementName('')).toBe(false);
     });
 
     it('logs an error containing "is not a valid custom element name"', () => {
-      assertIsValidElementName('InvalidTag');
+      isValidCustomElementName('InvalidTag');
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('is not a valid custom element name'));
     });
 
     it('logs an error with a description of the naming rules', () => {
-      assertIsValidElementName('InvalidTag');
+      isValidCustomElementName('InvalidTag');
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('contain a hyphen'));
     });
   });
@@ -88,28 +88,28 @@ describe('assertIsValidElementName()', () => {
     });
 
     it('returns false for "annotation-xml"', () => {
-      expect(assertIsValidElementName('annotation-xml')).toBe(false);
+      expect(isValidCustomElementName('annotation-xml')).toBe(false);
     });
 
     it('returns false for "color-profile"', () => {
-      expect(assertIsValidElementName('color-profile')).toBe(false);
+      expect(isValidCustomElementName('color-profile')).toBe(false);
     });
 
     it('returns false for "font-face"', () => {
-      expect(assertIsValidElementName('font-face')).toBe(false);
+      expect(isValidCustomElementName('font-face')).toBe(false);
     });
 
     it('returns false for "missing-glyph"', () => {
-      expect(assertIsValidElementName('missing-glyph')).toBe(false);
+      expect(isValidCustomElementName('missing-glyph')).toBe(false);
     });
 
     it('logs an error containing "is a reserved tag name"', () => {
-      assertIsValidElementName('annotation-xml');
+      isValidCustomElementName('annotation-xml');
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('is a reserved tag name'));
     });
 
     it('lists the reserved names in the error message', () => {
-      assertIsValidElementName('annotation-xml');
+      isValidCustomElementName('annotation-xml');
       expect(console.error).toHaveBeenCalledWith(expect.stringContaining('annotation-xml'));
     });
   });

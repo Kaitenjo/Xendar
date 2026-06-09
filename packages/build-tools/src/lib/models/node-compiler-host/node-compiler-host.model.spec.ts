@@ -10,13 +10,7 @@ vi.mock('node:fs', () => ({
   statSync: vi.fn(),
 }));
 
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  realpathSync,
-  statSync,
-} from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 
 describe('NodeCompilerHost', () => {
   let host: NodeCompilerHost;

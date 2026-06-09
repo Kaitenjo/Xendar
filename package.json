@@ -27,7 +27,7 @@
     "typescript": "^6.0.3"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.58.7",
+    "@microsoft/api-extractor": "^7.58.8",
     "@types/node": "^25.9.2",
     "@vitest/coverage-v8": "^4.1.8",
     "depcheck": "^1.4.7",

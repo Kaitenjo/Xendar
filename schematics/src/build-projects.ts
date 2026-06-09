@@ -1,7 +1,7 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { build as tsupBuild } from 'tsup';
-import { PackageJson } from 'type-fest';
+import { PackageJson, TsConfigJson } from 'type-fest';
 import { build as viteBuild } from 'vite';
 
 const projectsPath = '../packages';
@@ -194,6 +194,9 @@ function buildNode(projectName: string, projectPath: string, pkg: XaendarPackage
   const distDir = resolve(outDir, 'dist');
   const entryPath = resolve(projectPath, entry).replace(/\\/g, '/');
 
+  const mainTsConfigPath = resolve(projectsPath, '../tsconfig.json');
+  const mainTsConfig: TsConfigJson = JSON.parse(readFileSync(mainTsConfigPath, 'utf-8'));
+
   return tsupBuild({
     entry: {
       [projectName]: entryPath
@@ -205,9 +208,10 @@ function buildNode(projectName: string, projectPath: string, pkg: XaendarPackage
       compilerOptions: {
         ignoreDeprecations: '6.0',
         rootDir: resolve(projectPath, '../..'),
-        paths: {
-          '@xaendar/compiler': [resolve(projectPath, '../../packages/compiler/src/public-api.ts').replace(/\\/g, '/')],
-        }
+        paths: Object.entries(mainTsConfig.compilerOptions!.paths!).reduce<Record<string, string[]>>((acc, [key, paths]) => {
+          acc[key] = paths.map(p => resolve(projectPath, '../..', `${p}.ts`).replace(/\\/g, '/'));
+          return acc;
+        }, {})
       }
     } : false,
     sourcemap: false,

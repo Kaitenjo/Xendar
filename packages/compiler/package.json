@@ -1,6 +1,6 @@
 {
   "name": "@xaendar/compiler",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "type": "module",
   "author": "Kaitenjo",
   "license": "MIT",
@@ -9,8 +9,8 @@
     "target": "browser"
   },
   "dependencies": {
-    "@xaendar/common": "0.5.6",
-    "@xaendar/types": "0.5.6",
+    "@xaendar/common": "0.5.7",
+    "@xaendar/types": "0.5.7",
     "typescript": "^6.0.3"
   }
 }

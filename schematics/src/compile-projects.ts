@@ -37,7 +37,7 @@ async function compileAll(): Promise<void> {
     console.log(`▶ Compile: @xaendar/${project}`);
 
     try {
-      execSync(`tsc --noEmit --project ${tsconfigPath}`, { stdio: 'inherit', cwd: projectPath });
+      execSync(`tsc --noEmit --project "${tsconfigPath}"`, { stdio: 'inherit', cwd: projectPath });
       console.log(`✅ @xaendar/${project} completato`);
     } catch (err) {
       console.error(`❌ Typescript Compilation failed for @xaendar/${project}:`);

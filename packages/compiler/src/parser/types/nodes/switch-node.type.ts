@@ -1,6 +1,6 @@
 import { Expression } from 'typescript';
-import { ASTNodeType } from '../node.enum.js';
-import { CaseNode } from './case-node.type.js';
+import { ASTNodeType } from '../node.enum';
+import { CaseNode } from './case-node.type';
 
 /**
  * AST node representing an `@switch` directive with one or more case branches.

@@ -1,5 +1,5 @@
-import { ASTNodeType } from '../node.enum.js';
-import { IfNode } from './if-node.type.js';
+import { ASTNodeType } from '../node.enum';
+import { IfNode } from './if-node.type';
 
 /**
  * AST node representing an `@else if` conditional directive.

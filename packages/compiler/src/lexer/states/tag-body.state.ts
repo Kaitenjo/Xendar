@@ -1,8 +1,8 @@
-import { AT_SIGN, GREATER_THEN, SLASH, SPACE } from '../../costants/chars.constants.js';
-import { LexerCursor } from '../types/lexer-cursor.model.js';
-import { LexerState } from '../types/lexer-state.enum.js';
-import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type.js';
-import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type.js';
+import { AT_SIGN, GREATER_THEN, SLASH, SPACE } from '../../costants/chars.constants';
+import { LexerCursor } from '../types/lexer-cursor.model';
+import { LexerState } from '../types/lexer-state.enum';
+import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type';
+import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type';
 
 /**
  * Scans the body of an open tag to determine what comes next:

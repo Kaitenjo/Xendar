@@ -1,8 +1,8 @@
-import { ASTNodeType } from '../../parser/types/node.enum.js';
-import { InterpolationNode } from '../../parser/types/nodes/interpolation-node.type.js';
-import { TextNode } from '../../parser/types/nodes/text-node.type.js';
-import { Context } from '../models/render-context.model.js';
-import { resolveExpression } from '../utils/render-generator.utils.js';
+import { ASTNodeType } from '../../parser/types/node.enum';
+import { InterpolationNode } from '../../parser/types/nodes/interpolation-node.type';
+import { TextNode } from '../../parser/types/nodes/text-node.type';
+import { Context } from '../models/render-context.model';
+import { resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for a text or interpolation node.

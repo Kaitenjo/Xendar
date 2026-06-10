@@ -1,4 +1,4 @@
-import { TokenType } from '../token-type.enum.js';
+import { TokenType } from '../token-type.enum';
 
 /**
  * Token emitted when the lexer consumes a DOM event binding declared with `@eventName=handler`.

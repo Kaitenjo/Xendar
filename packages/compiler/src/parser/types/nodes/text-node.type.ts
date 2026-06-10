@@ -1,4 +1,4 @@
-import { ASTNodeType } from '../node.enum.js';
+import { ASTNodeType } from '../node.enum';
 
 /**
  * AST node representing a run of plain text content.

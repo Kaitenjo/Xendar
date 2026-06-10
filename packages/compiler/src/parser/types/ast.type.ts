@@ -1,12 +1,12 @@
-import { ConstDeclarationNode } from './nodes/const-declaration-node.type.js';
-import { ElementNode } from './nodes/element-node.type.js';
-import { ElseIfNode } from './nodes/else-if-node.type.js';
-import { ElseNode } from './nodes/else-node.type.js';
-import { ForNode } from './nodes/for-node.type.js';
-import { IfNode } from './nodes/if-node.type.js';
-import { InterpolationNode } from './nodes/interpolation-node.type.js';
-import { SwitchNode } from './nodes/switch-node.type.js';
-import { TextNode } from './nodes/text-node.type.js';
+import { ConstDeclarationNode } from './nodes/const-declaration-node.type';
+import { ElementNode } from './nodes/element-node.type';
+import { ElseIfNode } from './nodes/else-if-node.type';
+import { ElseNode } from './nodes/else-node.type';
+import { ForNode } from './nodes/for-node.type';
+import { IfNode } from './nodes/if-node.type';
+import { InterpolationNode } from './nodes/interpolation-node.type';
+import { SwitchNode } from './nodes/switch-node.type';
+import { TextNode } from './nodes/text-node.type';
 
 /**
  * Union of all AST node types that the parser can produce from a token stream.

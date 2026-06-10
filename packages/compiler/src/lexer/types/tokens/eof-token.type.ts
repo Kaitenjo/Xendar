@@ -1,4 +1,4 @@
-import { TokenType } from '../token-type.enum.js';
+import { TokenType } from '../token-type.enum';
 
 /**
  * Sentinel token emitted when the lexer reaches the end of the input stream.

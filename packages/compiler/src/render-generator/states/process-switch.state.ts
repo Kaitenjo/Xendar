@@ -1,8 +1,8 @@
 import { indent } from '@xaendar/common';
-import { SwitchNode } from '../../parser/types/nodes/switch-node.type.js';
-import { Context } from '../models/render-context.model.js';
-import { processNode } from '../render-generator.js';
-import { resolveExpression } from '../utils/render-generator.utils.js';
+import { SwitchNode } from '../../parser/types/nodes/switch-node.type';
+import { Context } from '../models/render-context.model';
+import { processNode } from '../render-generator';
+import { resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for a `@switch` node.

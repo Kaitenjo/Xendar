@@ -119,8 +119,8 @@ function buildProject(projectName: string): void {
     markComplete(projectName);
   };
 
-  const onError = (err: unknown) => {
-    console.error(`❌ @xaendar/${projectName} fallito:`, (err as Error).message);
+  const onError = (err: Error) => {
+    console.error(`❌ @xaendar/${projectName} fallito:`, err.message);
   };
 
   try {
@@ -130,7 +130,7 @@ function buildProject(projectName: string): void {
 
     buildPromise.then(onSuccess).catch(onError);
   } catch (err) {
-    onError(err);
+    onError(err as Error);
   }
 }
 
@@ -188,14 +188,78 @@ function buildXaendarAliasMap(): Record<string, string> {
  */
 function buildNode(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<unknown> {
   const entry = pkg.xaendar?.entry ?? 'src/public-api.ts';
-  const dts = pkg.xaendar?.dts !== false;
   const bundleAll = pkg.xaendar?.noExternal === true;
   const outDir = resolve(projectPath, '../../dist/@xaendar', projectName);
   const distDir = resolve(outDir, 'dist');
   const entryPath = resolve(projectPath, entry).replace(/\\/g, '/');
 
-  const mainTsConfigPath = resolve(projectsPath, '../tsconfig.json');
-  const mainTsConfig: TsConfigJson = JSON.parse(readFileSync(mainTsConfigPath, 'utf-8'));
+  let dts: Parameters<typeof tsupBuild>[0]['dts'] = false;
+  let types: { types: string } | object = {};
+
+  if (pkg.xaendar?.dts) {
+    const mainTsConfigPath = resolve(projectsPath, '../tsconfig.json');
+    const mainTsConfig: TsConfigJson = JSON.parse(readFileSync(mainTsConfigPath, 'utf-8'));
+    
+    dts = {
+      compilerOptions: {
+        moduleResolution: mainTsConfig.compilerOptions!.moduleResolution!,
+        module: mainTsConfig.compilerOptions!.module!,
+        ignoreDeprecations: '6.0',
+        rootDir: resolve(projectPath, '../..'),
+        paths: Object.entries(mainTsConfig.compilerOptions!.paths!).reduce<Record<string, string[]>>((acc, [key, paths]) => {
+          acc[key] = paths.map(p => resolve(projectPath, '../..', `${p}.ts`).replace(/\\/g, '/'));
+          return acc;
+        }, {})
+      }
+    };
+
+    types = {
+      types: `./dist/${projectName}.d.ts`
+    };
+  }
+
+  let bin: Record<string, string> = {};
+  let dependencies = pkg.dependencies;
+  let options: Parameters<typeof tsupBuild>[0] = {
+    external: Object.keys(pkg.dependencies ?? {})
+  };
+
+  if (bundleAll) {
+    bin = {
+      xd: `./dist/${projectName}.js`,
+    }
+
+    dependencies = {};
+
+    options = {
+      noExternal: [/.*/],
+      esbuildOptions: opts => {
+        opts.alias = buildXaendarAliasMap();
+        opts.external = [
+          'node:*',
+          'events',
+          'fs',
+          'path',
+          'os',
+          'url',
+          'util',
+          'stream',
+          'buffer',
+          'crypto',
+          'child_process',
+          'process',
+          'module',
+        ];
+
+        opts.banner = {
+          js: `
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+`.trim(),
+        }
+      }
+    }
+  }
 
   return tsupBuild({
     entry: {
@@ -204,78 +268,40 @@ function buildNode(projectName: string, projectPath: string, pkg: XaendarPackage
     minify: true,
     outDir: distDir,
     format: ['esm'],
-    dts: dts ? {
-      compilerOptions: {
-        ignoreDeprecations: '6.0',
-        rootDir: resolve(projectPath, '../..'),
-        paths: Object.entries(mainTsConfig.compilerOptions!.paths!).reduce<Record<string, string[]>>((acc, [key, paths]) => {
-          acc[key] = paths.map(p => resolve(projectPath, '../..', `${p}.ts`).replace(/\\/g, '/'));
-          return acc;
-        }, {})
-      }
-    } : false,
+    dts,
     sourcemap: false,
     clean: true,
-    ...(bundleAll
-      ? {
-        noExternal: [/.*/],
-        esbuildOptions: (opts) => {
-          opts.alias = buildXaendarAliasMap();
-          opts.external = [
-            'node:*',
-            'events',
-            'fs',
-            'path',
-            'os',
-            'url',
-            'util',
-            'stream',
-            'buffer',
-            'crypto',
-            'child_process',
-            'process',
-            'module',
-          ];
-
-          opts.banner = {
-            js: `
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-`.trim(),
-          }
-        },
-      }
-      : { external: Object.keys(pkg.dependencies ?? {}) }),
-  }).then(() => {
-    const distPkg = {
-      name: pkg.name!,
-      version: pkg.version!,
-      description: pkg.description ?? '',
-      author: pkg.author ?? '',
-      license: pkg.license ?? 'MIT',
-      type: 'module',
-      ...(bundleAll ? {
-        bin: {
-          'xd': `./dist/${projectName}.js`,
-        },
-      } : {}),
-      exports: {
-        '.': {
-          ...(dts ? { types: `./dist/${projectName}.d.ts` } : {}),
-          import: `./dist/${projectName}.js`,
-          require: `./dist/${projectName}.js`
-        }
-      },
-      main: `./dist/${projectName}.js`,
-      ...(dts ? { types: `./dist/${projectName}.d.ts` } : {}),
-      dependencies: bundleAll ? undefined : pkg.dependencies
-    };
-
-    mkdirSync(outDir, { recursive: true });
-    writeFileSync(resolve(outDir, 'package.json'), JSON.stringify(distPkg, null, 2), 'utf-8');
-  });
+    tsconfig: resolve(projectsPath, '../tsconfig.json'),
+    ...options,
+  }).then(() => writePackageJsonForNodeProject(projectName, pkg, { types, outDir, bin, dependencies }));
 }
 
+function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackageJson, options: { types: { types: string } | object, outDir: string, bin: Record<string, string>, dependencies: PackageJson['dependencies'] }): void {
+  const distPkg = {
+    name: pkg.name!,
+    version: pkg.version!,
+    description: pkg.description ?? '',
+    author: pkg.author ?? '',
+    license: pkg.license ?? 'MIT',
+    type: 'module',
+    ...options.bin,
+    exports: {
+      '.': {
+        ...options.types,
+        import: `./dist/${projectName}.js`,
+        require: `./dist/${projectName}.js`
+      }
+    },
+    main: `./dist/${projectName}.js`,
+    ...options.types,
+    dependencies: options.dependencies
+  };
+
+  mkdirSync(options.outDir, { recursive: true });
+  
+  const packageJsonPath = resolve(options.outDir, 'package.json');
+  writeFileSync(packageJsonPath, JSON.stringify(distPkg, null, 2), 'utf-8');
+}
 /**
  * Marks a project as complete and triggers dependents whose deps are now satisfied.
  */

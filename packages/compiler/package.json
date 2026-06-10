@@ -5,9 +5,6 @@
   "author": "Kaitenjo",
   "license": "MIT",
   "description": "A library for transpiling Xaendar Templates into JavaScript code",
-  "exports": {
-    ".": "./src/public-api.ts"
-  },
   "xaendar": {
     "target": "browser"
   },

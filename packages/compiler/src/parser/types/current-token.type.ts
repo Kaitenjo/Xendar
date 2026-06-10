@@ -1,4 +1,4 @@
-import { Token } from '../../lexer/types/token.type.js'
+import { Token } from '../../lexer/types/token.type'
 
 /**
  * Represents the token currently pointed to by the parser cursor.

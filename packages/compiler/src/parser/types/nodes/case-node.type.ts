@@ -1,5 +1,5 @@
-import { ASTNodeType } from '../node.enum.js';
-import { ASTNode } from '../ast.type.js';
+import { ASTNodeType } from '../node.enum';
+import { ASTNode } from '../ast.type';
 
 /**
  * AST node representing a `@case` or `@default` branch inside a `@switch` block.

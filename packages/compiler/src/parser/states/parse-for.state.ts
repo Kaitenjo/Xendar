@@ -1,15 +1,15 @@
 import { NoArgsFunction } from '@xaendar/types';
 import ts from 'typescript';
-import { TokenType } from '../../lexer/types/token-type.enum.js';
-import { ForToken } from '../../lexer/types/tokens/for-token.type.js';
-import { ParserCursor } from '../models/parser-cursor.model.js';
-import { ASTNode } from '../types/ast.type.js';
-import { ForExpression } from '../types/for-expression.type.js';
-import { ASTNodeType } from '../types/node.enum.js';
-import { ForImplicitVariables } from '../types/nodes/for-implicit-variables.js';
-import { ForNode } from '../types/nodes/for-node.type.js';
-import { validateExpression } from '../utils/expression-validator.js';
-import { parseBlockChildren } from './parse-block-children.state.js';
+import { TokenType } from '../../lexer/types/token-type.enum';
+import { ForToken } from '../../lexer/types/tokens/for-token.type';
+import { ParserCursor } from '../models/parser-cursor.model';
+import { ASTNode } from '../types/ast.type';
+import { ForExpression } from '../types/for-expression.type';
+import { ASTNodeType } from '../types/node.enum';
+import { ForImplicitVariables } from '../types/nodes/for-implicit-variables';
+import { ForNode } from '../types/nodes/for-node.type';
+import { validateExpression } from '../utils/expression-validator';
+import { parseBlockChildren } from './parse-block-children.state';
 
 /**
  * Parses a `@for` directive, consuming the FOR token, the CONDITION token,

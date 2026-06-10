@@ -1,4 +1,4 @@
-import { TokenType } from '../token-type.enum.js';
+import { TokenType } from '../token-type.enum';
 
 /**
  * Token emitted when the lexer encounters the closing `}` of a flow-control block body.

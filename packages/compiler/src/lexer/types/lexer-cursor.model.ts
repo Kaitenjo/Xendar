@@ -1,7 +1,7 @@
 import { PositiveInteger, TupleOfLength } from '@xaendar/types';
-import { CR, EOF, LF, SPACE } from '../../costants/chars.constants.js';
-import { CurrentChar } from './current-char.type.js';
-import { CursorPosition } from './current-position.type.js';
+import { CR, EOF, LF, SPACE } from '../../costants/chars.constants';
+import { CurrentChar } from './current-char.type';
+import { CursorPosition } from './current-position.type';
 
 /**
  * Cursor abstraction used by the Lexer to navigate the input source.

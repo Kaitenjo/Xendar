@@ -1,9 +1,9 @@
-import { GREATER_THEN, SLASH, SPACE } from '../../costants/chars.constants.js';
-import { LexerCursor } from '../types/lexer-cursor.model.js';
-import { LexerState } from '../types/lexer-state.enum.js';
-import { TokenType } from '../types/token-type.enum.js';
-import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type.js';
-import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type.js';
+import { GREATER_THEN, SLASH, SPACE } from '../../costants/chars.constants';
+import { LexerCursor } from '../types/lexer-cursor.model';
+import { LexerState } from '../types/lexer-state.enum';
+import { TokenType } from '../types/token-type.enum';
+import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type';
+import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type';
 
 /**
  * Consumes a DOM event binding starting with `@` and reads until a delimiter

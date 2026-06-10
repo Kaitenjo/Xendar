@@ -1,1 +1,1 @@
-export * from './lib/models/plugin/plugin.js';
+export * from './lib/models/plugin/plugin';

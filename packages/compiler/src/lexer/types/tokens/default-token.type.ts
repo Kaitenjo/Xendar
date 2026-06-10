@@ -1,4 +1,4 @@
-import { TokenType } from '../token-type.enum.js';
+import { TokenType } from '../token-type.enum';
 
 /**
  * Token emitted when the lexer encounters a `@default` keyword inside a `@switch` block.

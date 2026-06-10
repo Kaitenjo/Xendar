@@ -1,6 +1,6 @@
-import { ASTNodeType } from '../node.enum.js';
-import { ASTNode } from '../ast.type.js';
-import { ForExpression } from '../for-expression.type.js';
+import { ASTNodeType } from '../node.enum';
+import { ASTNode } from '../ast.type';
+import { ForExpression } from '../for-expression.type';
 
 /**
  * AST node representing an `@for` iteration directive.

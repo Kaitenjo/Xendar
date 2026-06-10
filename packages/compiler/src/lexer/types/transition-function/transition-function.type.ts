@@ -1,6 +1,6 @@
-import { LexerCursor } from '../lexer-cursor.model.js';
-import { LexerTransitionFunctionContext } from './transition-function-context.type.js';
-import { LexerTransitionFunctionReturnType } from './transition-function-return-type.type.js';
+import { LexerCursor } from '../lexer-cursor.model';
+import { LexerTransitionFunctionContext } from './transition-function-context.type';
+import { LexerTransitionFunctionReturnType } from './transition-function-return-type.type';
 
 /**
  * A lexer transition function.

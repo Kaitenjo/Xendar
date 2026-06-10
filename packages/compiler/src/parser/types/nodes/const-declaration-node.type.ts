@@ -1,5 +1,5 @@
 import { Expression } from 'typescript';
-import { ASTNodeType } from '../node.enum.js';
+import { ASTNodeType } from '../node.enum';
 
 /**
  * AST node representing a `@const name = expression;` template-level constant declaration.

@@ -1,9 +1,9 @@
-import { compile } from '@xaendar/compiler';
 import { isValidCustomElementName } from '@xaendar/common';
+import { compile } from '@xaendar/compiler';
 import { dirname, resolve } from 'node:path';
 import type { Plugin } from 'vite';
-import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex.js';
-import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model.js';
+import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex';
+import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model';
 
 /**
  * Vite plugin that compiles Xaendar DSL template files (`.xd.component.html`)

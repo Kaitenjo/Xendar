@@ -1,8 +1,8 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { EventToken } from '../../lexer/types/tokens/event-token.type.js';
-import { ParserCursor } from '../models/parser-cursor.model.js';
-import { ASTNode } from '../types/ast.type.js';
-import { EventNode } from '../types/nodes/event-node.type.js';
+import { EventToken } from '../../lexer/types/tokens/event-token.type';
+import { ParserCursor } from '../models/parser-cursor.model';
+import { ASTNode } from '../types/ast.type';
+import { EventNode } from '../types/nodes/event-node.type';
 
 /**
  * Parses an EVENT token into an `EventNode` by splitting the raw

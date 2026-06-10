@@ -1,4 +1,4 @@
-import { NOT_ALLOWED_TAGS } from '../../costants/not-alllowed-tags.constants.js';
+import { NOT_ALLOWED_TAGS } from '../../costants/not-alllowed-tags.constants';
 
 /**
  * Asserts that a given tag name is valid for use as a custom element name.

@@ -1,25 +1,25 @@
 import { Stack } from '@xaendar/common';
 import { Dictionary } from '@xaendar/types';
-import { EOF } from '../costants/chars.constants.js';
-import { consumeAttribute } from './states/attribute.state.js';
-import { consumeCaseFlowControlCondition } from './states/case-flow-control-condition.state.js';
-import { consumeConstDeclaration } from './states/const-declaration.js';
-import { consumeEvent } from './states/event.state.js';
-import { consumeFlowControlBlock } from './states/flow-control-block.state.js';
-import { consumeDefaultFlowControlCondition } from './states/default-flow-control-condition.state.js';
-import { consumeFlowControl } from './states/flow-control.js';
-import { consumeInterpolationExpression } from './states/interpolation-expression.state.js';
-import { consumeInterpolationliteral } from './states/interpolation-literal.state.js';
-import { consumeInterpolation } from './states/interpolation.state.js';
-import { consumeTagBody } from './states/tag-body.state.js';
-import { consumeTagClose } from './states/tag-close.state.js';
-import { consumeTagOpenEnd } from './states/tag-open-end.state.js';
-import { consumeTagOpenName } from './states/tag-open-name.state.js';
-import { consumeText } from './states/text.state.js';
-import { LexerCursor } from './types/lexer-cursor.model.js';
-import { LexerState } from './types/lexer-state.enum.js';
-import { Token } from './types/token.type.js';
-import { LexerTransitionFunction } from './types/transition-function/transition-function.type.js';
+import { EOF } from '../costants/chars.constants';
+import { consumeAttribute } from './states/attribute.state';
+import { consumeCaseFlowControlCondition } from './states/case-flow-control-condition.state';
+import { consumeConstDeclaration } from './states/const-declaration';
+import { consumeEvent } from './states/event.state';
+import { consumeFlowControlBlock } from './states/flow-control-block.state';
+import { consumeDefaultFlowControlCondition } from './states/default-flow-control-condition.state';
+import { consumeFlowControl } from './states/flow-control';
+import { consumeInterpolationExpression } from './states/interpolation-expression.state';
+import { consumeInterpolationliteral } from './states/interpolation-literal.state';
+import { consumeInterpolation } from './states/interpolation.state';
+import { consumeTagBody } from './states/tag-body.state';
+import { consumeTagClose } from './states/tag-close.state';
+import { consumeTagOpenEnd } from './states/tag-open-end.state';
+import { consumeTagOpenName } from './states/tag-open-name.state';
+import { consumeText } from './states/text.state';
+import { LexerCursor } from './types/lexer-cursor.model';
+import { LexerState } from './types/lexer-state.enum';
+import { Token } from './types/token.type';
+import { LexerTransitionFunction } from './types/transition-function/transition-function.type';
 
 /**
  * Utility class that emulates a cursor navigating through a template string.

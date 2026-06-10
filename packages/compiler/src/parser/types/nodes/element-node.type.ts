@@ -1,7 +1,7 @@
-import { ASTNodeType } from '../node.enum.js';
-import { ASTNode } from '../ast.type.js';
-import { AttributeNode } from './attribute-node.type.js';
-import { EventNode } from './event-node.type.js';
+import { ASTNodeType } from '../node.enum';
+import { ASTNode } from '../ast.type';
+import { AttributeNode } from './attribute-node.type';
+import { EventNode } from './event-node.type';
 
 /**
  * AST node representing an HTML element with a tag name, attributes, events, and children.

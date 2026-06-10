@@ -1,10 +1,10 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { ConstDeclarationToken } from '../../lexer/types/tokens/const-declaration-token.type.js';
-import { ParserCursor } from '../models/parser-cursor.model.js';
-import { ASTNode } from '../types/ast.type.js';
-import { ASTNodeType } from '../types/node.enum.js';
-import { ConstDeclarationNode } from '../types/nodes/const-declaration-node.type.js';
-import { validateExpression } from '../utils/expression-validator.js';
+import { ConstDeclarationToken } from '../../lexer/types/tokens/const-declaration-token.type';
+import { ParserCursor } from '../models/parser-cursor.model';
+import { ASTNode } from '../types/ast.type';
+import { ASTNodeType } from '../types/node.enum';
+import { ConstDeclarationNode } from '../types/nodes/const-declaration-node.type';
+import { validateExpression } from '../utils/expression-validator';
 
 /**
  * Parses a CONST_DECLARATION token into a `ConstDeclarationNode`.

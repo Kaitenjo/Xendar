@@ -1,16 +1,16 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum.js';
-import { IfToken } from '../../lexer/types/tokens/if-token.type.js';
-import { ParserCursor } from '../models/parser-cursor.model.js';
-import { ASTNode } from '../types/ast.type.js';
-import { ASTNodeType } from '../types/node.enum.js';
-import { ElseNode } from '../types/nodes/else-node.type.js';
-import { IfNode } from '../types/nodes/if-node.type.js';
-import { validateExpression } from '../utils/expression-validator.js';
-import { parseBlockChildren } from './parse-block-children.state.js';
-import { ElseIfToken } from '../../lexer/types/tokens/else-if-token.type.js';
-import { ElseIfNode } from '../types/nodes/else-if-node.type.js';
-import { ElseToken } from '../../lexer/types/tokens/else-token.type.js';
+import { TokenType } from '../../lexer/types/token-type.enum';
+import { IfToken } from '../../lexer/types/tokens/if-token.type';
+import { ParserCursor } from '../models/parser-cursor.model';
+import { ASTNode } from '../types/ast.type';
+import { ASTNodeType } from '../types/node.enum';
+import { ElseNode } from '../types/nodes/else-node.type';
+import { IfNode } from '../types/nodes/if-node.type';
+import { validateExpression } from '../utils/expression-validator';
+import { parseBlockChildren } from './parse-block-children.state';
+import { ElseIfToken } from '../../lexer/types/tokens/else-if-token.type';
+import { ElseIfNode } from '../types/nodes/else-if-node.type';
+import { ElseToken } from '../../lexer/types/tokens/else-token.type';
 
 /**
  * Parses an `@if` directive, consuming the IF token, the CONDITION token,

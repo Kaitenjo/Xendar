@@ -1,9 +1,9 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TextToken } from '../../lexer/types/tokens/text-token.type.js';
-import { ParserCursor } from '../models/parser-cursor.model.js';
-import { ASTNode } from '../types/ast.type.js';
-import { ASTNodeType } from '../types/node.enum.js';
-import { TextNode } from '../types/nodes/text-node.type.js';
+import { TextToken } from '../../lexer/types/tokens/text-token.type';
+import { ParserCursor } from '../models/parser-cursor.model';
+import { ASTNode } from '../types/ast.type';
+import { ASTNodeType } from '../types/node.enum';
+import { TextNode } from '../types/nodes/text-node.type';
 
 /**
  * Parses a TEXT token into a `TextNode`.

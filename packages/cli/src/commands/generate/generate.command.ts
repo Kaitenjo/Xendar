@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { generateComponent } from './component/component.command.js';
+import { generateComponent } from './component/component.command';
 
 /**
  * Creates and returns the `generate` command (alias `g`) with all its

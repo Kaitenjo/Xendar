@@ -1,6 +1,6 @@
-import { ConstDeclarationNode } from '../../parser/types/nodes/const-declaration-node.type.js';
-import { Context } from '../models/render-context.model.js';
-import { resolveExpression } from '../utils/render-generator.utils.js';
+import { ConstDeclarationNode } from '../../parser/types/nodes/const-declaration-node.type';
+import { Context } from '../models/render-context.model';
+import { resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for a `@const` declaration node.

@@ -1,4 +1,4 @@
-import { A, a, CR, LF, Z, z } from '../costants/chars.constants.js';
+import { A, a, CR, LF, Z, z } from '../costants/chars.constants';
 
 /**
  * Check if char code is a Line Feed (\n) or Carriage Return (\r)

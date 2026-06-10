@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PackageJson } from 'type-fest';
-import { indexHtml } from './templates/index-html.js';
-import { mainTs } from './templates/main-ts.js';
-import { packageJson } from './templates/package-json.js';
-import { signalTs } from './templates/signal-ts.js';
-import { tsconfigJson } from './templates/tsconfig-json.js';
-import { viteConfigTs } from './templates/vite-config-ts.js';
-import { xaendarJson } from './templates/xaendar-json.js';
+import { indexHtml } from './templates/index-html';
+import { mainTs } from './templates/main-ts';
+import { packageJson } from './templates/package-json';
+import { signalTs } from './templates/signal-ts';
+import { tsconfigJson } from './templates/tsconfig-json';
+import { viteConfigTs } from './templates/vite-config-ts';
+import { xaendarJson } from './templates/xaendar-json';
 
 /**
  * The context required to resolve all file contents when scaffolding
@@ -34,7 +34,7 @@ export type Entry = {
    */
   type: 'file';
   /** 
-   * The file name, including extension (e.g. `package.json`). 
+   * The file name, including extension (e.g. `packageon`). 
    */
   name: string;
   /** 
@@ -47,7 +47,7 @@ export type Entry = {
    */
   type: 'directory';
   /** 
-   * The file name, including extension (e.g. `package.json`). 
+   * The file name, including extension (e.g. `packageon`). 
    */
   name: string;
   /** 
@@ -66,15 +66,15 @@ export type Entry = {
 };
 
 /**
- * Reads the current Xaendar version from the CLI's own `package.json`.
+ * Reads the current Xaendar version from the CLI's own `packageon`.
  * Used to pin the generated project's dependencies to the same version.
  */
 function readCliVersion(): string {
   try {
-    const cliPackageJson: PackageJson = JSON.parse(readFileSync(resolve(import.meta.filename , '..', '../package.json'), 'utf8'));
+    const cliPackageJson: PackageJson = JSON.parse(readFileSync(resolve(import.meta.filename , '..', '../packageon'), 'utf8'));
     
     /*
-      This should never happen since the CLI's own package.json must have a version field
+      This should never happen since the CLI's own packageon must have a version field
       If it doesn't, something went wrong during the last publish process  
     */
     if (!cliPackageJson.version) {
@@ -107,12 +107,12 @@ export function buildStructure(context: ProjectContext): Entry[] {
   return [
     {
       type: 'file',
-      name: 'package.json',
+      name: 'packageon',
       content: packageJson(name, version),
     },
     {
       type: 'file',
-      name: 'xaendar.json',
+      name: 'xaendaron',
       content: xaendarJson(name, context.style),
     },
     {
@@ -122,7 +122,7 @@ export function buildStructure(context: ProjectContext): Entry[] {
     },
     {
       type: 'file',
-      name: 'tsconfig.json',
+      name: 'tsconfigon',
       content: tsconfigJson(),
     },
     {

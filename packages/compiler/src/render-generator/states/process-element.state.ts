@@ -1,7 +1,7 @@
-import { ElementNode } from '../../parser/types/nodes/element-node.type.js';
-import { Context } from '../models/render-context.model.js';
-import { processNode } from '../render-generator.js';
-import { resolveExpression } from '../utils/render-generator.utils.js';
+import { ElementNode } from '../../parser/types/nodes/element-node.type';
+import { Context } from '../models/render-context.model';
+import { processNode } from '../render-generator';
+import { resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for an HTML element node: creates the DOM element, sets attributes,

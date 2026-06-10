@@ -1,8 +1,8 @@
 import { Expression } from 'typescript';
-import { ASTNode } from '../ast.type.js';
-import { ASTNodeType } from '../node.enum.js';
-import { ElseIfNode } from './else-if-node.type.js';
-import { ElseNode } from './else-node.type.js';
+import { ASTNode } from '../ast.type';
+import { ASTNodeType } from '../node.enum';
+import { ElseIfNode } from './else-if-node.type';
+import { ElseNode } from './else-node.type';
 
 /**
  * AST node representing an `@if` conditional directive.

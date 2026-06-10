@@ -1,10 +1,10 @@
 import { indent } from '@xaendar/common';
 import { Function } from '@xaendar/types';
-import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables.js';
-import { ForNode } from '../../parser/types/nodes/for-node.type.js';
-import { Context } from '../models/render-context.model.js';
-import { processNode } from '../render-generator.js';
-import { getTextIdentifier } from '../utils/render-generator.utils.js';
+import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
+import { ForNode } from '../../parser/types/nodes/for-node.type';
+import { Context } from '../models/render-context.model';
+import { processNode } from '../render-generator';
+import { getTextIdentifier } from '../utils/render-generator.utils';
 
 /**
  * Generates code for a `@for` iteration node.

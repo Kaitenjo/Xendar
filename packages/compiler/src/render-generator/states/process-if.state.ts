@@ -1,11 +1,11 @@
 import { indent } from '@xaendar/common';
-import { ASTNodeType } from '../../parser/types/node.enum.js';
-import { ElseIfNode } from '../../parser/types/nodes/else-if-node.type.js';
-import { ElseNode } from '../../parser/types/nodes/else-node.type.js';
-import { IfNode } from '../../parser/types/nodes/if-node.type.js';
-import { Context } from '../models/render-context.model.js';
-import { processNode } from '../render-generator.js';
-import { resolveExpression } from '../utils/render-generator.utils.js';
+import { ASTNodeType } from '../../parser/types/node.enum';
+import { ElseIfNode } from '../../parser/types/nodes/else-if-node.type';
+import { ElseNode } from '../../parser/types/nodes/else-node.type';
+import { IfNode } from '../../parser/types/nodes/if-node.type';
+import { Context } from '../models/render-context.model';
+import { processNode } from '../render-generator';
+import { resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for an `@if` conditional node.

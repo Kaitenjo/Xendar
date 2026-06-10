@@ -1,5 +1,5 @@
-import { LexerState } from '../lexer-state.enum.js'
-import { Token } from '../token.type.js'
+import { LexerState } from '../lexer-state.enum'
+import { Token } from '../token.type'
 
 /**
  * Context object passed by the Lexer engine to each

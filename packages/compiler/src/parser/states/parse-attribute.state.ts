@@ -1,10 +1,10 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum.js';
-import { AttributeToken } from '../../lexer/types/tokens/attribute-token.type.js';
-import { ParserCursor } from '../models/parser-cursor.model.js';
-import { ASTNode } from '../types/ast.type.js';
-import { AttributeNode } from '../types/nodes/attribute-node.type.js';
-import { parseInterpolation } from './parse-interpolation.state.js';
+import { TokenType } from '../../lexer/types/token-type.enum';
+import { AttributeToken } from '../../lexer/types/tokens/attribute-token.type';
+import { ParserCursor } from '../models/parser-cursor.model';
+import { ASTNode } from '../types/ast.type';
+import { AttributeNode } from '../types/nodes/attribute-node.type';
+import { parseInterpolation } from './parse-interpolation.state';
 
 /**
  * Parses an ATTRIBUTE token into an `AttributeNode`.

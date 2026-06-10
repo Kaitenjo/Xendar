@@ -1,14 +1,14 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum.js';
-import { TagOpenNameToken } from '../../lexer/types/tokens/tag-open-name-token.type.js';
-import { ParserCursor } from '../models/parser-cursor.model.js';
-import { ASTNode } from '../types/ast.type.js';
-import { ASTNodeType } from '../types/node.enum.js';
-import { AttributeNode } from '../types/nodes/attribute-node.type.js';
-import { ElementNode } from '../types/nodes/element-node.type.js';
-import { EventNode } from '../types/nodes/event-node.type.js';
-import { parseAttribute } from './parse-attribute.state.js';
-import { parseEvent } from './parse-event.state.js';
+import { TokenType } from '../../lexer/types/token-type.enum';
+import { TagOpenNameToken } from '../../lexer/types/tokens/tag-open-name-token.type';
+import { ParserCursor } from '../models/parser-cursor.model';
+import { ASTNode } from '../types/ast.type';
+import { ASTNodeType } from '../types/node.enum';
+import { AttributeNode } from '../types/nodes/attribute-node.type';
+import { ElementNode } from '../types/nodes/element-node.type';
+import { EventNode } from '../types/nodes/event-node.type';
+import { parseAttribute } from './parse-attribute.state';
+import { parseEvent } from './parse-event.state';
 
 /**
  * Parses a TAG_OPEN_NAME token and the subsequent attributes, events, and children

@@ -1,4 +1,4 @@
-import { InterpolationNode } from './interpolation-node.type.js';
+import { InterpolationNode } from './interpolation-node.type';
 
 /**
  * AST node representing an HTML attribute on an element.

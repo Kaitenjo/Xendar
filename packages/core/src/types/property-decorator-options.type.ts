@@ -1,4 +1,4 @@
-import { InputSignalOptions } from './input-signal-options.type';
+import { InputSignalOptions } from './signals/input-signal.options.type';
 
 /**
  * Parameters accepted by the `@property` decorator.

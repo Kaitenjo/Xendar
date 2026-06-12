@@ -1,5 +1,6 @@
 import { InputSignalOptions } from '../../types/signals/input-signal.options.type';
 import { InputSignal } from '../../types/signals/input-signal.type';
+import { INPUT_SIGNAL_INSTANCE_SYMBOL } from './input-instance.symbol';
 import { assertPrivateContext } from './input-set.symbol';
 
 /**
@@ -23,6 +24,7 @@ export function input<ActualValue = unknown, IncomingValue = ActualValue>(value?
       originalSet.call(signal, transformedValue as ActualValue);
     }
   });
+  getter[INPUT_SIGNAL_INSTANCE_SYMBOL] = true;
 
-  return getter as InputSignal<ActualValue, IncomingValue>;
+  return getter as unknown as InputSignal<ActualValue, IncomingValue>;
 }

@@ -1,6 +1,6 @@
 import { NoArgsVoidFunction } from "@xaendar/types";
+import { isInputSignal } from "../signals/input/input-instance.symbol";
 import { INPUT_SIGNAL_SET_SYMBOL } from "../signals/input/input-set.symbol";
-import { InputSignal } from "../signals/input/input";
 
 /**
  * Base class for all Web Components in the framework
@@ -61,7 +61,7 @@ export class BaseWebComponent extends HTMLElement {
       but i prefer to check it at runtime anyway to avoid any possible error in the future 
       if the decorator is used wrong or if the types are not respected for some reason 
      */
-    if (!(context[name] instanceof InputSignal)) {
+    if (!isInputSignal(context[name])) {
       throw new Error(`Property ${name} is not an InputSignal`);
     }
 

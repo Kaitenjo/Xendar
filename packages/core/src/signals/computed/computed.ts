@@ -16,7 +16,7 @@ export function computed<Value = any>(value: Value, options?: SignalOptions<Valu
   const signal = new Signal.State(value, options);
   const getter = function () { return signal.get(); }
   Object.assign(getter, {
-    get: signal.get
+    get: signal.get.bind(signal)
   });
   return getter as unknown as Computed<Value>;
 }

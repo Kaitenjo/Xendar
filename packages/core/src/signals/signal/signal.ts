@@ -18,8 +18,8 @@ export function signal<T = any>(value: T, options?: SignalOptions<T>): SignalTyp
   const getter = function () { return signal.get(); }
 
   Object.assign(getter, {
-    set: signal.set,
-    get: signal.get,
+    set: signal.set.bind(signal),
+    get: signal.get.bind(signal),
     update: (updater: (prev: T) => T) => signal.set(updater(signal.get()))
   });
   return getter as unknown as SignalType<T>;

@@ -22,7 +22,7 @@ export function input<ActualValue = unknown, IncomingValue = ActualValue>(value?
       const transformedValue = transform ? transform(newValue) : newValue;
       originalSet.call(signal, transformedValue as ActualValue);
     },
-    get: signal.get
+    get: signal.get.bind(signal)
   });
   getter[INPUT_SIGNAL_INSTANCE_SYMBOL] = true;
 

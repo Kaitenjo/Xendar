@@ -1,6 +1,6 @@
 import { NoArgsVoidFunction } from "@xaendar/types";
 import { INPUT_SIGNAL_SET_SYMBOL } from "../signals/input/input-set.symbol";
-import { InputSignal } from "../signals/input/input.model";
+import { InputSignal } from "../signals/input/input";
 
 /**
  * Base class for all Web Components in the framework

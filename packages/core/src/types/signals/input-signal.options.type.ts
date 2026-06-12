@@ -1,4 +1,4 @@
-import { SignalOptions } from '@xaendar/signals';
+import { SignalOptions } from '@xaendar/signals'
 
 /**
  * Options used to configure an `InputSignal`.

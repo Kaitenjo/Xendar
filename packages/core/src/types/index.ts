@@ -1,3 +1,3 @@
 export * from './event';
-export * from './input-signal-options.type';
+export * from './signals';
 export * from './web-component';

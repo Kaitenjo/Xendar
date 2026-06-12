@@ -11,7 +11,10 @@ import { processSwitch } from "./states/process-switch.state.js";
 import { processTextAndInterpolation } from "./states/process-text-and-interpolation.state.js";
 import { getElementIdentifier, getTextIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
 
-const nodeToProcess = new Map<string, { fn: NoArgsFunction<string[]> } | { fn: Function<[items: string, index: string], string[]>, args: [items: string, index: string] }>();
+const nodeToProcess = new Map<string,
+  | { fn: NoArgsFunction<string[]> }  // If, Switch
+  | { fn: Function<[items: string, index: string], string[]>, args: [items: string, index: string] } // For
+>();
 
 /**
  * Generates the TypeScript body of a render function from an AST.
@@ -28,33 +31,39 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
   ]
 
   if (cssVariableName) {
-    renderFunctions.push(`  this._root.adoptedStyleSheets = [${cssVariableName}];`);
+    renderFunctions.push(...indent(`this._root.adoptedStyleSheets = [${cssVariableName}];`));
   }
-  
+
   renderFunctions.push(
-    '  let unwatchFns = [];',
-    ...indent(...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, context)]).flat()),
-    '  return unwatchFns;',
+    ...indent(
+      'let unwatchFns = [];',
+      ...indent(...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, context)]).flat()),
+      'return unwatchFns;'
+    ),
     '}'
   )
 
   while (nodeToProcess.size > 0) {
     const [key, fnData] = nodeToProcess.entries().next().value!;
-    if ('args' in fnData) {      
+    if ('args' in fnData) {
       renderFunctions.push(
         `${key}(${fnData.args.join(', ')}) {`,
-        '  let unwatchFns = [];',
-        ...indent(...fnData.fn(...fnData.args)),
-        '  return unwatchFns;',
+        ...indent(
+          'let unwatchFns = [];',
+          ...indent(...fnData.fn(...fnData.args)),
+          'return unwatchFns;'
+        ),
         '}',
       );
     } else {
       renderFunctions.push(
         `${key}() {`,
-        '  let unwatchFns = [];',
-        ...indent(...fnData.fn()),
-        '  return unwatchFns;',
-        '}',
+        ...indent(
+          'let unwatchFns = [];',
+          ...indent(...fnData.fn()),
+          'return unwatchFns;',
+          '}'
+        ),
       );
     }
     nodeToProcess.delete(key);

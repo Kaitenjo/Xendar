@@ -1,7 +1,5 @@
+import { loadSignals } from '@xaendar/signals';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GLOBAL_STATE } from '../../utils/globals/globals';
-import { loadSignals } from '../../load-signals';
-import { State } from '../state/state';
 import { effect } from './effect';
 
 loadSignals();
@@ -11,11 +9,6 @@ loadSignals();
  * re-runs are executed synchronously within the test.
  */
 const flushMicrotasks = () => new Promise<void>(resolve => queueMicrotask(resolve));
-
-beforeEach(() => {
-  GLOBAL_STATE.frozen = false;
-  GLOBAL_STATE.computing = null;
-});
 
 describe('effect', () => {
 
@@ -27,7 +20,7 @@ describe('effect', () => {
     });
 
     it('reads the current value of tracked signals', () => {
-      const state = new State(42);
+      const state = new Signal.State(42);
       let captured: number | undefined;
 
       effect(() => { captured = state.get(); });
@@ -38,7 +31,7 @@ describe('effect', () => {
 
   describe('reactivity', () => {
     it('re-runs when a tracked signal changes', async () => {
-      const state = new State(0);
+      const state = new Signal.State(0);
       const spy = vi.fn();
 
       effect(() => { spy(state.get()); });
@@ -52,7 +45,7 @@ describe('effect', () => {
     });
 
     it('batches multiple synchronous updates into a single re-run', async () => {
-      const state = new State(0);
+      const state = new Signal.State(0);
       const spy = vi.fn();
 
       effect(() => { spy(state.get()); });
@@ -68,8 +61,8 @@ describe('effect', () => {
     });
 
     it('tracks multiple signals', async () => {
-      const greeting = new State('hello');
-      const subject = new State('world');
+      const greeting = new Signal.State('hello');
+      const subject = new Signal.State('world');
       const spy = vi.fn();
 
       effect(() => { spy(`${greeting.get()} ${subject.get()}`); });
@@ -85,9 +78,9 @@ describe('effect', () => {
     });
 
     it('re-tracks dependencies on each run (dynamic deps)', async () => {
-      const toggle = new State(true);
-      const primary = new State('A');
-      const fallback = new State('B');
+      const toggle = new Signal.State(true);
+      const primary = new Signal.State('A');
+      const fallback = new Signal.State('B');
       const spy = vi.fn();
 
       effect(() => {
@@ -112,7 +105,7 @@ describe('effect', () => {
     });
 
     it('does not re-run when set to the same value (equality check)', async () => {
-      const state = new State(1);
+      const state = new Signal.State(1);
       const spy = vi.fn();
 
       effect(() => { spy(state.get()); });
@@ -137,7 +130,7 @@ describe('effect', () => {
       });
 
       it('is called before each re-run', async () => {
-        const state = new State(0);
+        const state = new Signal.State(0);
         const order: string[] = [];
 
         effect(
@@ -164,7 +157,7 @@ describe('effect', () => {
       });
 
       it('is called after each re-run', async () => {
-        const state = new State(0);
+        const state = new Signal.State(0);
         const order: string[] = [];
 
         effect(
@@ -182,7 +175,7 @@ describe('effect', () => {
 
     describe('onBeforeRun + onAfterRun together', () => {
       it('wraps each run with before and after hooks in the correct order', async () => {
-        const state = new State(0);
+        const state = new Signal.State(0);
         const order: string[] = [];
 
         effect(
@@ -214,7 +207,7 @@ describe('effect', () => {
       });
 
       it('is not called before disposal', async () => {
-        const state = new State(0);
+        const state = new Signal.State(0);
         const spy = vi.fn();
 
         const dispose = effect(() => { state.get(); }, { onCleanup: spy });
@@ -236,7 +229,7 @@ describe('effect', () => {
     });
 
     it('stops re-running after disposal', async () => {
-      const state = new State(0);
+      const state = new Signal.State(0);
       const spy = vi.fn();
 
       const dispose = effect(() => { spy(state.get()); });

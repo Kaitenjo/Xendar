@@ -1,8 +1,9 @@
 import { AccessorDecorator, ClassAccessorDecoratorValue } from '@xaendar/types';
 import { INTERNAL_OBSERVED_ATTRIBUTES } from '../costants';
 import { BaseWebComponent } from '../directives/base-web-component';
-import { InputSignal } from '../signals/input/input.model';
+import { input } from '../signals/input/input';
 import { PropertyDecoratorOptions, PropertyDecoratorOptionsWithRequired, } from '../types/property-decorator-options.type';
+import { InputSignal } from '../types/signals/input-signal.type';
 
 const propertyDecoratorOptionsWithRequiredBrand = Symbol('PropertyDecoratorOptionsWithRequiredBrand');
 type PropertyDecoratoprOptionsWithRequiredBrandType<ActualValue = unknown, IncomingValue = ActualValue> = PropertyDecoratorOptionsWithRequired<ActualValue, IncomingValue> & { 
@@ -38,7 +39,7 @@ function createPropertyDecorator<
       actualOptions = value;
     }
 
-    const signal = new InputSignal<ActualValue, IncomingValue>(actualValue, {
+    const signal = input<ActualValue, IncomingValue>(actualValue, {
       equals: actualOptions?.equals,
       watched: actualOptions?.watched,
       unwatched: actualOptions?.unwatched,

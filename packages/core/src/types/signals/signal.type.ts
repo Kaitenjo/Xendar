@@ -8,11 +8,11 @@
  */
 export type Signal<Value = any> = Signal.State<Value> & {
   /**
-   * Sets a new value for the signal.
+   * Get the current value of the signal.
    *
-   * @param value - The new value to store.
+   * @returns The current value of the signal.
    */
-  (value: Value): void;
+  (): Value;
   /**
    * Updates the signal value based on its previous value.
    *

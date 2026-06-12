@@ -15,8 +15,12 @@ import { Signal as SignalType } from '../../types/signals/signal.type';
  */
 export function signal<T = any>(value: T, options?: SignalOptions<T>): SignalType<T> {
   const signal = new Signal.State(value, options);
-  const getter = function () { signal.get(); }
-  Object.assign(getter, signal);
-  Object.assign(getter, { update: (updater: (prev: T) => T) => signal.set(updater(signal.get()))});
+  const getter = function () { return signal.get(); }
+
+  Object.assign(getter, {
+    set: signal.set,
+    get: signal.get,
+    update: (updater: (prev: T) => T) => signal.set(updater(signal.get()))
+  });
   return getter as unknown as SignalType<T>;
 }

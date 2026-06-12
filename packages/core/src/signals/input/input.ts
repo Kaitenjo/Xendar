@@ -15,14 +15,14 @@ export function input<ActualValue = unknown, IncomingValue = ActualValue>(value?
   const signal = new Signal.State(value, options);
   const originalSet = signal.set;
 
-  const getter = function () { signal.get(); }
-  Object.assign(getter, signal);
+  const getter = function () { return signal.get(); }
   Object.assign(signal, {
     set(newValue: IncomingValue, symbol: symbol): void {
       assertPrivateContext(symbol);
       const transformedValue = transform ? transform(newValue) : newValue;
       originalSet.call(signal, transformedValue as ActualValue);
-    }
+    },
+    get: signal.get
   });
   getter[INPUT_SIGNAL_INSTANCE_SYMBOL] = true;
 

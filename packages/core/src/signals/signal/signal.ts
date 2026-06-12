@@ -13,7 +13,7 @@ import { Signal as SignalType } from '../../types/signals/signal.type';
  * @param options - Configuration options for the signal.
  * @returns A {@link SignalType} instance.
  */
-export function signal<T = any>(value: T, options: SignalOptions<T>): SignalType<T> {
+export function signal<T = any>(value: T, options?: SignalOptions<T>): SignalType<T> {
   const signal = new Signal.State(value, options);
   const getter = function () { signal.get(); }
   Object.assign(getter, signal);

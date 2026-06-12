@@ -12,7 +12,7 @@ import { Computed } from '../../types/signals/computed.type';
  * @param options - Configuration options for the signal.
  * @returns A {@link Computed} instance.
  */
-export function computed<Value = any>(value: Value, options: SignalOptions<Value>): Computed<Value> {
+export function computed<Value = any>(value: Value, options?: SignalOptions<Value>): Computed<Value> {
   const signal = new Signal.State(value, options);
   const getter = function () { signal.get(); }
   Object.assign(getter, signal);

@@ -178,7 +178,7 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
     throw new Error('Xaendar: could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.');
   }
 
-  result = `import { effect } from "@xaendar/signals";
+  result = `import { effect } from "@xaendar/core";
 
 ${result}`;
 

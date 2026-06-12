@@ -280,7 +280,7 @@ describe('xaendarPlugin()', () => {
     it('adds the effect import at the top of the transformed file', () => {
       const result = callTransform(BASE_CODE, COMPONENT_ID) as { code: string };
 
-      expect(result.code).toMatch(/^import { effect } from "@xaendar\/signals"/);
+      expect(result.code).toMatch(/^import { effect } from "@xaendar\/core"/);
     });
 
     it('preserves the static initializer call in the output', () => {

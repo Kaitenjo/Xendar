@@ -1,6 +1,6 @@
 {
   "name": "@xaendar/core",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "type": "module",
   "author": "Kaitenjo",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "target": "browser"
   },
   "dependencies": {
-    "@xaendar/signals": "0.6.2",
-    "@xaendar/types": "0.6.2"
+    "@xaendar/signals": "0.6.3",
+    "@xaendar/types": "0.6.3"
   }
 }

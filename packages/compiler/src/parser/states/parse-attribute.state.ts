@@ -43,6 +43,6 @@ export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<A
 
   return {
     name,
-    value: value.replace(/^['']|['']$/g, '')
+    value: value.replace(/^[""]|['']$/g, '')
   };
 }

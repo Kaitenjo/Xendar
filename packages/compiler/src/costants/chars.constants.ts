@@ -35,7 +35,7 @@ export const SPACE = 32;
  */
 export const EXCLAMATION = 33;
 /**
- * `'`
+ * `"`
  */
 export const DOUBLE_QUOTE = 34;
 /**

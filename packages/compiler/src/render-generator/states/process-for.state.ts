@@ -69,36 +69,36 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
 
   mainBlock.push(
     '(() => {',
-    ...indent(
+    ...indent([
       'let localUnwatchFns = [];',
       'const unwatch = () => {',
-      ...indent(
+      ...indent([
         'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
         'localUnwatchFns?.forEach(fn => fn());',
         'localUnwatchFns = [];',
-      ),
+      ]),
       '};',
       'unwatchFns.push(',
-      ...indent(
+      ...indent([
         'effect(() => {',
-        ...indent(
+        ...indent([
           'unwatch();',
           `const ${itemsName} = ${iterableExpr};`,
           'Signal.subtle.untrack(() => {',
-          ...indent(
+          ...indent([
             `for (let ${counterName} = 0; ${counterName} < ${itemsName}.length; ${counterName}++) {`,
-            ...indent(
+            ...indent([
               `localUnwatchFns.push(...this.for_${nodeName}(${itemsName}, ${counterName}));`,
               'unwatchFns.push(...localUnwatchFns);'
-            ),
+            ]),
             '}',
-          ),
+          ]),
           '});'
-        ),
+        ]),
         '})'
-      ),
+      ]),
       ');',
-    ),
+    ]),
     '})();'
   );
 

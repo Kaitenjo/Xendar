@@ -27,15 +27,15 @@ export function processSwitch(node: SwitchNode, nodeName: string, parentNode: st
 
     functionsToProcess.set(caseName, caseNode.children.map((child, i) => processNode(child, `${nodeName}_${i}_${i}`, parentNode, caseContext)).flat());
     mainBlock.push(
-      ...indent(
+      ...indent([
         ...(!caseNode.condition ? ['default: {'] : caseNode.condition.map((cond, i, arr) => `case ${cond}:${i === arr.length - 1 ? ' {' : ''}`)),
-        ...indent(
+        ...indent([
           `localUnwatchFns = Signal.subtle.untrack(this.${caseName}.bind(this));`,
           'unwatchFns.push(...localUnwatchFns);',
           'break;'
-        ),
+        ]),
         '}'
-      )
+      ])
     );
   });
 
@@ -44,26 +44,26 @@ export function processSwitch(node: SwitchNode, nodeName: string, parentNode: st
   return {
     mainBlock: [
       '(() => {',
-      ...indent(
+      ...indent([
         'let localUnwatchFns = []',
         'const unwatch = () => {',
-        ...indent(
+        ...indent([
           'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
           'localUnwatchFns?.forEach(fn => fn());',
           'localUnwatchFns = [];'
-        ),
+        ]),
         '}',
         'unwatchFns.push(',
-        ...indent(
+        ...indent([
           'effect(() => {',
-          ...indent(
+          ...indent([
             'unwatch();',
             ...mainBlock
-          ),
+          ]),
           '})',
-        ),
+        ]),
         ');'
-      ),
+      ]),
       '})();',
     ],
     fns: functionsToProcess

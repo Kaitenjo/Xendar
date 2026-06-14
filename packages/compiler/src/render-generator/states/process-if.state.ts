@@ -25,7 +25,7 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
   const ifKey = `if_${nodeName}`;
   mainBlock.push(
     `if (${resolveExpression(node.conditionNode, context)}) {`,
-    ...indent(`checkAndUpdateState(0, this.${ifKey}.bind(this));`),
+    indent(`checkAndUpdateState(0, this.${ifKey}.bind(this));`),
     '}'
   );
   functionsToProcess.set(ifKey, processConsequent(node, nodeName, parentNode, ifContext));
@@ -38,7 +38,7 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
     const keyElseIf = `elseIf_${nodeName}_${index}`;
     mainBlock[mainBlock.length - 1] += ` else if (${resolveExpression(alt.conditionNode, context)}) {`;
     mainBlock.push(
-      ...indent(`checkAndUpdateState(${++index}, this.${keyElseIf}.bind(this));`),
+      indent(`checkAndUpdateState(${++index}, this.${keyElseIf}.bind(this));`),
       '}'
     );
     functionsToProcess.set(keyElseIf, processConsequent(alt, nodeName, parentNode, elseIfContext));
@@ -50,7 +50,7 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
     const keyElse = `else_${nodeName}`;
     mainBlock[mainBlock.length - 1] += ' else {';
     mainBlock.push(
-      ...indent(`checkAndUpdateState(${++index}, this.${keyElse}.bind(this));`),
+      indent(`checkAndUpdateState(${++index}, this.${keyElse}.bind(this));`),
       '}'
     );
 
@@ -60,35 +60,35 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
   return {
     mainBlock: [
       '(() => {',
-      ...indent(
+      ...indent([
         'let state;',
         'let localUnwatchFns = []',
         'const checkAndUpdateState = (newState, fn) => {',
-        ...indent(
+        ...indent([
           'if (state === newState) {',
-          ...indent('return;'),
+          indent('return;'),
           '}',
           'state = newState;',
           'unwatch();',
           'localUnwatchFns = Signal.subtle.untrack(fn);',
           'unwatchFns.push(...localUnwatchFns);'
-        ),
+        ]),
         '};',
         'const unwatch = () => {',
-        ...indent(
+        ...indent([
           'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
           'localUnwatchFns?.forEach(fn => fn());',
           'localUnwatchFns = [];'
-        ),
+        ]),
         '}',
         'unwatchFns.push(',
-        ...indent(
+        ...indent([
           'effect(() => {',
-          ...indent(...mainBlock),
+          ...indent(mainBlock),
           '})',
-        ),
+        ]),
         ');'
-      ),
+      ]),
       '})();',
     ],
     fns: functionsToProcess

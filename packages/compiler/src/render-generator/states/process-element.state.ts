@@ -1,6 +1,8 @@
+import { indent } from '@xaendar/common';
 import { AttributeNode } from '../../parser/types/nodes/attribute-node.type';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { EventNode } from '../../parser/types/nodes/event-node.type';
+import { InterpolationNode } from '../../parser/types/nodes/interpolation-node.type';
 import { Context } from '../models/render-context.model';
 import { processNode } from '../render-generator';
 import { resolveExpression } from '../utils/render-generator.utils';
@@ -43,12 +45,17 @@ export function processElement(node: ElementNode, nodeName: string, parentNode: 
  * @returns Array of generated code lines, one per attribute.
  */
 function mapAttributes(attributes: AttributeNode[], nodeName: string, context: Context): string[] {
-  return attributes?.map(attr => {
-    const value = attr.value;
-    return typeof value === "string"
-      ? `${nodeName}.setAttribute('${attr.name}', ${value});`
-      : `unwatchFns.push(effect(() => ${nodeName}.setAttribute('${attr.name}', ${resolveExpression(value.expression, context)})));`
-  }) ?? [];
+  const literalsAttributes = new Array<{ name: string, value: string }>();
+  const bindingsAttributes = new Array<{ name: string, value: InterpolationNode }>();
+
+  attributes?.forEach(({ name, value }) => typeof value === "string" ? literalsAttributes.push({ name, value }) : bindingsAttributes.push({ name, value }));
+  
+  return [
+    ...literalsAttributes.map(attr => `${nodeName}.setAttribute("${attr.name}", "${attr.value}");`),
+    `unwatchFns.push(`,
+    ...indent(bindingsAttributes.map(attr => `effect(() => ${nodeName}.setAttribute("${attr.name}", ${resolveExpression(attr.value.expression, context)})),`)),
+    `);`
+  ]
 }
 
 /**

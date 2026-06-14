@@ -3,29 +3,25 @@ import { indent } from './indent.utils';
 
 describe('indent()', () => {
 
-  it('returns an empty array when called with no arguments', () => {
-    expect(indent()).toEqual([]);
-  });
-
   it('prepends two spaces to a single line', () => {
-    expect(indent('hello')).toEqual(['  hello']);
+    expect(indent('hello')).toEqual('  hello');
   });
 
   it('prepends two spaces to each of multiple lines', () => {
-    expect(indent('foo', 'bar', 'baz')).toEqual(['  foo', '  bar', '  baz']);
+    expect(indent(['foo', 'bar', 'baz'])).toEqual(['  foo', '  bar', '  baz']);
   });
 
   it('also indents empty strings', () => {
-    expect(indent('')).toEqual(['  ']);
+    expect(indent('')).toEqual('  ');
   });
 
   it('preserves existing indentation', () => {
-    expect(indent('  already indented')).toEqual(['    already indented']);
+    expect(indent('  already indented')).toEqual('    already indented');
   });
 
   it('does not mutate the input arguments', () => {
     const lines = ['a', 'b'];
-    indent(...lines);
+    indent(lines);
     expect(lines).toEqual(['a', 'b']);
   });
 });

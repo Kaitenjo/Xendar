@@ -1,4 +1,4 @@
-import { GREATER_THEN, LEFT_BRACE, SLASH, SPACE } from '../../costants/chars.constants';
+import { DOUBLE_QUOTE, EQUAL_THEN, LEFT_BRACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -15,15 +15,35 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * @returns Transition result with the ATTRIBUTE token and next state.
  */
 export function consumeAttribute(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
-  let read = true;
+  let readAttributeName = true;
+  let readValue = false;
   let attribute = '';
   let retVal!: LexerTransitionFunctionReturnType;
 
-  while (read) {
+  while (readAttributeName) {
     switch (cursor.peek()) {
-      case SPACE:
-      case SLASH:
-      case GREATER_THEN:
+      case EQUAL_THEN:
+        cursor.advance();
+        attribute = `${attribute}=`;
+        readAttributeName = false;
+        break;
+
+      default:
+        cursor.advance();
+        attribute = `${attribute}${cursor.currentChar.value}`;
+    }
+  }
+
+  if (cursor.peek() !== DOUBLE_QUOTE) {
+    throw new Error(`[Lexer] Expected '"' after attribute name, found '${cursor.currentChar.value}'`);
+  }
+
+  // consume opening quote
+  cursor.advance();
+
+  while (readValue) {
+    switch (cursor.peek()) {
+      case DOUBLE_QUOTE:
         retVal = {
           state: LexerState.TAG_BODY,
           tokens: [{
@@ -31,7 +51,7 @@ export function consumeAttribute(cursor: LexerCursor, _context: LexerTransitionF
             parts: [attribute]
           }] 
         };
-        read = false;
+        readValue = false;
         break;
 
       case LEFT_BRACE:

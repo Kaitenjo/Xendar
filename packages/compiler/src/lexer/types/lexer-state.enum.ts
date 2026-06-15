@@ -52,6 +52,10 @@ export enum LexerState {
    */
   FLOW_CONTROL_BLOCK = 'flow-control-block',
   /**
+   * Consuming an attribute literal value
+   */
+  ATTRIBUTE_VALUE = 'attribute-value',
+  /**
    * Dispatching between an expression or literal interpolation after `{`.
    */
   INTERPOLATION = 'interpolation',

@@ -1,4 +1,4 @@
-import { DOUBLE_QUOTE, EQUAL_THEN, LEFT_BRACE } from '../../costants/chars.constants';
+import { DOUBLE_QUOTE, EQUAL_THEN, LEFT_BRACE, SPACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -15,60 +15,56 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * @returns Transition result with the ATTRIBUTE token and next state.
  */
 export function consumeAttribute(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
-  let readAttributeName = true;
-  let readValue = false;
+  let read = true;
   let attribute = '';
   let retVal!: LexerTransitionFunctionReturnType;
-
-  while (readAttributeName) {
+  
+  while (read) {
     switch (cursor.peek()) {
-      case EQUAL_THEN:
+      /*
+        Cover the cases where the attribute is applied without any value
+        Ex:
+        <input disabled />
+      */
+      case SPACE:
         cursor.advance();
-        attribute = `${attribute}=`;
-        readAttributeName = false;
-        break;
-
-      default:
-        cursor.advance();
-        attribute = `${attribute}${cursor.currentChar.value}`;
-    }
-  }
-
-  if (cursor.peek() !== DOUBLE_QUOTE) {
-    throw new Error(`[Lexer] Expected '"' after attribute name, found '${cursor.currentChar.value}'`);
-  }
-
-  // consume opening quote
-  cursor.advance();
-
-  while (readValue) {
-    switch (cursor.peek()) {
-      case DOUBLE_QUOTE:
+        read = false;
         retVal = {
           state: LexerState.TAG_BODY,
           tokens: [{
             type: TokenType.ATTRIBUTE,
             parts: [attribute]
-          }] 
-        };
-        readValue = false;
+          }]
+        }
         break;
 
-      case LEFT_BRACE:
+      case EQUAL_THEN:
+        cursor.advance();
+        
+        // If attibutes as a value, it must start with double quotes
+        if (cursor.peek() !== DOUBLE_QUOTE) {
+          const { row, column } = cursor.position;
+          throw new Error(`Attribute value must start with double quotes '"'.Row ${row} Col ${column}`);
+        }
+
+        // Consume '"'
+        cursor.advance();
+        read = false;
+        const isInterpolatedValue = cursor.peek() === LEFT_BRACE;
+
         retVal = {
-          state: LexerState.INTERPOLATION,
+          state: isInterpolatedValue ? LexerState.INTERPOLATION : LexerState.ATTRIBUTE_VALUE,
+          pushState: true,
           tokens: [{
             type: TokenType.ATTRIBUTE,
             parts: [attribute]
-          }],
-          pushState: true 
-        };
-        read = false;
+          }]
+        }
         break;
 
       default:
         cursor.advance();
-        attribute = `${attribute}${cursor.currentChar.value}`
+        attribute = `${attribute}${cursor.currentChar.value}`;
     }
   }
 

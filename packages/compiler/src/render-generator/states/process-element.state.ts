@@ -50,12 +50,18 @@ function mapAttributes(attributes: AttributeNode[], nodeName: string, context: C
 
   attributes?.forEach(({ name, value }) => typeof value === "string" ? literalsAttributes.push({ name, value }) : bindingsAttributes.push({ name, value }));
   
-  return [
-    ...literalsAttributes.map(attr => `${nodeName}.setAttribute("${attr.name}", "${attr.value}");`),
+  const mappedAttributes = literalsAttributes.map(attr => `${nodeName}.setAttribute("${attr.name}", "${attr.value}");`);
+  const mappedBindingAttributes = bindingsAttributes.map(attr => `effect(() => ${nodeName}.setAttribute("${attr.name}", ${resolveExpression(attr.value.expression, context)})),`);
+  
+  if (mappedBindingAttributes.length) {
+    mappedAttributes.push(
     `unwatchFns.push(`,
-    ...indent(bindingsAttributes.map(attr => `effect(() => ${nodeName}.setAttribute("${attr.name}", ${resolveExpression(attr.value.expression, context)})),`)),
+    ...indent(mappedBindingAttributes),
     `);`
-  ]
+    )
+  }
+
+  return mappedAttributes;
 }
 
 /**

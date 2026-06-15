@@ -1,4 +1,4 @@
-import { LEFT_BRACE, RIGHT_BRACE, SPACE } from '../../costants/chars.constants';
+import { DOUBLE_QUOTE, LEFT_BRACE, RIGHT_BRACE, SPACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -29,10 +29,11 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
 
       case RIGHT_BRACE:
         deep--;
-        
+
         if (deep === 0) {
           cursor.advance();
           interpolation = interpolation.trimEnd();
+
           /*
             After an interpolation we have to understanad where to transite
             The next state depends from the previous state
@@ -42,22 +43,13 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
 
           switch (previousState) {
             case LexerState.ATTRIBUTE:
-              /*
-                This is a special case to handle syntax sugar for attribute interpolations:
-                If the attribute name and the variable binded have the same indentifier it can be written
-                from attribute={attribute} to {attribute}
-                
-                In this case the attribute token emitted by the previosu state will have an empty string
-                as part and we need to fill it with the actual interpolation content
-
-                This is tricky but it allows to avoid unnecessary complication in the parser and
-                render generator, by keeping this syntax sugar as a purely lexical feature and
-                by redirecting to the standard flow for attribute interpolations after the lexer
-              */
-              const lastToken = context.tokens[context.tokens.length - 1];
-              if (lastToken?.type === TokenType.ATTRIBUTE && !lastToken.parts[0]) {
-                lastToken.parts[0] = `${interpolation}=`;
+              if (cursor.peek() !== DOUBLE_QUOTE) {
+                const { row, column } = cursor.position;
+                throw new Error(`Interpolation must be end with double quotes '"' Found ${String.fromCharCode(cursor.peek())}. \nRow ${row} Col ${column}`);
               }
+
+              // Consume '"'
+              cursor.advance();
               state = LexerState.TAG_BODY
               break;
 
@@ -67,9 +59,9 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
 
           retVal = {
             state,
-            tokens: [{ 
-              type: TokenType.INTERPOLATION_EXPRESSION, 
-              parts: [interpolation] 
+            tokens: [{
+              type: TokenType.INTERPOLATION_EXPRESSION,
+              parts: [interpolation]
             }],
             popState: true
           }

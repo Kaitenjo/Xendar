@@ -69,6 +69,13 @@ const template = `
     }
   }
   <input id="{id}" type="text" value="{ value + '' + 'asd' + ' ' + "test" }" placeholder="{placeholder}" @change="onChange($event)" />
+  @if (a) {
+    <div>
+      @if (b) {
+        <span>Nested if</span>
+      }
+    </div>
+  }
   `
 
 const filePath = 'dist/compiled.js'

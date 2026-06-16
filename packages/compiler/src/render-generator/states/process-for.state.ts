@@ -4,7 +4,7 @@ import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-vari
 import { ForNode } from '../../parser/types/nodes/for-node.type';
 import { Context } from '../models/render-context.model';
 import { processNode } from '../render-generator';
-import { getTextIdentifier } from '../utils/render-generator.utils';
+import { getBlockIdentifier, getTextIdentifier } from '../utils/render-generator.utils';
 
 /**
  * Generates code for a `@for` iteration node.
@@ -54,7 +54,8 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
   const oddName = resolveImplicit(node, '$odd');
   const forContext = new Context([node.itemAlias, indexName, firstName, lastName, evenName, oddName], parentContext);
 
-  functionsToProcess.set(`for_${nodeName}`, {
+  const forKey = getBlockIdentifier(parentNode, nodeName, 'for');
+  functionsToProcess.set(forKey, {
     code: [
       `const ${node.itemAlias} = ${itemsName}[${counterName}];`,
       `const ${indexName} = ${counterName};`,
@@ -88,7 +89,7 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
           ...indent([
             `for (let ${counterName} = 0; ${counterName} < ${itemsName}.length; ${counterName}++) {`,
             ...indent([
-              `localUnwatchFns.push(...this.for_${nodeName}(${itemsName}, ${counterName}));`,
+              `localUnwatchFns.push(...this.${forKey}(${itemsName}, ${counterName}));`,
               'unwatchFns.push(...localUnwatchFns);'
             ]),
             '}',

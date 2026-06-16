@@ -5,7 +5,8 @@ import { ElseNode } from '../../parser/types/nodes/else-node.type';
 import { IfNode } from '../../parser/types/nodes/if-node.type';
 import { Context } from '../models/render-context.model';
 import { processNode } from '../render-generator';
-import { resolveExpression } from '../utils/render-generator.utils';
+import { getBlockIdentifier, resolveExpression } from '../utils/render-generator.utils';
+import { NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
 
 /**
  * Generates code for an `@if` conditional node.
@@ -19,14 +20,14 @@ import { resolveExpression } from '../utils/render-generator.utils';
  */
 export function processIf(node: IfNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, string[]> } {
   const ifContext = new Context([], context);
-  const functionsToProcess = new Map<string, string[]>;
-  const mainBlock = new Array<string>;
+  const functionsToProcess = new Map<string, string[]>();
+  const mainBlock = new Array<{ condition?: string, block: string }>();
 
-  const ifKey = `if_${nodeName}`;
-  mainBlock.push(
-    `if (${resolveExpression(node.conditionNode, context)}) {`,
-    indent(`checkAndUpdateState(0, this.${ifKey}.bind(this));`),
-    '}'
+  const ifKey = getBlockIdentifier(parentNode, nodeName, 'if');
+  mainBlock.push({
+    condition: resolveExpression(node.conditionNode, context),
+    block: `this.${ifKey}.bind(this)`
+  }
   );
   functionsToProcess.set(ifKey, processConsequent(node, nodeName, parentNode, ifContext));
 
@@ -34,62 +35,40 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
   let index = 0;
   while (alt?.type === ASTNodeType.ElseIf) {
     const elseIfContext = new Context([], context);
+    const keyElseIf = getBlockIdentifier(parentNode, `${nodeName}_${index}`, 'elseIf');
+    const conditionNode = alt.conditionNode;
 
-    const keyElseIf = `elseIf_${nodeName}_${index}`;
-    mainBlock[mainBlock.length - 1] += ` else if (${resolveExpression(alt.conditionNode, context)}) {`;
-    mainBlock.push(
-      indent(`checkAndUpdateState(${++index}, this.${keyElseIf}.bind(this));`),
-      '}'
-    );
+    mainBlock.push({
+      condition: resolveExpression(conditionNode, context),
+      block: `this.${keyElseIf}.bind(this)`
+    });
     functionsToProcess.set(keyElseIf, processConsequent(alt, nodeName, parentNode, elseIfContext));
     alt = alt.alternate;
   }
 
   if (alt) {
     const elseContext = new Context([], context);
-    const keyElse = `else_${nodeName}`;
-    mainBlock[mainBlock.length - 1] += ' else {';
-    mainBlock.push(
-      indent(`checkAndUpdateState(${++index}, this.${keyElse}.bind(this));`),
-      '}'
-    );
+    const keyElse = getBlockIdentifier(parentNode, nodeName, 'else');
+    mainBlock.push({
+      block: `this.${keyElse}.bind(this)`
+    });
 
     functionsToProcess.set(keyElse, processConsequent(alt, nodeName, parentNode, elseContext));
   }
 
   return {
     mainBlock: [
-      '(() => {',
-      ...indent([
-        'let state;',
-        'let localUnwatchFns = []',
-        'const checkAndUpdateState = (newState, fn) => {',
-        ...indent([
-          'if (state === newState) {',
-          indent('return;'),
-          '}',
-          'state = newState;',
-          'unwatch();',
-          'localUnwatchFns = Signal.subtle.untrack(fn);',
-          'unwatchFns.push(...localUnwatchFns);'
-        ]),
-        '};',
-        'const unwatch = () => {',
-        ...indent([
-          'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
-          'localUnwatchFns?.forEach(fn => fn());',
-          'localUnwatchFns = [];'
-        ]),
-        '}',
-        'unwatchFns.push(',
-        ...indent([
-          'effect(() => {',
-          ...indent(mainBlock),
-          '})',
-        ]),
-        ');'
-      ]),
-      '})();',
+      '_if(unwatchFns, [',
+      ...indent(mainBlock.map(({ condition, block }) => {
+        return [
+          '{',
+          ...indent(condition 
+            ? [`condition: ${condition.toString()},`, `block: ${block.toString()}`] 
+            : [`block: ${block.toString()}`]),
+          '},'
+        ]
+      }).flat()),
+      '])',
     ],
     fns: functionsToProcess
   };

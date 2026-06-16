@@ -340,3 +340,7 @@ export function getTextIdentifier(parentNode: string, index: string, prefix = 't
   return identifier.replace(/-/g, '_');
 }
 
+export function getBlockIdentifier(parentNode: string, index: string, prefix: 'if' | 'elseIf' | 'else' | 'for' | 'switch' | 'case' | 'default'): string {
+  const identifier = parentNode !== ROOT_NODE ? `${parentNode}_${prefix}${index}` : `${prefix}${index}`;
+  return identifier.replace(/-/g, '_');
+}

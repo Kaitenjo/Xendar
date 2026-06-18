@@ -1,4 +1,4 @@
-import { GREATER_THEN, LEFT_BRACE, SLASH, SPACE } from '../../costants/chars.constants';
+import { DOUBLE_QUOTE, EQUAL_THEN, LEFT_BRACE, SPACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -18,37 +18,53 @@ export function consumeAttribute(cursor: LexerCursor, _context: LexerTransitionF
   let read = true;
   let attribute = '';
   let retVal!: LexerTransitionFunctionReturnType;
-
+  
   while (read) {
     switch (cursor.peek()) {
+      /*
+        Cover the cases where the attribute is applied without any value
+        Ex:
+        <input disabled />
+      */
       case SPACE:
-      case SLASH:
-      case GREATER_THEN:
+        cursor.advance();
+        read = false;
         retVal = {
           state: LexerState.TAG_BODY,
           tokens: [{
             type: TokenType.ATTRIBUTE,
             parts: [attribute]
-          }] 
-        };
-        read = false;
+          }]
+        }
         break;
 
-      case LEFT_BRACE:
+      case EQUAL_THEN:
+        cursor.advance();
+        
+        // If attibutes as a value, it must start with double quotes
+        if (cursor.peek() !== DOUBLE_QUOTE) {
+          const { row, column } = cursor.position;
+          throw new Error(`Attribute value must start with double quotes '"'.Row ${row} Col ${column}`);
+        }
+
+        // Consume '"'
+        cursor.advance();
+        read = false;
+        const isInterpolatedValue = cursor.peek() === LEFT_BRACE;
+
         retVal = {
-          state: LexerState.INTERPOLATION,
+          state: isInterpolatedValue ? LexerState.INTERPOLATION : LexerState.ATTRIBUTE_VALUE,
+          pushState: true,
           tokens: [{
             type: TokenType.ATTRIBUTE,
             parts: [attribute]
-          }],
-          pushState: true 
-        };
-        read = false;
+          }]
+        }
         break;
 
       default:
         cursor.advance();
-        attribute = `${attribute}${cursor.currentChar.value}`
+        attribute = `${attribute}${cursor.currentChar.value}`;
     }
   }
 

@@ -1,10 +1,9 @@
 import { indent } from '@xaendar/common';
-import { Function } from '@xaendar/types';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
 import { Context } from '../models/render-context.model';
 import { processNode } from '../render-generator';
-import { getTextIdentifier } from '../utils/render-generator.utils';
+import { getBlockIdentifier, getTextIdentifier } from '../utils/render-generator.utils';
 
 /**
  * Generates code for a `@for` iteration node.
@@ -54,53 +53,16 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
   const oddName = resolveImplicit(node, '$odd');
   const forContext = new Context([node.itemAlias, indexName, firstName, lastName, evenName, oddName], parentContext);
 
-  functionsToProcess.set(`for_${nodeName}`, {
+  const forKey = getBlockIdentifier(parentNode, nodeName, 'for');
+  functionsToProcess.set(forKey, {
     code: [
-      `const ${node.itemAlias} = ${itemsName}[${counterName}];`,
-      `const ${indexName} = ${counterName};`,
-      `const ${firstName} = ${counterName} === 0;`,
-      `const ${lastName} = ${counterName} === ${itemsName}.length - 1;`,
-      `const ${evenName} = ${counterName} % 2 === 0;`,
-      `const ${oddName} = !${evenName};`,
+      `const { ${node.itemAlias}, ${indexName}, ${firstName}, ${lastName}, ${evenName}, ${oddName} } = _iterationVariables(${itemsName}, ${counterName});`,
       ...node.children.flatMap((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, forContext))
     ],
     args: [itemsName, counterName]
   });
 
-  mainBlock.push(
-    '(() => {',
-    ...indent(
-      'let localUnwatchFns = [];',
-      'const unwatch = () => {',
-      ...indent(
-        'unwatchFns = unwatchFns.filter(fn => !localUnwatchFns.includes(fn));',
-        'localUnwatchFns?.forEach(fn => fn());',
-        'localUnwatchFns = [];',
-      ),
-      '};',
-      'unwatchFns.push(',
-      ...indent(
-        'effect(() => {',
-        ...indent(
-          'unwatch();',
-          `const ${itemsName} = ${iterableExpr};`,
-          'Signal.subtle.untrack(() => {',
-          ...indent(
-            `for (let ${counterName} = 0; ${counterName} < ${itemsName}.length; ${counterName}++) {`,
-            ...indent(
-              `localUnwatchFns.push(...this.for_${nodeName}(${itemsName}, ${counterName}));`,
-              'unwatchFns.push(...localUnwatchFns);'
-            ),
-            '}',
-          ),
-          '});'
-        ),
-        '})'
-      ),
-      ');',
-    ),
-    '})();'
-  );
+  mainBlock.push(`_for(unwatchFns, () => ${iterableExpr}, this.${forKey}.bind(this));`);
 
   return {
     mainBlock,

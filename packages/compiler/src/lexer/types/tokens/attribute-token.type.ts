@@ -1,7 +1,7 @@
 import { TokenType } from '../token-type.enum';
 
 /**
- * Token emitted when the lexer consumes an HTML attribute name (and optional value).
+ * Token emitted when the lexer consumes an HTML attribute name.
  */
 export type AttributeToken = {
   /**
@@ -9,7 +9,7 @@ export type AttributeToken = {
    */
   type: TokenType.ATTRIBUTE
   /**
-   * `parts[0]` is the raw `name` or `name=value` string.
+   * `parts[0]` is the raw `name` string.
    */
   parts: [string]
 }

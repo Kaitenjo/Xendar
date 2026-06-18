@@ -35,11 +35,11 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
   }
 
   renderFunctions.push(
-    ...indent(
+    ...indent([
       'let unwatchFns = [];',
-      ...indent(...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, context)]).flat()),
+      ...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, context)]).flat(),
       'return unwatchFns;'
-    ),
+    ]),
     '}'
   )
 
@@ -48,22 +48,22 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
     if ('args' in fnData) {
       renderFunctions.push(
         `${key}(${fnData.args.join(', ')}) {`,
-        ...indent(
+        ...indent([
           'let unwatchFns = [];',
-          ...indent(...fnData.fn(...fnData.args)),
+          ...fnData.fn(...fnData.args),
           'return unwatchFns;'
-        ),
+        ]),
         '}',
       );
     } else {
       renderFunctions.push(
         `${key}() {`,
-        ...indent(
+        ...indent([
           'let unwatchFns = [];',
-          ...indent(...fnData.fn()),
-          'return unwatchFns;',
-          '}'
-        ),
+          ...fnData.fn(),
+          'return unwatchFns;'
+        ]),
+        '}'
       );
     }
     nodeToProcess.delete(key);

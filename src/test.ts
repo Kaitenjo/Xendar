@@ -2,7 +2,7 @@ import { compile } from "@xaendar/compiler";
 import { writeFileSync } from "fs";
 
 const template = `
-  <label for={id} aria-label={label} {placeholder} @input>
+  <label style="width: 100%; height: 50px;" for="{id}" aria-label="{label}" @input="onInput($event)">
     {label}
   </label>
   @const test = user.name;
@@ -68,8 +68,15 @@ const template = `
       <div>Content</div>
     }
   }
-  <input id={id} type="text" value={ value + '' + 'asd' + ' ' + "test" } placeholder={placeholder} @change="onChange($event)" />
+  <input id="{id}" type="text" value="{ value + '' + 'asd' + ' ' + "test" }" placeholder="{placeholder}" @change="onChange($event)" />
+  @if (a) {
+    <div>
+      @if (b) {
+        <span>Nested if</span>
+      }
+    </div>
+  }
   `
 
-const filePath = 'test.js'
+const filePath = 'dist/compiled.js'
 writeFileSync(filePath, compile(template));

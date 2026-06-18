@@ -23,9 +23,13 @@ export enum TokenType {
    */
   TAG_CLOSE_NAME,
   /**
-   * An HTML attribute and its optional value.
+   * An HTML attribute
    */
   ATTRIBUTE,
+  /**
+   * An HTML attribute literal value
+   */
+  ATTRIBUTE_VALUE,
   /**
    * A DOM event binding declared with `@eventName=handler`.
    */

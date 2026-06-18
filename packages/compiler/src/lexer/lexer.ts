@@ -1,13 +1,14 @@
 import { Stack } from '@xaendar/common';
 import { Dictionary } from '@xaendar/types';
 import { EOF } from '../costants/chars.constants';
+import { consumeAttributeValue } from './states/attribute-value.state';
 import { consumeAttribute } from './states/attribute.state';
 import { consumeCaseFlowControlCondition } from './states/case-flow-control-condition.state';
 import { consumeConstDeclaration } from './states/const-declaration';
-import { consumeEvent } from './states/event.state';
-import { consumeFlowControlBlock } from './states/flow-control-block.state';
 import { consumeDefaultFlowControlCondition } from './states/default-flow-control-condition.state';
+import { consumeEvent } from './states/event.state';
 import { consumeFlowControl } from './states/flow-control';
+import { consumeFlowControlBlock } from './states/flow-control-block.state';
 import { consumeInterpolationExpression } from './states/interpolation-expression.state';
 import { consumeInterpolationliteral } from './states/interpolation-literal.state';
 import { consumeInterpolation } from './states/interpolation.state';
@@ -56,6 +57,7 @@ export class Lexer {
     [LexerState.TAG_OPEN_END]: consumeTagOpenEnd,
     [LexerState.TAG_CLOSE]: consumeTagClose,
     [LexerState.ATTRIBUTE]: consumeAttribute,
+    [LexerState.ATTRIBUTE_VALUE]: consumeAttributeValue,
     [LexerState.FLOW_CONTROL]: consumeFlowControl,
     [LexerState.FLOW_CONTROL_CONDITION]: consumeDefaultFlowControlCondition,
     [LexerState.CASE_FLOW_CONTROL_CONDITION]: consumeCaseFlowControlCondition,

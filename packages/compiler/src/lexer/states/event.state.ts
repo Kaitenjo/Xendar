@@ -26,16 +26,6 @@ export function consumeEvent(cursor: LexerCursor, _context: LexerTransitionFunct
       case SPACE:
       case SLASH:
       case GREATER_THEN:
-        /*
-          Special case to handle syntax sugar for event bindings:
-          If the desired function to be binded is the equal to the event name
-          with the "on" prefix, automatically generate the binding string.
-          Ex: @click="onClick" can be written as @click, and the emitted token will have "onClick" as part
-        */
-        if (!event.includes('=')) {
-          event = `${event}=on${event[0]!.toUpperCase()}${event.slice(1)}($event)`;
-        }
-
         retVal = {
           state: LexerState.TAG_BODY,
           tokens: [{ 

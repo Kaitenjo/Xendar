@@ -1,4 +1,4 @@
-import { NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
+import { Function, NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
 import { effect } from '../signals';
 
 /**
@@ -11,7 +11,7 @@ import { effect } from '../signals';
  */
 type Block = {
   condition?: NoArgsFunction<boolean>,
-  block: NoArgsFunction<NoArgsVoidFunction[]>
+  block: Function<[HTMLElement], NoArgsVoidFunction[]>
 };
 
 /**
@@ -28,27 +28,28 @@ type Block = {
  * state (which branch is active) and the related cleanup functions are only updated if
  * the active branch has actually changed.
  *
+ * @param parentNode - The parent HTML element where the conditional structure is applied.
  * @param unwatchFns - Shared array that collects all active cleanup functions.
  *   Mutated in place: the created effect and branch functions are added to and
  *   removed from this array.
  * @param blocks - Ordered list of conditional branches to evaluate.
  */
-export function _if(unwatchFns: NoArgsVoidFunction[], blocks: Block[]): void {
+export function _if(parentNode: HTMLElement, unwatchFns: NoArgsVoidFunction[], blocks: Block[]): void {
   let state: number | null = null;
   let localUnwatchFns = new Array<NoArgsVoidFunction>;
   let fn: () => { state: number | null, fns: NoArgsVoidFunction[] } | undefined;
 
   switch (blocks.length) {
     case 1:
-      fn = () => handleIf(blocks[0]!, state, unwatchFns, localUnwatchFns);
+      fn = () => handleIf(parentNode, blocks[0]!, state, unwatchFns, localUnwatchFns);
       break;
 
     case 2:
-      fn = () => handleIfElse(blocks[0]!, blocks[1]!, state, unwatchFns, localUnwatchFns);
+      fn = () => handleIfElse(parentNode, blocks[0]!, blocks[1]!, state, unwatchFns, localUnwatchFns);
       break;
 
     default:
-      fn = () => handleIfElseIf(blocks, state, unwatchFns, localUnwatchFns);
+      fn = () => handleIfElseIf(parentNode, blocks, state, unwatchFns, localUnwatchFns);
   }
 
   const unlistener = effect(() => {
@@ -77,14 +78,15 @@ export function _if(unwatchFns: NoArgsVoidFunction[], blocks: Block[]): void {
  *   otherwise `undefined`.
  */
 function handleIf(
+  parentNode: HTMLElement,
   ifBlock: Block,
   state: number | null,
   unwatchFns: NoArgsVoidFunction[],
   localUnwatchFns: NoArgsVoidFunction[]
 ): { state: number | null, fns: NoArgsVoidFunction[] } | undefined {
   return ifBlock.condition!() 
-    ? checkAndUpdateState(state, 0, ifBlock.block, unwatchFns, localUnwatchFns) 
-    : checkAndUpdateState(state, null, () => [], unwatchFns, localUnwatchFns);
+    ? checkAndUpdateState(parentNode, state, 0, ifBlock.block, unwatchFns, localUnwatchFns) 
+    : checkAndUpdateState(parentNode, state, null, () => [], unwatchFns, localUnwatchFns);
 }
 
 /**
@@ -102,6 +104,7 @@ function handleIf(
  *   otherwise `undefined`.
  */
 function handleIfElse(
+  parentNode: HTMLElement,
   ifBlock: Block,
   elseBlock: Block,
   state: number | null,
@@ -109,8 +112,8 @@ function handleIfElse(
   localUnwatchFns: NoArgsVoidFunction[]
 ): { state: number | null, fns: NoArgsVoidFunction[] } | undefined {
   return ifBlock.condition!()
-    ? checkAndUpdateState(state, 0, ifBlock.block, unwatchFns, localUnwatchFns)
-    : checkAndUpdateState(state, 1, elseBlock.block, unwatchFns, localUnwatchFns);
+    ? checkAndUpdateState(parentNode, state, 0, ifBlock.block, unwatchFns, localUnwatchFns)
+    : checkAndUpdateState(parentNode, state, 1, elseBlock.block, unwatchFns, localUnwatchFns);
 }
 
 /**
@@ -128,6 +131,7 @@ function handleIfElse(
  *   otherwise `undefined`. Also returns `undefined` if no branch matches.
  */
 function handleIfElseIf(
+  parentNode: HTMLElement,
   blocks: Block[],
   state: number | null,
   unwatchFns: NoArgsVoidFunction[],
@@ -136,7 +140,7 @@ function handleIfElseIf(
   for (let i = 0; i < blocks.length; i++) {
     const { condition, block } = blocks[i]!;
     if (!condition || condition()) {
-      return checkAndUpdateState(state, i, block, unwatchFns, localUnwatchFns);
+      return checkAndUpdateState(parentNode, state, i, block, unwatchFns, localUnwatchFns);
     }
   }
 }
@@ -163,15 +167,16 @@ function handleIfElseIf(
  *   `undefined`.
  */
 function checkAndUpdateState(
+  parentNode: HTMLElement,
   state: number | null,
   newState: number | null,
-  conditionalBlockFn: NoArgsFunction<NoArgsVoidFunction[]>,
+  conditionalBlockFn: Function<[HTMLElement], NoArgsVoidFunction[]>,
   unwatchFns: NoArgsVoidFunction[],
   localUnwatchFns: NoArgsVoidFunction[]
 ): { state: number | null, fns: NoArgsVoidFunction[] } | undefined {
   if (state !== newState) {
     unwatch(unwatchFns, localUnwatchFns);
-    localUnwatchFns = Signal.subtle.untrack<NoArgsVoidFunction[]>(conditionalBlockFn);
+    localUnwatchFns = Signal.subtle.untrack<NoArgsVoidFunction[]>(() => conditionalBlockFn(parentNode));
     unwatchFns.push(...localUnwatchFns);
     return { state: newState, fns: localUnwatchFns };
   }

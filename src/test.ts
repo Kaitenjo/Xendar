@@ -7,6 +7,14 @@ const template = `
   </label>
   @const test = user.name;
   
+  @if (isChecked) {
+    <span>Checked</span>
+  }
+
+  @if (!isChecked) {
+    <span>Unchecked</span>
+  }
+
   @if ((a || b) && c || id !== 'boolean' || pippo instanceof HTMLElement || id && id.length > 0) {
     @const test2 = user.name;
     @const test3 = user.name;

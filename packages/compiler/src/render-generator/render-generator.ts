@@ -11,9 +11,12 @@ import { processSwitch } from "./states/process-switch.state.js";
 import { processTextAndInterpolation } from "./states/process-text-and-interpolation.state.js";
 import { getElementIdentifier, getTextIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
 
-const nodeToProcess = new Map<string,
-  | { fn: NoArgsFunction<string[]> }  // If, Switch
-  | { fn: Function<[items: string, index: string], string[]>, args: [items: string, index: string] } // For
+const nodeToProcess = new Map<string, { 
+  fn: Function<string[], string[]>, 
+  args: 
+    | [parentElement: string] // If Switch
+    | [parentElement: string, items: string, index: string] // For
+  }
 >();
 
 /**
@@ -24,14 +27,15 @@ const nodeToProcess = new Map<string,
  */
 export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string): string {
   nodeToProcess.clear();
-  const context = new Context;
+  const context = new Context([ROOT_NODE]);
 
   const renderFunctions = [
     '_render() {',
+    indent(`const ${ROOT_NODE} = this._root;`)
   ]
 
   if (cssVariableName) {
-    renderFunctions.push(...indent(`this._root.adoptedStyleSheets = [${cssVariableName}];`));
+    renderFunctions.push(indent(`${ROOT_NODE}.adoptedStyleSheets = [${cssVariableName}];`));
   }
 
   renderFunctions.push(
@@ -43,29 +47,17 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
     '}'
   )
 
-  while (nodeToProcess.size > 0) {
+  while (nodeToProcess.size) {
     const [key, fnData] = nodeToProcess.entries().next().value!;
-    if ('args' in fnData) {
-      renderFunctions.push(
-        `${key}(${fnData.args.join(', ')}) {`,
-        ...indent([
-          'let unwatchFns = [];',
-          ...fnData.fn(...fnData.args),
-          'return unwatchFns;'
-        ]),
-        '}',
-      );
-    } else {
-      renderFunctions.push(
-        `${key}() {`,
-        ...indent([
-          'let unwatchFns = [];',
-          ...fnData.fn(),
-          'return unwatchFns;'
-        ]),
-        '}'
-      );
-    }
+    renderFunctions.push(
+      `${key}(${fnData.args.join(', ')}) {`,
+      ...indent([
+        'let unwatchFns = [];',
+        ...fnData.fn(...fnData.args),
+        'return unwatchFns;'
+      ]),
+      '}',
+    );
     nodeToProcess.delete(key);
   }
 
@@ -88,7 +80,7 @@ export function processNode(node: ASTNode, nodeName: string, parentNode: string,
 
     case ASTNodeType.If:
       const conditionalBlockData = processIf(node, nodeName, parentNode, context);
-      conditionalBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody }));
+      conditionalBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody.code, args: fnBody.args }));
       return conditionalBlockData.mainBlock;
 
     case ASTNodeType.For:
@@ -98,7 +90,7 @@ export function processNode(node: ASTNode, nodeName: string, parentNode: string,
 
     case ASTNodeType.Switch:
       const switchBlockData = processSwitch(node, nodeName, parentNode, context);
-      switchBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody }));
+      switchBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody.code, args: fnBody.args }));
       return switchBlockData.mainBlock;
 
     case ASTNodeType.ConstDeclaration:

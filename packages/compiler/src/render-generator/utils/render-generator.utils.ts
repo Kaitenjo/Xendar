@@ -221,7 +221,7 @@ export const GLOBAL_IDENTIFIERS: ReadonlySet<string> = new Set([
   'Window',
 ]);
 
-export const ROOT_NODE = 'this._root';
+export const ROOT_NODE = 'root';
 
 /**
  * Resolves references to component properties inside a template expression.

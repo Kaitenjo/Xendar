@@ -6,7 +6,6 @@ import { IfNode } from '../../parser/types/nodes/if-node.type';
 import { Context } from '../models/render-context.model';
 import { processNode } from '../render-generator';
 import { getBlockIdentifier, resolveExpression } from '../utils/render-generator.utils';
-import { NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
 
 /**
  * Generates code for an `@if` conditional node.
@@ -18,9 +17,9 @@ import { NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
  * @param context Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processIf(node: IfNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, string[]> } {
+export function processIf(node: IfNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [parentElement: string] }> } {
   const ifContext = new Context([], context);
-  const functionsToProcess = new Map<string, string[]>();
+  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string] }>();
   const mainBlock = new Array<{ condition?: string, block: string }>();
 
   const ifKey = getBlockIdentifier(parentNode, nodeName, 'if');
@@ -29,7 +28,7 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
     block: `this.${ifKey}.bind(this)`
   }
   );
-  functionsToProcess.set(ifKey, processConsequent(node, nodeName, parentNode, ifContext));
+  functionsToProcess.set(ifKey, { code: processConsequent(node, nodeName, parentNode, ifContext), args: [parentNode] });
 
   let alt = node.alternate;
   let index = 0;
@@ -42,7 +41,7 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
       condition: resolveExpression(conditionNode, context),
       block: `this.${keyElseIf}.bind(this)`
     });
-    functionsToProcess.set(keyElseIf, processConsequent(alt, nodeName, parentNode, elseIfContext));
+    functionsToProcess.set(keyElseIf, { code: processConsequent(alt, nodeName, parentNode, elseIfContext), args: [parentNode] });
     alt = alt.alternate;
   }
 
@@ -53,17 +52,17 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
       block: `this.${keyElse}.bind(this)`
     });
 
-    functionsToProcess.set(keyElse, processConsequent(alt, nodeName, parentNode, elseContext));
+    functionsToProcess.set(keyElse, { code: processConsequent(alt, nodeName, parentNode, elseContext), args: [parentNode] });
   }
 
   return {
     mainBlock: [
-      '_if(unwatchFns, [',
+      `_if(${parentNode}, unwatchFns, [`,
       ...indent(mainBlock.map(({ condition, block }) => {
         return [
           '{',
           ...indent(condition 
-            ? [`condition: ${condition.toString()},`, `block: ${block.toString()}`] 
+            ? [`condition: () => ${condition.toString()},`, `block: ${block.toString()}`] 
             : [`block: ${block.toString()}`]),
           '},'
         ]

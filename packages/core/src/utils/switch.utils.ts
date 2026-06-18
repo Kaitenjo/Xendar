@@ -14,6 +14,7 @@ import { _if } from './if.utils';
  * Because it delegates to `_if`, the switch benefits from the same optimisation:
  * the active branch is only re-rendered when it actually changes.
  *
+ * @param parentNode - The parent HTML element where the conditional structure is applied.
  * @param unwatchFns - Shared array that collects all active cleanup functions.
  *   Mutated in place by the underlying {@link _if} call.
  * @param expression - Function that evaluates the switch expression. Called
@@ -25,6 +26,7 @@ import { _if } from './if.utils';
  *     its cleanup functions.
  */
 export function _switch(
+  parentNode: HTMLElement,
   unwatchFns: NoArgsVoidFunction[],
   expression: NoArgsFunction<unknown>,
   blocks: Array<{ 
@@ -32,7 +34,7 @@ export function _switch(
     block: NoArgsFunction<NoArgsVoidFunction[]> 
   }>
 ): void {
-  _if(unwatchFns, blocks.map(({ condition, block }) => ({
+  _if(parentNode, unwatchFns, blocks.map(({ condition, block }) => ({
     condition: condition 
       ? () => condition.some(condition => condition === expression())
       : undefined,

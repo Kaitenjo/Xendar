@@ -186,7 +186,7 @@ function checkAndUpdateState(
  * @param unwatchFns - Shared array of active cleanup functions, mutated in place.
  * @param localUnwatchFns - Cleanup functions of the branch to deactivate.
  */
-function unwatch(unwatchFns: NoArgsVoidFunction[], localUnwatchFns: NoArgsVoidFunction[]) {
+export function unwatch(unwatchFns: NoArgsVoidFunction[], localUnwatchFns: NoArgsVoidFunction[]) {
   for (const fn of localUnwatchFns) {
     const index = unwatchFns.indexOf(fn);
     if (index !== -1) {

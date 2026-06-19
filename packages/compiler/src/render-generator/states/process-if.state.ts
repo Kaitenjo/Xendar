@@ -17,9 +17,9 @@ import { getBlockIdentifier, resolveExpression } from '../utils/render-generator
  * @param context Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processIf(node: IfNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [parentElement: string] }> } {
+export function processIf(node: IfNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [parentElement: string, parentContext: string] }> } {
   const ifContext = new Context([], context);
-  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string] }>();
+  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string, parentContext: string] }>();
   const mainBlock = new Array<{ condition?: string, block: string }>();
 
   const ifKey = getBlockIdentifier(parentNode, nodeName, 'if');
@@ -28,7 +28,7 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
     block: `this.${ifKey}.bind(this)`
   }
   );
-  functionsToProcess.set(ifKey, { code: processConsequent(node, nodeName, parentNode, ifContext), args: [parentNode] });
+  functionsToProcess.set(ifKey, { code: processConsequent(node, nodeName, parentNode, ifContext), args: [parentNode, 'parentContext'] });
 
   let alt = node.alternate;
   let index = 0;
@@ -41,7 +41,7 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
       condition: resolveExpression(conditionNode, context),
       block: `this.${keyElseIf}.bind(this)`
     });
-    functionsToProcess.set(keyElseIf, { code: processConsequent(alt, nodeName, parentNode, elseIfContext), args: [parentNode] });
+    functionsToProcess.set(keyElseIf, { code: processConsequent(alt, nodeName, parentNode, elseIfContext), args: [parentNode, 'parentContext'] });
     alt = alt.alternate;
   }
 
@@ -52,12 +52,12 @@ export function processIf(node: IfNode, nodeName: string, parentNode: string, co
       block: `this.${keyElse}.bind(this)`
     });
 
-    functionsToProcess.set(keyElse, { code: processConsequent(alt, nodeName, parentNode, elseContext), args: [parentNode] });
+    functionsToProcess.set(keyElse, { code: processConsequent(alt, nodeName, parentNode, elseContext), args: [parentNode, 'parentContext'] });
   }
 
   return {
     mainBlock: [
-      `_if(${parentNode}, unwatchFns, [`,
+      `_if(${parentNode}, parentContext, unwatchFns, [`,
       ...indent(mainBlock.map(({ condition, block }) => {
         return [
           '{',

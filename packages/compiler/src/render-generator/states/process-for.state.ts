@@ -36,9 +36,12 @@ import { getBlockIdentifier, getTextIdentifier } from '../utils/render-generator
  * @param parentContext - The enclosing scope context.
  * @returns Array of generated code lines.
  */
-export function processFor(node: ForNode, nodeName: string, parentNode: string, parentContext: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [parentElement: string, items: string, index: string] }> } {
+export function processFor(node: ForNode, nodeName: string, parentNode: string, parentContext: Context): { 
+  mainBlock: string[], 
+  fns: Map<string, { code: string[], args: [parentElement: string, parentContext: string, items: string, index: string] }> 
+} {
   const mainBlock = new Array<string>;
-  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string, items: string, index: string] }>();
+  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string, parentContext: string, items: string, index: string] }>();
 
   const iterableSource = node.iterableSource;
   const iterableExpr = parentContext.getIdentifier(iterableSource) ?? `this.${iterableSource}`;
@@ -59,10 +62,10 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
       `const { ${node.itemAlias}, ${indexName}, ${firstName}, ${lastName}, ${evenName}, ${oddName} } = _iterationVariables(${itemsName}, ${counterName});`,
       ...node.children.flatMap((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, forContext))
     ],
-    args: [parentNode, itemsName, counterName]
+    args: [parentNode, 'parentContext', itemsName, counterName]
   });
 
-  mainBlock.push(`_for(${parentNode}, unwatchFns, () => ${iterableExpr}, this.${forKey}.bind(this));`);
+  mainBlock.push(`_for(${parentNode}, parentContext, unwatchFns, () => ${iterableExpr}, this.${forKey}.bind(this));`);
 
   return {
     mainBlock,

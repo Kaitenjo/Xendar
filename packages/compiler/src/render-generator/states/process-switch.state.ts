@@ -15,15 +15,15 @@ import { getBlockIdentifier, resolveExpression } from '../utils/render-generator
  * @param context Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processSwitch(node: SwitchNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [parentElement: string] }> } {
-  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string] }>();
+export function processSwitch(node: SwitchNode, nodeName: string, parentNode: string, context: Context): { mainBlock: string[], fns: Map<string, { code: string[], args: [parentElement: string, parentContext: string] }> } {
+  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string, parentContext: string] }>();
   const blocks = new Array<{ condition: string[] | null, block: string }>();
 
   node.cases.forEach((caseNode, i) => {
     const caseContext = new Context([], context);
     const caseName = caseNode.condition ? getBlockIdentifier(parentNode, `${nodeName}_${i}`, 'case') : getBlockIdentifier(parentNode, nodeName, 'default');
 
-    functionsToProcess.set(caseName, { code: caseNode.children.map((child, i) => processNode(child, `${nodeName}_${i}_${i}`, parentNode, caseContext)).flat(), args: [parentNode] });
+    functionsToProcess.set(caseName, { code: caseNode.children.map((child, i) => processNode(child, `${nodeName}_${i}_${i}`, parentNode, caseContext)).flat(), args: [parentNode, 'parentContext'] });
     blocks.push({
       condition: caseNode.condition,
       block: `this.${caseName}.bind(this)`
@@ -32,7 +32,7 @@ export function processSwitch(node: SwitchNode, nodeName: string, parentNode: st
 
   return {
     mainBlock: [
-      `_switch(${parentNode}, unwatchFns, () => ${resolveExpression(node.expression, context)}, [`,
+      `_switch(${parentNode}, parentContext, unwatchFns, () => ${resolveExpression(node.expression, context)}, [`,
       ...indent(blocks.map(({ condition, block }) => {
         return [
           '{',

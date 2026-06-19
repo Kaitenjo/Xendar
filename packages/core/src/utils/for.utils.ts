@@ -1,24 +1,26 @@
-import { NoArgsVoidFunction } from '@xaendar/types';
+import { Function, NoArgsVoidFunction } from '@xaendar/types';
 import { unwatch } from './if.utils';
 import { effect } from '../signals';
+import { Context } from './context.utils';
 
 /**
  * Reactively iterates over a list of items, re-running the loop whenever the tracked condition changes.
  * Previous iteration side-effects are cleaned up before each re-evaluation.
  *
  * @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param unwatchFns - Array collecting cleanup functions for the parent scope.
  * @param condition - A reactive function that returns the array of items to iterate over.
  * @param forFn - A callback invoked for each item, receiving the parent node, the item, and its index. Must return an array of cleanup functions.
  */
-export function _for(parentNode: HTMLElement, unwatchFns: NoArgsVoidFunction[], condition: () => unknown[], forFn: (parentNode: HTMLElement, item: unknown, index: number) => NoArgsVoidFunction[]) {
+export function _for(parentNode: HTMLElement, parentContext: Context, unwatchFns: NoArgsVoidFunction[], condition: () => unknown[], forFn: Function<[parentNode: HTMLElement, context: Context, item: unknown, index: number], NoArgsVoidFunction[]>) {
   const localUnwatchFns = new Array<NoArgsVoidFunction>;
   const unlistener = effect(() => {
     unwatch(unwatchFns, localUnwatchFns);
     const items = condition();
     Signal.subtle.untrack(() => {
       for (let i = 0; i < items.length; i++) {
-        localUnwatchFns.push(...forFn(parentNode, items[i], i));
+        localUnwatchFns.push(...forFn(parentNode, parentContext, items[i], i));
         unwatchFns.push(...localUnwatchFns);
       }
     });

@@ -1,4 +1,5 @@
 import { NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
+import { Context } from './context.utils';
 import { _if } from './if.utils';
 
 /**
@@ -15,6 +16,7 @@ import { _if } from './if.utils';
  * the active branch is only re-rendered when it actually changes.
  *
  * @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param unwatchFns - Shared array that collects all active cleanup functions.
  *   Mutated in place by the underlying {@link _if} call.
  * @param expression - Function that evaluates the switch expression. Called
@@ -27,6 +29,7 @@ import { _if } from './if.utils';
  */
 export function _switch(
   parentNode: HTMLElement,
+  parentContext: Context,
   unwatchFns: NoArgsVoidFunction[],
   expression: NoArgsFunction<unknown>,
   blocks: Array<{ 
@@ -34,7 +37,7 @@ export function _switch(
     block: NoArgsFunction<NoArgsVoidFunction[]> 
   }>
 ): void {
-  _if(parentNode, unwatchFns, blocks.map(({ condition, block }) => ({
+  _if(parentNode, parentContext, unwatchFns, blocks.map(({ condition, block }) => ({
     condition: condition 
       ? () => condition.some(condition => condition === expression())
       : undefined,

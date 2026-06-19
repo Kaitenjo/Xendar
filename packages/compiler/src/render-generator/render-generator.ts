@@ -11,12 +11,12 @@ import { processSwitch } from "./states/process-switch.state.js";
 import { processTextAndInterpolation } from "./states/process-text-and-interpolation.state.js";
 import { getElementIdentifier, getTextIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
 
-const nodeToProcess = new Map<string, { 
-  fn: Function<string[], string[]>, 
-  args: 
-    | [parentElement: string] // If Switch
-    | [parentElement: string, items: string, index: string] // For
-  }
+const nodeToProcess = new Map<string, {
+  fn: Function<string[], string[]>,
+  args:
+  | [parentElement: string, parentContext: string] // If Switch
+  | [parentElement: string, parentContext: string, items: string, index: string] // For
+}
 >();
 
 /**
@@ -31,7 +31,10 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
 
   const renderFunctions = [
     '_render() {',
-    indent(`const ${ROOT_NODE} = this._root;`)
+    ...indent([
+      `const ${ROOT_NODE} = this._root;`,
+      'const context = new Context()'
+    ])
   ]
 
   if (cssVariableName) {
@@ -52,6 +55,7 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
     renderFunctions.push(
       `${key}(${fnData.args.join(', ')}) {`,
       ...indent([
+        'const context = new Context([], parentContext)',
         'let unwatchFns = [];',
         ...fnData.fn(...fnData.args),
         'return unwatchFns;'
@@ -73,7 +77,7 @@ export function processNode(node: ASTNode, nodeName: string, parentNode: string,
   switch (node.type) {
     case ASTNodeType.Text:
     case ASTNodeType.Interpolation:
-      return processTextAndInterpolation(node, getTextIdentifier(parentNode, nodeName), parentNode, context);
+      return processTextAndInterpolation(node, parentNode);
 
     case ASTNodeType.Element:
       return processElement(node, getElementIdentifier(node, parentNode, nodeName), parentNode, context);

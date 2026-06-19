@@ -1,5 +1,6 @@
 import { Function, NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
 import { effect } from '../signals';
+import { Context } from './context.utils';
 
 /**
  * Represents a single branch of a conditional structure (`if` / `else if` / `else`).
@@ -11,7 +12,7 @@ import { effect } from '../signals';
  */
 type Block = {
   condition?: NoArgsFunction<boolean>,
-  block: Function<[HTMLElement], NoArgsVoidFunction[]>
+  block: Function<[HTMLElement, Context], NoArgsVoidFunction[]>
 };
 
 /**
@@ -29,27 +30,28 @@ type Block = {
  * the active branch has actually changed.
  *
  * @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param unwatchFns - Shared array that collects all active cleanup functions.
  *   Mutated in place: the created effect and branch functions are added to and
  *   removed from this array.
  * @param blocks - Ordered list of conditional branches to evaluate.
  */
-export function _if(parentNode: HTMLElement, unwatchFns: NoArgsVoidFunction[], blocks: Block[]): void {
+export function _if(parentNode: HTMLElement, parentContext: Context, unwatchFns: NoArgsVoidFunction[], blocks: Block[]): void {
   let state: number | null = null;
   let localUnwatchFns = new Array<NoArgsVoidFunction>;
   let fn: () => { state: number | null, fns: NoArgsVoidFunction[] } | undefined;
 
   switch (blocks.length) {
     case 1:
-      fn = () => handleIf(parentNode, blocks[0]!, state, unwatchFns, localUnwatchFns);
+      fn = () => handleIf(parentNode, parentContext, blocks[0]!, state, unwatchFns, localUnwatchFns);
       break;
 
     case 2:
-      fn = () => handleIfElse(parentNode, blocks[0]!, blocks[1]!, state, unwatchFns, localUnwatchFns);
+      fn = () => handleIfElse(parentNode, parentContext, blocks[0]!, blocks[1]!, state, unwatchFns, localUnwatchFns);
       break;
 
     default:
-      fn = () => handleIfElseIf(parentNode, blocks, state, unwatchFns, localUnwatchFns);
+      fn = () => handleIfElseIf(parentNode, parentContext, blocks, state, unwatchFns, localUnwatchFns);
   }
 
   const unlistener = effect(() => {
@@ -70,6 +72,8 @@ export function _if(parentNode: HTMLElement, unwatchFns: NoArgsVoidFunction[], b
  * previously active branch is deactivated by resetting the state to `null` and
  * executing an empty block.
  *
+ * @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param ifBlock - The `if` branch to evaluate.
  * @param state - The current state (index of the active branch, or `null` if none).
  * @param unwatchFns - Shared array of active cleanup functions.
@@ -79,14 +83,15 @@ export function _if(parentNode: HTMLElement, unwatchFns: NoArgsVoidFunction[], b
  */
 function handleIf(
   parentNode: HTMLElement,
+  parentContext: Context,
   ifBlock: Block,
   state: number | null,
   unwatchFns: NoArgsVoidFunction[],
   localUnwatchFns: NoArgsVoidFunction[]
 ): { state: number | null, fns: NoArgsVoidFunction[] } | undefined {
   return ifBlock.condition!() 
-    ? checkAndUpdateState(parentNode, state, 0, ifBlock.block, unwatchFns, localUnwatchFns) 
-    : checkAndUpdateState(parentNode, state, null, () => [], unwatchFns, localUnwatchFns);
+    ? checkAndUpdateState(parentNode, parentContext, state, 0, ifBlock.block, unwatchFns, localUnwatchFns) 
+    : checkAndUpdateState(parentNode, parentContext, state, null, () => [], unwatchFns, localUnwatchFns);
 }
 
 /**
@@ -94,7 +99,9 @@ function handleIf(
  *
  * If the `if` condition is true, the first branch is activated (state `0`); otherwise,
  * the `else` branch is activated (state `1`).
- *
+ * 
+ * @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param ifBlock - The `if` branch to evaluate.
  * @param elseBlock - The `else` branch used when the `if` condition is false.
  * @param state - The current state (index of the active branch, or `null` if none).
@@ -105,6 +112,7 @@ function handleIf(
  */
 function handleIfElse(
   parentNode: HTMLElement,
+  parentContext: Context,
   ifBlock: Block,
   elseBlock: Block,
   state: number | null,
@@ -112,8 +120,8 @@ function handleIfElse(
   localUnwatchFns: NoArgsVoidFunction[]
 ): { state: number | null, fns: NoArgsVoidFunction[] } | undefined {
   return ifBlock.condition!()
-    ? checkAndUpdateState(parentNode, state, 0, ifBlock.block, unwatchFns, localUnwatchFns)
-    : checkAndUpdateState(parentNode, state, 1, elseBlock.block, unwatchFns, localUnwatchFns);
+    ? checkAndUpdateState(parentNode, parentContext, state, 0, ifBlock.block, unwatchFns, localUnwatchFns)
+    : checkAndUpdateState(parentNode, parentContext, state, 1, elseBlock.block, unwatchFns, localUnwatchFns);
 }
 
 /**
@@ -122,7 +130,9 @@ function handleIfElse(
  * Iterates through the branches in order and activates the first one whose condition is
  * true; a branch without a condition is always considered valid and acts as the final
  * `else`. The state is set to the index of the activated branch.
- *
+ * 
+ * @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param blocks - Ordered list of conditional branches to evaluate.
  * @param state - The current state (index of the active branch, or `null` if none).
  * @param unwatchFns - Shared array of active cleanup functions.
@@ -132,6 +142,7 @@ function handleIfElse(
  */
 function handleIfElseIf(
   parentNode: HTMLElement,
+  parentContext: Context,
   blocks: Block[],
   state: number | null,
   unwatchFns: NoArgsVoidFunction[],
@@ -140,7 +151,7 @@ function handleIfElseIf(
   for (let i = 0; i < blocks.length; i++) {
     const { condition, block } = blocks[i]!;
     if (!condition || condition()) {
-      return checkAndUpdateState(parentNode, state, i, block, unwatchFns, localUnwatchFns);
+      return checkAndUpdateState(parentNode, parentContext, state, i, block, unwatchFns, localUnwatchFns);
     }
   }
 }
@@ -156,6 +167,8 @@ function handleIfElseIf(
  *
  * If the branch has not changed, no operation is performed.
  *
+* @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param state - The current state (index of the active branch, or `null` if none).
  * @param newState - The new state to set (index of the branch to activate, or `null`).
  * @param conditionalBlockFn - Branch function to execute, which returns its own
@@ -168,15 +181,16 @@ function handleIfElseIf(
  */
 function checkAndUpdateState(
   parentNode: HTMLElement,
+  parentContext: Context,
   state: number | null,
   newState: number | null,
-  conditionalBlockFn: Function<[HTMLElement], NoArgsVoidFunction[]>,
+  conditionalBlockFn: Function<[HTMLElement, Context], NoArgsVoidFunction[]>,
   unwatchFns: NoArgsVoidFunction[],
   localUnwatchFns: NoArgsVoidFunction[]
 ): { state: number | null, fns: NoArgsVoidFunction[] } | undefined {
   if (state !== newState) {
     unwatch(unwatchFns, localUnwatchFns);
-    localUnwatchFns = Signal.subtle.untrack<NoArgsVoidFunction[]>(() => conditionalBlockFn(parentNode));
+    localUnwatchFns = Signal.subtle.untrack<NoArgsVoidFunction[]>(() => conditionalBlockFn(parentNode, parentContext));
     unwatchFns.push(...localUnwatchFns);
     return { state: newState, fns: localUnwatchFns };
   }

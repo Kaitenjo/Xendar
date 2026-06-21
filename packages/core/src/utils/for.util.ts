@@ -11,7 +11,7 @@ import { Context } from './context.util';
  * @param condition - A reactive function that returns the array of items to iterate over.
  * @param forFn - A callback invoked for each item, receiving the parent node, the item, and its index. Must return an array of cleanup functions.
  */
-export function _for(parentNode: HTMLElement, parentContext: Context, condition: () => unknown[], forFn: Function<[parentNode: HTMLElement, context: Context, item: unknown, index: number], Context>) {
+export function _for(parentNode: HTMLElement, parentContext: Context, condition: () => unknown[], forFn: Function<[parentNode: HTMLElement, context: Context, items: unknown[], index: number], Context>) {
   let contexts = new Array<Context>;
   const unlistener = effect(() => {
     contexts.forEach(context => {
@@ -22,7 +22,7 @@ export function _for(parentNode: HTMLElement, parentContext: Context, condition:
     const items = condition();
     Signal.subtle.untrack(() => {
       for (let i = 0; i < items.length; i++) {
-        const context = forFn(parentNode, parentContext, items[i], i);
+        const context = forFn(parentNode, parentContext, items, i);
         contexts.push(context);
         parentContext.addChild(context);
       }
@@ -42,7 +42,7 @@ export function _for(parentNode: HTMLElement, parentContext: Context, condition:
  * @param indexAlias - The template alias name for the current index.
  * @returns A record mapping alias names and built-in variables to their values.
  */
-export function _iterationVariables(items: unknown[], index: number, itemAlias: string, indexAlias: string): Record<string, unknown> {
+export function _iterationVariables(items: unknown[], index: number, itemAlias = 'item', indexAlias = 'index'): Record<string, unknown> {
   const even = index % 2 === 0;
 
   return {

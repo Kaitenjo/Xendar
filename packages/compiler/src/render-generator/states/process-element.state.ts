@@ -39,9 +39,9 @@ export function processElement(node: ElementNode, nodeName: string, parentNode: 
       ...indent(events),
       ']'
     ]),
-    ')'
+    ');'
   )
-  : code[code.length - 1] = `${code[code.length - 1]} [])`;
+  : code[code.length - 1] = `${code[code.length - 1]} []);`;
   
   code.push(...node.children.map((child, i) => processNode(child, i.toString(), nodeName, compilerContext)).flat())
   return code;

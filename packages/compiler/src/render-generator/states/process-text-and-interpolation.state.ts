@@ -17,8 +17,8 @@ import { resolveExpression } from '../utils/render-generator.utils';
  */
 export function processTextAndInterpolation(node: TextNode | InterpolationNode, parentNode: string, compilerContext: CompilerContext): string[] {
   return [`${node.type === ASTNodeType.Text 
-      ? `_renderLiteralText(${parentNode}, context, '${node.value}')`
-      : `_renderText(${parentNode}, context, () => ${resolveExpression(node.expression, compilerContext)})`
+      ? `_renderLiteralText(${parentNode}, context, '${node.value}');`
+      : `_renderText(${parentNode}, context, () => ${resolveExpression(node.expression, compilerContext)});`
     }`,
   ];
 }

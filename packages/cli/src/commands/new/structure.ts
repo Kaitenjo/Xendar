@@ -112,7 +112,7 @@ export function buildStructure(context: ProjectContext): Entry[] {
     },
     {
       type: 'file',
-      name: 'xaendaron',
+      name: 'xaendar.json',
       content: xaendarJson(name, context.style),
     },
     {
@@ -122,7 +122,7 @@ export function buildStructure(context: ProjectContext): Entry[] {
     },
     {
       type: 'file',
-      name: 'tsconfigon',
+      name: 'tsconfig.json',
       content: tsconfigJson(),
     },
     {

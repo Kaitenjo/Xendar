@@ -33,8 +33,9 @@ export function newCommand(): Command {
 
 /**
  * Resolves the style option, providing a default and validating the input.
- * @param style - The style option provided by the user.
- * @returns The resolved style option, defaulting to 'css' if not provided.
+ *
+ * @param style - The CSS preprocessor option provided by the user.
+ * @returns The validated style string, defaulting to `'css'` if not provided.
  */
 function resolveStyleOptions(style: string | undefined): string {
   const validStyles = ['css', 'scss', 'less', 'styl'];
@@ -51,9 +52,11 @@ function resolveStyleOptions(style: string | undefined): string {
 }
 
 /**
- * Checks if the target project directory exists and is empty. If it doesn't exist, creates it.
- * Exits the process with an error if the directory exists and is not empty.
- * @param path - The path to the project directory to check and create.
+ * Checks whether the target project directory exists and is empty.
+ * Creates the directory if it does not exist, or exits the process with an
+ * error if it exists and is not empty.
+ *
+ * @param path - The absolute path to the project directory to check and create.
  */
 function checkAndCreateProjectDirectory(path: string): void {
   const exists = existsSync(path);

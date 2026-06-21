@@ -15,9 +15,9 @@ import { parseBlockChildren } from './parse-block-children.state';
  * Parses a `@for` directive, consuming the FOR token, the CONDITION token,
  * the BLOCK_OPEN token, and all child nodes until BLOCK_CLOSE.
  *
- * @param cursor Parser cursor positioned at the FOR token.
- * @param context Parser context for recursive child parsing.
- * @param _token The FOR token (unused; consumed for position advancement).
+ * @param cursor - Parser cursor positioned at the FOR token.
+ * @param parseNode - Parser function for recursive child parsing.
+ * @param _token - The FOR token (consumed for position advancement).
  * @returns The parsed `ForNode`.
  */
 export function parseForControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, _token: ForToken): ForNode {
@@ -111,12 +111,10 @@ export function parseForExpression(source: string, baseOffset: number): ForExpre
  * aliases for implicit loop variables (e.g. `$index = i, $last = l, $even = isEven`).
  *
  * Valid entries are comma-separated pairs in the form `$implicit = alias`.
- * Diagnostics are pushed to `diagnostics` for any malformed or duplicate entry.
  *
- * @param source      - The raw alias-declarations string (everything after the second `;`).
- * @param baseOffset  - Character offset of `source` within the original template.
- * @param out         - Map to populate with `alias → implicit-variable` entries.
- * @param diagnostics - Array to collect any parse errors.
+ * @param source - The raw alias-declarations string (everything after the second `;`).
+ * @param baseOffset - Character offset of `source` within the original template.
+ * @param out - Map to populate with `alias → implicit-variable` entries.
  */
 function parseImplicitAliases(source: string, baseOffset: number, out: Map<ForImplicitVariables, string>): void {
   const entries = source.split(',');

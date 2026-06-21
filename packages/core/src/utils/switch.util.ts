@@ -1,6 +1,6 @@
-import { NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
-import { Context } from './context.utils';
-import { _if } from './if.utils';
+import { Function, NoArgsFunction } from '@xaendar/types';
+import { Context } from './context.util';
+import { _if } from './if.util';
 
 /**
  * Creates a reactive switch/case structure by converting it into an if/else-if chain
@@ -30,14 +30,13 @@ import { _if } from './if.utils';
 export function _switch(
   parentNode: HTMLElement,
   parentContext: Context,
-  unwatchFns: NoArgsVoidFunction[],
   expression: NoArgsFunction<unknown>,
   blocks: Array<{ 
     condition: unknown[] | null, 
-    block: NoArgsFunction<NoArgsVoidFunction[]> 
+    block: Function<[HTMLElement, Context], Context> 
   }>
 ): void {
-  _if(parentNode, parentContext, unwatchFns, blocks.map(({ condition, block }) => ({
+  _if(parentNode, parentContext, blocks.map(({ condition, block }) => ({
     condition: condition 
       ? () => condition.some(condition => condition === expression())
       : undefined,

@@ -66,7 +66,7 @@ export class LexerCursor {
   /**
    * Creates a new cursor for the given input source.
    *
-   * @param input Full source string to be tokenized.
+   * @param input - Full source string to be tokenised.
    */
   constructor(public input: string) { }
 
@@ -79,9 +79,8 @@ export class LexerCursor {
    * - Detects line breaks (LF / CR)
    * - Throws an EOF error when the end of the input is reached
    *
-   * @param chars Number of characters to consume (must be >= 1)
-   *
-   * @throws Error with cause `EOF` when advancing past input length
+   * @param chars - Number of characters to consume. Must be >= 1.
+   * @throws When `chars` is less than 1 or when advancing past the end of the input.
    */
   public advance(chars = 1): void {
     if (chars < 1) {
@@ -121,9 +120,9 @@ export class LexerCursor {
    * - `RegExp`: slices the input and tests the pattern against it.
    *   Requires `length` to know how many characters to peek.
    *
-   * @param pattern String or RegExp to match against
-   * @param length  Number of characters to peek — required when `pattern` is a RegExp
-   * @returns `true` if the upcoming characters match, `false` otherwise
+   * @param pattern - String or RegExp to match against.
+   * @param length - Number of characters to peek — required when `pattern` is a RegExp.
+   * @returns `true` if the upcoming characters match, `false` otherwise.
    */
   public peekMatch(pattern: string): boolean;
   public peekMatch(pattern: RegExp, length: number): boolean;

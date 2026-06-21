@@ -10,7 +10,8 @@ import { NOT_ALLOWED_TAGS } from '../../costants/not-alllowed-tags.constants';
  * - not contain the following chars: '@', '#', '$', '%', '&', '*', '!', '?', '/', '\\', '|', "'", '"', '<', '>', '='
  * - not be a native HTML tag name.
  * - not be a reserved tag name.
- * @param tagName The tag name to validate.
+ *
+ * @param tagName - The tag name to validate.
  * @throws Will throw an error if the tag name is invalid.
  */
 export function isValidCustomElementName(tagName: string): boolean {

@@ -19,6 +19,9 @@ import { setDevMode } from './utils/dev-mode/dev-mode';
  *  - `Watcher`: The `Watcher` class for observing changes in signals.
  * 
  * This function should be called once to initialize the Signals library and make its API available globally.
+ *
+ * @param options - Optional configuration object.
+ * @param options.devMode - When `true`, enables development mode with extra runtime checks and logging.
  */
 export function loadSignals(options?: { devMode?: boolean }): void {
   setDevMode(options?.devMode ?? false)

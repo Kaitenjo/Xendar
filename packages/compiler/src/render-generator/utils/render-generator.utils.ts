@@ -1,6 +1,6 @@
 import ts, { Expression } from 'typescript';
-import { Context } from '../models/render-context.model';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
+import { CompilerContext } from '../models/compiler-context.model';
 
 /**
  * Complete set of JavaScript global identifiers up to ES2026.
@@ -236,7 +236,7 @@ export const ROOT_NODE = 'root';
  *
  * @param expression - Either a raw identifier string or a validated
  *   `ts.Expression` node produced by `validateExpression`.
- * @param context - The active template scope context.
+ * @param compilerContext - The active template scope context.
  * @returns The resolved expression as a JavaScript string ready for codegen.
  *
  * @example
@@ -249,8 +249,8 @@ export const ROOT_NODE = 'root';
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: Expression, context: Context): string {
-  return emitNode(expression, expression, context);
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext): string {
+  return emitNode(expression, expression, compilerContext);
 }
 
 /**
@@ -262,10 +262,10 @@ export function resolveExpression(expression: Expression, context: Context): str
  * - If the node is a resolvable Identifier, emits the resolved name.
  * - Otherwise recurses into children and concatenates their output.
  */
-function emitNode(node: ts.Node, parent: ts.Node, context: Context): string {
+function emitNode(node: ts.Node, parent: ts.Node, compilerContext: CompilerContext): string {
   // Leaf Identifier that needs resolution
   if (ts.isIdentifier(node) && needsResolution(node, parent)) {
-    return context.getIdentifier(node.text) ?? `this.${node.text}`;
+    return compilerContext.hasIdentifier(node.text) ? node.text : `this.${node.text}`;
   }
 
   // No resolvable identifiers in this subtree — emit verbatim
@@ -283,7 +283,7 @@ function emitNode(node: ts.Node, parent: ts.Node, context: Context): string {
   let lastEnd = node.getStart();
 
   ts.forEachChild(node, child => {
-    result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, context)}`;
+    result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, compilerContext)}`;
     lastEnd = child.getEnd();
   });
 
@@ -323,23 +323,46 @@ function needsResolution(node: ts.Identifier, parent: ts.Node): boolean {
 }
 
 /**
- * Generates a unique variable name for an element based on its tag name and parent node.
- * If the parent node is 'this._root', the identifier will be based solely on the element's type.
- * Otherwise, it will be prefixed with the parent node's name to ensure uniqueness.
- * @param node The ElementNode for which to generate the identifier.
- * @param parentNode  The name of the parent node to ensure uniqueness in the context of nested elements.
- * @returns A string representing the unique variable name for the element.
+ * Generates a unique variable name for a DOM element based on its tag name
+ * and parent node context.
+ *
+ * When the parent is the root node (`this._root`), the identifier is based
+ * solely on the tag name; otherwise the parent name is prepended to ensure
+ * uniqueness within nested structures. Hyphens in tag names are replaced
+ * with underscores to produce a valid JavaScript identifier.
+ *
+ * @param node - The `ElementNode` for which to generate the identifier.
+ * @param parentNode - The variable name of the parent node.
+ * @param index - A numeric suffix to disambiguate sibling elements of the same type.
+ * @returns A unique variable name string for the element.
  */
 export function getElementIdentifier(node: ElementNode, parentNode: string, index: string): string {
   const identifier = parentNode !== ROOT_NODE ? `${parentNode}_${node.tagName}${index}` : `${node.tagName}${index}`;
   return identifier.replace(/-/g, '_');
 }
 
+/**
+ * Generates a unique variable name for a text or interpolation node.
+ *
+ * @param parentNode - The variable name of the parent node.
+ * @param index - A numeric suffix to disambiguate sibling text nodes.
+ * @param prefix - Optional prefix to use instead of the default `'text'`.
+ * @returns A unique variable name string for the text node.
+ */
 export function getTextIdentifier(parentNode: string, index: string, prefix = 'text'): string {
   const identifier = parentNode !== ROOT_NODE ? `${parentNode}_${prefix}${index}` : `${prefix}${index}`;
   return identifier.replace(/-/g, '_');
 }
 
+/**
+ * Generates a unique variable name for a control-flow block (if, else-if, else,
+ * for, switch, case, or default).
+ *
+ * @param parentNode - The variable name of the parent node.
+ * @param index - A suffix to disambiguate sibling blocks.
+ * @param prefix - The block type prefix (`'if'`, `'elseIf'`, `'else'`, etc.).
+ * @returns A unique variable name string for the block.
+ */
 export function getBlockIdentifier(parentNode: string, index: string, prefix: 'if' | 'elseIf' | 'else' | 'for' | 'switch' | 'case' | 'default'): string {
   const identifier = parentNode !== ROOT_NODE ? `${parentNode}_${prefix}${index}` : `${prefix}${index}`;
   return identifier.replace(/-/g, '_');

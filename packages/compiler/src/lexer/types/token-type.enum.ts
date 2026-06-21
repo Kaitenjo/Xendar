@@ -43,10 +43,6 @@ export enum TokenType {
    */
   INTERPOLATION_EXPRESSION,
   /**
-   * A `@const name = expression;` template-level constant declaration.
-   */
-  CONST_DECLARATION,
-  /**
    * Opening keyword of an `@if` directive.
    */
   IF,

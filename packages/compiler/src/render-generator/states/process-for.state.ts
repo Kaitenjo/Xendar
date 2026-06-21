@@ -1,7 +1,6 @@
-import { indent } from '@xaendar/common';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
-import { Context } from '../models/render-context.model';
+import { CompilerContext } from '../models/compiler-context.model';
 import { processNode } from '../render-generator';
 import { getBlockIdentifier, getTextIdentifier } from '../utils/render-generator.utils';
 
@@ -33,10 +32,10 @@ import { getBlockIdentifier, getTextIdentifier } from '../utils/render-generator
  * @param nodeName - Base variable name prefix used for child nodes and
  *   to produce a unique loop counter identifier.
  * @param parentNode - Variable name of the parent DOM node.
- * @param parentContext - The enclosing scope context.
+ * @param compilerContext - The enclosing scope context.
  * @returns Array of generated code lines.
  */
-export function processFor(node: ForNode, nodeName: string, parentNode: string, parentContext: Context): { 
+export function processFor(node: ForNode, nodeName: string, parentNode: string, compilerContext: CompilerContext): { 
   mainBlock: string[], 
   fns: Map<string, { code: string[], args: [parentElement: string, parentContext: string, items: string, index: string] }> 
 } {
@@ -44,7 +43,7 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
   const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string, parentContext: string, items: string, index: string] }>();
 
   const iterableSource = node.iterableSource;
-  const iterableExpr = parentContext.getIdentifier(iterableSource) ?? `this.${iterableSource}`;
+  const iterableExpr = compilerContext.hasIdentifier(iterableSource) ? iterableSource : `this.${iterableSource}`;
 
   const itemsName = getTextIdentifier(parentNode, nodeName, 'items');
   const counterName = getTextIdentifier(parentNode, nodeName, 'i');
@@ -54,7 +53,7 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
-  const forContext = new Context([node.itemAlias, indexName, firstName, lastName, evenName, oddName], parentContext);
+  const forContext = new CompilerContext([node.itemAlias, indexName, firstName, lastName, evenName, oddName], compilerContext);
 
   const forKey = getBlockIdentifier(parentNode, nodeName, 'for');
   functionsToProcess.set(forKey, {
@@ -65,7 +64,7 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
     args: [parentNode, 'parentContext', itemsName, counterName]
   });
 
-  mainBlock.push(`_for(${parentNode}, parentContext, unwatchFns, () => ${iterableExpr}, this.${forKey}.bind(this));`);
+  mainBlock.push(`_for(${parentNode}, context, () => ${iterableExpr}, this.${forKey}.bind(this));`);
 
   return {
     mainBlock,

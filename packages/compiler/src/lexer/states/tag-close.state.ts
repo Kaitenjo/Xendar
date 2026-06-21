@@ -9,8 +9,8 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * Consumes a closing tag `</tagName>`, skipping the `</` prefix and any surrounding
  * whitespace. Emits a TAG_CLOSE_NAME token with the tag name and transitions to TEXT.
  *
- * @param cursor The lexer cursor positioned at the `<` of a closing tag.
- * @param _context Unused lexer context.
+ * @param cursor - The lexer cursor positioned at the `<` of a closing tag.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the TAG_CLOSE_NAME token and the TEXT state.
  */
 export function consumeTagClose(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {

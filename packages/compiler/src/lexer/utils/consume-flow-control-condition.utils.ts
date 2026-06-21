@@ -3,6 +3,18 @@ import { LexerCursor } from "../types/lexer-cursor.model";
 import { LexerTransitionFunctionContext } from "../types/transition-function/transition-function-context.type";
 import { LexerTransitionFunctionReturnType } from "../types/transition-function/transition-function-return-type.type";
 
+/**
+ * Consumes a parenthesised flow-control condition expression from the cursor.
+ *
+ * Skips leading whitespace, then expects `(` followed by a balanced
+ * parenthesised expression. Handles nested parentheses and returns the
+ * raw expression string (excluding the outer `(` and `)`).
+ *
+ * @param cursor - The lexer cursor positioned before the opening `(`.
+ * @param _context - Unused lexer context (kept for signature consistency).
+ * @returns The raw expression string extracted from inside the parentheses.
+ * @throws When the next non-space character is not `(`.
+ */
 export function consumeFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): string {
   cursor.skipSpaces();
 
@@ -46,9 +58,9 @@ export function consumeFlowControlCondition(cursor: LexerCursor, _context: Lexer
 /**
  * Advances the cursor by one character and appends it to the accumulator string.
  *
- * @param cursor The lexer cursor to advance.
- * @param expression The current accumulated string.
- * @returns The updated string with the new character appended.
+ * @param cursor - The lexer cursor to advance.
+ * @param expression - The current accumulated expression string.
+ * @returns The updated string with the newly consumed character appended.
  */
 export function addCharacter(cursor: LexerCursor, expression: string): string {
   cursor.advance();

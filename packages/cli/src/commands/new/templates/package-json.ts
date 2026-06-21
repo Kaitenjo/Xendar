@@ -22,14 +22,14 @@ export function packageJson(name: string, version: string): string {
     "@xaendar/types": "^${version}"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-decorators": "^7.29.0",
+    "@babel/plugin-proposal-decorators": "^8.0.2",
     "@rolldown/plugin-babel": "^0.2.3",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.9",
     "@xaendar/build-tools": "^${version}",
     "@xaendar/cli": "^${version}",
     "typescript": "^6.0.3",
     "vite": "^8.0.16",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   }
 }
 `;

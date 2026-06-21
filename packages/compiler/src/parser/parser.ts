@@ -1,7 +1,6 @@
 import { TokenType } from "../lexer/types/token-type.enum.js";
 import { Token } from "../lexer/types/token.type.js";
 import { ParserCursor } from "./models/parser-cursor.model.js";
-import { parseConstDeclaration } from "./states/parse-const-declaration.state.js";
 import { parseElement } from "./states/parse-element.state.js";
 import { parseForControlFlow } from "./states/parse-for.state.js";
 import { parseIfControlFlow } from "./states/parse-if.state.js";
@@ -39,14 +38,13 @@ export class Parser {
     [TokenType.TAG_OPEN_NAME]: parseElement,
     [TokenType.IF]: parseIfControlFlow,
     [TokenType.FOR]: parseForControlFlow,
-    [TokenType.SWITCH]: parseSwitchControlFlow,
-    [TokenType.CONST_DECLARATION]: parseConstDeclaration
+    [TokenType.SWITCH]: parseSwitchControlFlow
   }
 
   /**
    * Creates a new Parser instance.
    *
-   * @param tokens Array of tokens produced by the Lexer
+   * @param tokens - Array of tokens produced by the Lexer.
    */
   constructor(private readonly tokens: Token[]) {
     this._cursor = new ParserCursor(this.tokens);
@@ -55,7 +53,7 @@ export class Parser {
   /**
    * Entry point for parsing the token stream into AST nodes.
    *
-   * @returns Array of top-level AST nodes
+   * @returns Array of top-level AST nodes.
    */
   public parse(): ASTNode[] {
     const nodes = new Array<ASTNode>;
@@ -73,8 +71,8 @@ export class Parser {
   /**
    * Parses the next AST node based on the current token.
    *
-   * @returns Parsed AST node
-   * @throws Error if an unexpected token is encountered
+   * @returns The parsed AST node, or `undefined` for EOF.
+   * @throws When no transition function is registered for the current token type.
    */
   private parseNode(): ASTNode | undefined {
     const token = this._cursor.peek();

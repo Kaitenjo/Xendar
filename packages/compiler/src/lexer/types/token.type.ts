@@ -4,7 +4,6 @@ import { BlockCloseToken } from './tokens/block-close-token.type';
 import { BlockOpenToken } from './tokens/block-open-token.type';
 import { CaseToken } from './tokens/case-token.type';
 import { ConditionToken } from './tokens/condition-token.type';
-import { ConstDeclarationToken } from './tokens/const-declaration-token.type';
 import { DefaultToken } from './tokens/default-token.type';
 import { ElseIfToken } from './tokens/else-if-token.type';
 import { ElseToken } from './tokens/else-token.type';
@@ -45,5 +44,4 @@ export type Token =
   | ConditionToken
   | BlockOpenToken
   | BlockCloseToken
-  | ConstDeclarationToken
   | EOFToken

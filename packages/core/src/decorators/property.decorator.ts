@@ -58,17 +58,25 @@ function createPropertyDecorator<
 }
 
 /**
- * Decoratore per proprietà opzionale.
+ * Decorator that declares an optional input property on a web component.
+ *
+ * Transforms the decorated accessor into a reactive {@link InputSignal}
+ * bound to the corresponding HTML attribute. An optional default `value`
+ * and further configuration can be supplied via `options`.
+ *
+ * @param value - Optional default value for the property.
+ * @param options - Additional configuration (equality function, lifecycle
+ *   hooks, attribute alias, transform function).
+ * @returns An accessor decorator that replaces the field with an `InputSignal`.
  *
  * @example
+ * ```ts
  * @Property()
  * accessor label: InputSignal<string>;
  *
- * @Property({ value: 0 })
+ * @Property(0)
  * accessor count: InputSignal<number>;
- *
- * @Property({ value: { required: true, foo: 'bar' }, alias: 'cfg' })
- * accessor config: InputSignal<Config>;
+ * ```
  */
 export function Property<
   Class extends BaseWebComponent,
@@ -83,15 +91,25 @@ export function Property<
 }
 
 /**
- * Decoratore per proprietà obbligatoria.
- * Il consumer deve fornire il valore; non accetta un valore di default.
+ * Decorator that declares a required input property on a web component.
+ *
+ * The consumer must explicitly supply the attribute value; no default is
+ * accepted. If the attribute is absent, the signal value will be `undefined`
+ * and any transform or default handling is the responsibility of the consumer.
+ *
+ * @param options - Optional configuration (equality function, lifecycle
+ *   hooks, attribute alias, transform function). The `required` flag is
+ *   added automatically.
+ * @returns An accessor decorator that replaces the field with an `InputSignal`.
  *
  * @example
+ * ```ts
  * @Property.required()
  * accessor userId: InputSignal<string>;
  *
  * @Property.required({ alias: 'user-id' })
  * accessor userId: InputSignal<string>;
+ * ```
  */
 Property.required = function required<
   Class extends BaseWebComponent,

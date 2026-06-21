@@ -6,15 +6,18 @@ import { LexerTransitionFunctionContext } from "../types/transition-function/tra
 import { LexerTransitionFunctionReturnType } from "../types/transition-function/transition-function-return-type.type.js";
 
 /**
- * Consumes the opening `{` of a flow control block body,
+ * Consumes the opening `{` of a flow-control block body,
  * skipping any leading whitespace before it.
  *
- * Emits a BLOCK_OPEN token and transitions to TEXT,
- * pushing FLOW_CONTROL_BLOCK onto the state stack.
- * This allows consumeText to later recognise the matching `}` as a BLOCK_CLOSE
- * rather than as an interpolation boundary.
+ * Emits a BLOCK_OPEN token and transitions to TEXT, pushing FLOW_CONTROL_BLOCK
+ * onto the state stack so that `consumeText` later recognises the matching `}`
+ * as a BLOCK_CLOSE rather than an interpolation boundary.
  *
- * Used by: @if, @for, @switch, @case, @else, @default
+ * Used by: `@if`, `@for`, `@switch`, `@case`, `@else`, `@default`.
+ *
+ * @param cursor - The lexer cursor positioned before the opening `{`.
+ * @param _context - Unused lexer context.
+ * @returns Transition result with the BLOCK_OPEN token and the TEXT state.
  */
 export function consumeFlowControlBlock(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   cursor.skipSpaces();

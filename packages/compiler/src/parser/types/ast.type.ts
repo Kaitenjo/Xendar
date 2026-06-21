@@ -1,4 +1,3 @@
-import { ConstDeclarationNode } from './nodes/const-declaration-node.type';
 import { ElementNode } from './nodes/element-node.type';
 import { ElseIfNode } from './nodes/else-if-node.type';
 import { ElseNode } from './nodes/else-node.type';
@@ -19,5 +18,4 @@ export type ASTNode =
   | ElseIfNode
   | ElseNode
   | ForNode
-  | SwitchNode
-  | ConstDeclarationNode;
+  | SwitchNode;

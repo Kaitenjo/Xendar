@@ -10,8 +10,8 @@ import { consumeFlowControlCondition } from "../utils/consume-flow-control-condi
  * handling nested parentheses correctly. Emits a CONDITION token with the
  * raw expression string and transitions to FLOW_CONTROL_BLOCK.
  *
- * @param cursor The lexer cursor positioned at the opening `(`.
- * @param _context Unused lexer context.
+ * @param cursor - The lexer cursor positioned at the opening `(`.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the CONDITION token and the FLOW_CONTROL_BLOCK state.
  */
 export function consumeCaseFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {

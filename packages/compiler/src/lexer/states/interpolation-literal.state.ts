@@ -10,8 +10,8 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * until the closing backtick followed by `}`. Emits an INTERPOLATION_LITERAL token
  * and pops the state stack to return to the previous state.
  *
- * @param cursor The lexer cursor positioned at the opening backtick.
- * @param context Lexer context used to retrieve the previous state for restoration.
+ * @param cursor - The lexer cursor positioned at the opening backtick.
+ * @param context - The lexer context used to retrieve the previous state for restoration.
  * @returns Transition result with the INTERPOLATION_LITERAL token and restored state.
  */
 export function consumeInterpolationliteral(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
@@ -78,9 +78,9 @@ export function consumeInterpolationliteral(cursor: LexerCursor, context: LexerT
 /**
  * Advances the cursor by one character and appends it to the accumulator string.
  *
- * @param cursor The lexer cursor to advance.
- * @param interpolation The current accumulated string.
- * @returns The updated string with the new character appended.
+ * @param cursor - The lexer cursor to advance.
+ * @param interpolation - The current accumulated expression string.
+ * @returns The updated string with the newly consumed character appended.
  */
 function addCharacter(cursor: LexerCursor, interpolation: string): string {
   cursor.advance();

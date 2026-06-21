@@ -8,9 +8,9 @@ import { EventNode } from '../types/nodes/event-node.type';
  * Parses an EVENT token into an `EventNode` by splitting the raw
  * `eventName=handler` string.
  *
- * @param cursor Parser cursor; advanced past the EVENT token.
- * @param _parseNode Unused parser function.
- * @param token The EVENT token to parse.
+ * @param cursor - Parser cursor; advanced past the EVENT token.
+ * @param _parseNode - Unused parser function (kept for signature consistency).
+ * @param token - The EVENT token to parse.
  * @returns The parsed `EventNode`.
  */
 export function parseEvent(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, token: EventToken): EventNode {

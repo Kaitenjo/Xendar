@@ -1,19 +1,28 @@
 import { NoArgsVoidFunction } from "@xaendar/types";
 import { isInputSignal } from "../signals/input/input-instance.symbol";
 import { INPUT_SIGNAL_SET_SYMBOL } from "../signals/input/input-set.symbol";
+import { Context } from "../utils";
 
 /**
- * Base class for all Web Components in the framework
- * 
- * This class internally has an `observedAttributes` property
- * add programmaticaly by the @WebComponent decorator. 
- * It won't appear by intellisense but it's there.
+ * Base class for all web components in the framework.
+ *
+ * Extends `HTMLElement` with Shadow DOM support and the lifecycle hooks
+ * required for signal-based rendering. Concrete component classes should
+ * extend this class and be decorated with `@WebComponent`.
+ *
+ * The `observedAttributes` static getter is added programmatically by the
+ * `@WebComponent` decorator and will not appear in IDE autocompletion, but
+ * it is present at runtime.
  */
 export class BaseWebComponent extends HTMLElement {
+
+  [key: string]: unknown;
+  
   /**
-   * Array of functions to unwatch all the signals used in the component
+   * The active template execution context for this component instance,
+   * holding all identifier bindings and registered cleanup functions.
    */
-  protected unwatchFns = new Array<NoArgsVoidFunction>;
+  protected context!: Context;
 
   /**
    * The root of the Web Component, where the content is rendered
@@ -26,24 +35,28 @@ export class BaseWebComponent extends HTMLElement {
   }
 
   /**
-   * Method called by the @Property decorator to
-   * update the rendering of the component
-   * @internal 
+   * Initialises the component's Shadow DOM render tree.
+   *
+   * Overridden by the compiler-generated code injected via the `@WebComponent`
+   * decorator pipeline. Returns an array of effect disposer functions that
+   * should be called when the component is disconnected.
+   *
+   * @internal
    */
   private _render(): NoArgsVoidFunction[] { 
     return [];
   }
 
   /**
-   * Method automatically called by the JavascriptEngine when an attribute
-   * on the host element is changed
-   * 
-   * This method runs before the connectedCallback method if any observed attribute
-   * is specified on the CustomElement tag in the HTML
-   * 
-   * @param name Name of the attribute changed
-   * @param _oldValue Old value of the attribute
-   * @param newValue New value of the attribute
+   * Called by the browser engine when an observed attribute on the host
+   * element is added, changed, or removed.
+   *
+   * This callback may fire before `connectedCallback` if the attribute is
+   * already present on the element at parse time.
+   *
+   * @param name - The name of the attribute that changed.
+   * @param _oldValue - The previous value of the attribute (unused).
+   * @param newValue - The new value of the attribute.
    */
   private attributeChangedCallback(name: string, _oldValue: unknown, newValue: unknown): void {
     /*
@@ -69,27 +82,23 @@ export class BaseWebComponent extends HTMLElement {
   }
 
   /**
-   * Method automatically called by the JavascriptEngine when a CustomElement
-   * is added to the DOM
-   * 
-   * This method is called EVERY time the element is added
+   * Called by the browser engine each time the element is inserted into the DOM.
+   *
+   * Triggers the initial render by calling `_render()`, which builds the
+   * Shadow DOM tree and sets up reactive signal subscriptions.
    */
   private connectedCallback(): void {
     this.unwatchFns = this._render();
   }
 
   /**
-   * Method automatically called by the JavascriptEngine when a CustomElement
-   * is removed from the DOM
-   * 
-   * This method is called EVERY time the element is removed
-   * 
-   * We use this method to reset the _initialized flag
-   * so that if the element is re-added to the DOM
-   * the properties initialization won't call the render method
+   * Called by the browser engine each time the element is removed from the DOM.
+   *
+   * Invokes `context.unlisten()` to dispose all active signal subscriptions,
+   * detach event listeners, and remove tracked DOM nodes so the component
+   * can be cleanly re-rendered if it is re-inserted.
    */
   private disconnectedCallback(): void {
-    this.unwatchFns.forEach(unwatch => unwatch());
-    this.unwatchFns = [];
+    this.context.unlisten();
   }
 }

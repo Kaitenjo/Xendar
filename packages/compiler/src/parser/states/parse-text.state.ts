@@ -8,9 +8,9 @@ import { TextNode } from '../types/nodes/text-node.type';
 /**
  * Parses a TEXT token into a `TextNode`.
  *
- * @param cursor Parser cursor; advanced past the TEXT token.
- * @param _parseNode Function to parse the next AST node.
- * @param token The TEXT token containing the raw text content.
+ * @param cursor - Parser cursor; advanced past the TEXT token.
+ * @param _parseNode - Unused parser function (kept for signature consistency).
+ * @param token - The TEXT token containing the raw text content.
  * @returns The parsed `TextNode`.
  */
 export function parseText(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, token: TextToken): TextNode {

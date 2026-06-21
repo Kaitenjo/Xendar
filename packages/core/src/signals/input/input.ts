@@ -4,9 +4,19 @@ import { INPUT_SIGNAL_INSTANCE_SYMBOL } from './input-instance.symbol';
 import { assertPrivateContext } from './input-set.symbol';
 
 /**
- * An `InputSignal` is a specialized `Signal.State` designed for use as a property signal in web components. 
- * It extends the base `State` signal with additional functionality to handle incoming values, such as those from HTML attributes or external sources, 
- * and allows for optional transformation of these values before they are stored in the signal.
+ * Creates an `InputSignal` — a specialized reactive state designed for use
+ * as a property signal in web components.
+ *
+ * Unlike a plain `Signal.State`, the `set` method of an `InputSignal` is
+ * restricted to internal callers (identified by the private symbol) and
+ * accepts an optional `transform` function that converts incoming values
+ * (e.g. raw HTML attribute strings) into the internally stored type before
+ * updating the signal.
+ *
+ * @param value - The initial value of the signal.
+ * @param options - Optional configuration including an equality function,
+ *   lifecycle hooks, and a `transform` function applied to incoming values.
+ * @returns A new `InputSignal` instance.
  */
 export function input<ActualValue = unknown, IncomingValue = ActualValue>(value?: ActualValue, options?: InputSignalOptions<ActualValue, IncomingValue>): InputSignal<ActualValue, IncomingValue> {
   const transform = options?.transform;

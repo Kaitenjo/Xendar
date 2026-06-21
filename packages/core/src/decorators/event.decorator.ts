@@ -7,6 +7,25 @@ function isEventOptions(value: EventOptions | unknown): value is EventOptions {
   return !!value && typeof value === 'object' && ('bubbles' in value || 'cancelable' in value || 'composed' in value);
 }
 
+/**
+ * Decorator that declares a custom event output on a web component.
+ *
+ * Transforms the decorated accessor into an {@link Output} object whose
+ * `emit` method dispatches a `CustomEvent` on the host element. The event
+ * name is derived from the accessor name, and the provided `options`
+ * (bubbles, cancelable, composed) are used as defaults that can be
+ * overridden per-emission.
+ *
+ * @param options - Default `CustomEvent` options for every emission. At
+ *   least one of `bubbles`, `cancelable`, or `composed` must be specified.
+ * @returns An accessor decorator that replaces the field with an `Output`.
+ *
+ * @example
+ * ```ts
+ * @Event({ bubbles: true })
+ * accessor clicked: Output<MouseEvent>;
+ * ```
+ */
 export function Event<
   Class extends BaseWebComponent,
   Data = void,

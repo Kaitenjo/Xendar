@@ -4,8 +4,22 @@ import { BaseWebComponent } from '../../directives/base-web-component';
 import { WebComponentDecoratorParams } from '../../types/web-component/web-component-decorator-params.type';
 
 /**
- * Decorator to define a web component
- * @param selector Name or names of the custom element
+ * Decorator that registers a class as a custom web component.
+ *
+ * Automatically defines the `observedAttributes` static getter on the class
+ * from metadata populated by `@Property` decorators, and registers the
+ * component with the browser's Custom Elements registry under the given
+ * selector(s).
+ *
+ * @param options - Configuration object containing at least a `selector`
+ *   (the custom element tag name) and a `templateUrl`.
+ * @returns A class decorator applied to the web component class.
+ *
+ * @example
+ * ```ts
+ * @WebComponent({ selector: 'my-button', templateUrl: './my-button.html' })
+ * class MyButtonComponent extends BaseWebComponent {}
+ * ```
  */
 export function WebComponent<T extends BaseWebComponent>(options: WebComponentDecoratorParams): ClassDecorator<T> {
   return function (klass: Constructor<T>, context: ClassDecoratorContext<Constructor<T>>): void {
@@ -15,14 +29,16 @@ export function WebComponent<T extends BaseWebComponent>(options: WebComponentDe
 }
 
 /**
- * Function to define the observedAttributes static property on the class.
- * We define static get observedAttributes programmatically
- * to abstract the manual definition from the user.
+ * Defines the `observedAttributes` static getter on a web component class
+ * using metadata collected by `@Property` decorators.
  *
- * We could not define the property in the base class due to the fact
- * that is static and each derived class would override the value of the others
- * @param klass The class to set the observedAttributes on
- * @param attributes The attributes to observe
+ * Defined programmatically to avoid requiring each component class to
+ * manually re-declare the static property, and to prevent subclasses from
+ * accidentally clobbering each other's attribute lists.
+ *
+ * @param klass - The web component class to augment.
+ * @param context - The class decorator context providing access to the
+ *   shared metadata object.
  */
 function defineObservedAttributes<T extends BaseWebComponent>(klass: Constructor<T>, context: ClassDecoratorContext<Constructor<T>>): void {
   Object.defineProperty(klass, 'observedAttributes', {
@@ -33,9 +49,11 @@ function defineObservedAttributes<T extends BaseWebComponent>(klass: Constructor
 }
 
 /**
- * Function to add the custom element definition to the browser using the passed selectors.
- * @param klass The class to define as a web component
- * @param selectors The selector or selectors to reference the web component in HTML
+ * Registers the component class in the browser's Custom Elements registry
+ * under the given selector(s).
+ *
+ * @param klass - The web component class to register.
+ * @param selectors - One or more custom element tag names to associate with the class.
  */
 function setSelectors<T extends BaseWebComponent>(klass: Constructor<T>, selectors: string | string[]): void {
   Array.isArray(selectors)

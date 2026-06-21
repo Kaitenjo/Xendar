@@ -6,19 +6,23 @@ import { toPascalCase } from '../../../utils/case.utils';
 /**
  * Scaffolds a new Xaendar component inside a dedicated folder.
  *
- * Creates the directory `<cwd>/<name>/` and writes the following files:
+ * Creates the directory `<path>/<name>/` and writes the following files:
  * - `<name>.xd.component.ts`      — class decorated with `@WebComponent`
  * - `<name>.xd.component.html`    — minimal template
  * - `<name>.xd.component.css`     — empty stylesheet
  * - `<name>.xd.component.spec.ts` — Vitest skeleton
  *
- * Exits the process with code `1` if the target directory already exists.
+ * Exits the process with code `1` if the target directory already exists
+ * and `force` is not set.
  *
  * @param name - The component name in any casing (`my-button`, `myButton`,
  *   `my_button`). Used as-is for filenames; converted to PascalCase for the
  *   class name and to kebab-case for the selector.
- * @param path - The base path where the component folder will be created (default:
- *   current working directory).
+ * @param path - The base directory where the component folder will be created.
+ *   Defaults to the current working directory.
+ * @param force - When `true`, deletes an existing directory with the same name
+ *   before generating the new component.
+ * @param style - The stylesheet extension to use (e.g. `css`, `scss`). Defaults to `css`.
  */
 export function generateComponent(name: string, path: string, force?: boolean, style?: string): void {
   if (!isValidCustomElementName(name)) {

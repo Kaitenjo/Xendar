@@ -1,47 +1,42 @@
-import { NoArgsVoidFunction } from '@xaendar/types';
-import { Context } from './context.utils';
+import { NoArgsFunction } from '@xaendar/types';
 import { effect } from '../signals/effect/effect';
+import { Context } from './context.util';
 
 /**
- * 
- * @param parentNode 
- * @param text 
- * @param context 
- * @returns 
+ * Creates a reactive text node bound to a named identifier in the current scope.
+ *
+ * Appends a `Text` node to `parentNode` with the initial value of the identifier.
+ * If the identifier is reactive, wraps the text update in an effect so the node
+ * content is kept in sync whenever the underlying signal changes.
+ *
+ * @param parentNode - The parent HTML element to append the text node to.
+ * @param context - The current template execution scope used to resolve `text`.
+ * @param text - The identifier name to resolve as the text content.
  */
-export function renderText(parentNode: HTMLElement, text: string, context: Context): { element: Text, unwatchFns: NoArgsVoidFunction[]  } {
-  const identifier = context.getIdentifier<string>(text)!;
-  const node = document.createTextNode(identifier.get());
+export function _renderText(parentNode: HTMLElement, context: Context, textFn: NoArgsFunction<string>): void {
+  const node = document.createTextNode(textFn());
   parentNode.appendChild(node);
+  context.listen(() => {
+    context.removeNode(node);
+    parentNode.removeChild(node);
+  })
 
-  const retVal: { element: Text, unwatchFns: NoArgsVoidFunction[]  } = {
-    element: node,
-    unwatchFns: [
-      () => parentNode.removeChild(node) 
-    ]
-  }
-
-  if (identifier.reactive) {
-    retVal.unwatchFns.push(effect(() => node.textContent = identifier.get()))
-  }
-
-  return retVal;
+  context.listen(effect(() => node.textContent = textFn()));
 }
 
 /**
- * 
- * @param parentNode 
- * @param text 
- * @param context 
- * @returns 
+ * Creates a static (non-reactive) text node with a literal string value.
+ *
+ * Appends a `Text` node containing `text` directly to `parentNode` and
+ * registers a cleanup function that removes the node when the context is
+ * destroyed.
+ *
+ * @param parentNode - The parent HTML element to append the text node to.
+ * @param context - The current template execution scope.
+ * @param text - The literal string to render as text content.
  */
-export function renderLiteralText(parentNode: HTMLElement, text: string): { element: Text, unwatchFns: NoArgsVoidFunction[]  } {
+export function _renderLiteralText(parentNode: HTMLElement, context: Context, text: string): void {
   const node = document.createTextNode(text);
   parentNode.appendChild(node);
-  return {
-    element: node,
-    unwatchFns: [
-      () => parentNode.removeChild(node) 
-    ]
-  }
+  context.listen(() => parentNode.removeChild(node));
 }

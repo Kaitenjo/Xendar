@@ -1,42 +1,42 @@
 import { A, a, CR, LF, Z, z } from '../costants/chars.constants';
 
 /**
- * Check if char code is a Line Feed (\n) or Carriage Return (\r)
- * @param char Character to control
- * @returns True if character is LF or CR, false otherwise
+ * Checks whether a character code represents a line feed (`\n`) or carriage return (`\r`).
+ *
+ * @param char - The Unicode character code to check.
+ * @returns `true` if the character is LF or CR, `false` otherwise.
  */
 export function isNewLine(char: number): boolean {
   return char === LF || char === CR;
 }
 
 /**
- * Check if char code is is a lower case letter
- * @param char Character to control
- * @returns True if character is a lowercase letter, false otherwise
+ * Checks whether a character code represents a lowercase letter (`a`–`z`).
+ *
+ * @param char - The Unicode character code to check.
+ * @returns `true` if the character is a lowercase letter, `false` otherwise.
  */
 export function isLowerCase(char: number): boolean {
   return char >= a && char <= z;
 }
 
 /**
- * Check if char code is is a upper  case letter
- * @param char Character to control
- * @returns True if character is a upper case letter, false otherwise
+ * Checks whether a character code represents an uppercase letter (`A`–`Z`).
+ *
+ * @param char - The Unicode character code to check.
+ * @returns `true` if the character is an uppercase letter, `false` otherwise.
  */
 export function isUpperCase(char: number): boolean {
   return char >= A && char <= Z;
 }
 
 /**
- * Check if the string contains at least one character different from
- * ' '
- * \n
- * \r
- * \t
- * \f
- * \v
- * @param str String to check
- * @returns True if string is not blank, false otherwise
+ * Checks whether a string contains at least one non-whitespace character.
+ *
+ * Whitespace characters include space, `\n`, `\r`, `\t`, `\f`, and `\v`.
+ *
+ * @param str - The string to check.
+ * @returns `true` if the string is not blank, `false` if it consists entirely of whitespace.
  */
 export function isNotBlank(str: string): boolean {
   /* 
@@ -55,10 +55,11 @@ export function isNotBlank(str: string): boolean {
 }
 
 /**
- * Check if given ascii code is a valid First Character
- * for Javasript Identifiers
- * @param code The ascii code to valuate
- * @returns True if is valid, false otherwise
+ * Checks whether the given ASCII code is a valid first character for a
+ * JavaScript identifier (`A`–`Z`, `a`–`z`, `$`, `_`).
+ *
+ * @param code - The ASCII code to evaluate.
+ * @returns `true` if the code can start a JS identifier, `false` otherwise.
  */
 export function isJSIdentifierStart(code: number): boolean {
   return (

@@ -4,7 +4,6 @@ import { EOF } from '../costants/chars.constants';
 import { consumeAttributeValue } from './states/attribute-value.state';
 import { consumeAttribute } from './states/attribute.state';
 import { consumeCaseFlowControlCondition } from './states/case-flow-control-condition.state';
-import { consumeConstDeclaration } from './states/const-declaration';
 import { consumeDefaultFlowControlCondition } from './states/default-flow-control-condition.state';
 import { consumeEvent } from './states/event.state';
 import { consumeFlowControl } from './states/flow-control';
@@ -65,14 +64,13 @@ export class Lexer {
     [LexerState.EVENT]: consumeEvent,
     [LexerState.INTERPOLATION]: consumeInterpolation,
     [LexerState.INTERPOLATION_EXPRESSION]: consumeInterpolationExpression,
-    [LexerState.INTERPOLATION_LITERAL]: consumeInterpolationliteral,
-    [LexerState.CONST_DECLARATION]: consumeConstDeclaration
+    [LexerState.INTERPOLATION_LITERAL]: consumeInterpolationliteral
   }
 
   /**
-   * Creates a new Cursor instance for the given template content.
+   * Creates a new Lexer instance for the given template content.
    *
-   * @param input The full template text that the cursor will navigate.
+   * @param input - The full template text to tokenise.
    */
   constructor(public input: string) {
     this._cursor = new LexerCursor(this.input);

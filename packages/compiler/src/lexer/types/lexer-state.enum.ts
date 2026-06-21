@@ -67,8 +67,4 @@ export enum LexerState {
    * Consuming a template-literal string inside `` {`...`} ``.
    */
   INTERPOLATION_LITERAL = 'interpolation-literal',
-  /**
-   * Consuming a `@const name = expression;` declaration.
-   */
-  CONST_DECLARATION = 'const-declaration'
 }

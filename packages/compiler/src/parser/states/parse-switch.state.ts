@@ -13,9 +13,9 @@ import { parseBlockChildren } from './parse-block-children.state';
  * Parses a `@switch` directive, consuming the SWITCH token, the CONDITION token,
  * the outer BLOCK_OPEN, all `@case` and `@default` branches, and the outer BLOCK_CLOSE.
  *
- * @param cursor Parser cursor positioned at the SWITCH token.
- * @param parseNode Parser function for recursive child parsing.
- * @param _token The SWITCH token (unused; consumed for position advancement).
+ * @param cursor - Parser cursor positioned at the SWITCH token.
+ * @param parseNode - Parser function for recursive child parsing.
+ * @param _token - The SWITCH token (consumed for position advancement).
  * @returns The parsed `SwitchNode`.
  */
 export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, _token: SwitchToken): SwitchNode {

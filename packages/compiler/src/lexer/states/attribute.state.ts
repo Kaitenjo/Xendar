@@ -10,8 +10,8 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * transitioning back to TAG_BODY when a space, `/`, or `>` is encountered.
  * If the attribute value is an interpolation, pushes the INTERPOLATION state.
  *
- * @param cursor The lexer cursor positioned at the start of the attribute.
- * @param _context Unused lexer context.
+ * @param cursor - The lexer cursor positioned at the start of the attribute.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the ATTRIBUTE token and next state.
  */
 export function consumeAttribute(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {

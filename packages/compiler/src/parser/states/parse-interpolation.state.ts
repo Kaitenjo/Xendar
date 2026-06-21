@@ -10,9 +10,9 @@ import { validateExpression } from '../utils/expression-validator';
 /**
  * Parses an interpolation expression or literal token into an `InterpolationNode`.
  *
- * @param cursor Parser cursor; advanced past the interpolation token.
- * @param _parseNode Unused parser function.
- * @param token The INTERPOLATION_EXPRESSION or INTERPOLATION_LITERAL token.
+ * @param cursor - Parser cursor; advanced past the interpolation token.
+ * @param _parseNode - Unused parser function (kept for signature consistency).
+ * @param token - The INTERPOLATION_EXPRESSION or INTERPOLATION_LITERAL token.
  * @returns The parsed `InterpolationNode`.
  */
 export function parseInterpolation(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, token: InterpolationExpressionToken | InterpolationLiteralToken): InterpolationNode {

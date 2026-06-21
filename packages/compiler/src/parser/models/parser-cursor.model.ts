@@ -42,18 +42,17 @@ export class ParserCursor {
   /**
    * Creates a new ParserCursor for the given token array.
    *
-   * @param _tokens Array of tokens to navigate.
+   * @param _tokens - The array of tokens to navigate.
    */
   constructor(private readonly _tokens: Token[]) { }
 
   /**
    * Advances the cursor by the specified number of tokens.
    *
-   * Updates the current token and index.
+   * Updates the current token and its index.
    *
-   * @param chars Number of tokens to advance (must be >= 1)
-   *
-   * @throws Error with cause `EOF` when advancing past the end
+   * @param chars - Number of tokens to advance. Must be >= 1.
+   * @throws When `chars` is less than 1.
    */
   public advance(chars = 1): void {
     if (chars < 1) {

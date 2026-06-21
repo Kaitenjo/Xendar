@@ -1,67 +1,64 @@
-import { indent } from '@xaendar/common';
+import { Expression, Identifier } from 'typescript';
 import { AttributeNode } from '../../parser/types/nodes/attribute-node.type';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { EventNode } from '../../parser/types/nodes/event-node.type';
-import { InterpolationNode } from '../../parser/types/nodes/interpolation-node.type';
-import { Context } from '../models/render-context.model';
+import { indent } from '@xaendar/common';
 import { processNode } from '../render-generator';
+import { CompilerContext } from '../models/compiler-context.model';
 import { resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for an HTML element node: creates the DOM element, sets attributes,
  * attaches event listeners, appends it to the parent, and recursively processes children.
  *
- * @param node The `ElementNode` to process.
- * @param nodeName Variable name to use for the created DOM element.
- * @param parentNode Variable name of the parent DOM node to append to.
- * @param context Current render scope context.
+ * @param node - The `ElementNode` to process.
+ * @param nodeName - Variable name to use for the created DOM element.
+ * @param parentNode - Variable name of the parent DOM node to append to.
+ * @param compilerContext - Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processElement(node: ElementNode, nodeName: string, parentNode: string, context: Context): string[] {
-  const childrenContext = new Context([], context);
-  const tagName = node.tagName;
+export function processElement(node: ElementNode, nodeName: string, parentNode: string, compilerContext: CompilerContext): string[] {
+  const attributes = mapAttributes(node.attributes, compilerContext);
+  const events = mapEvents(node.events);
+  const code = [`const ${nodeName} = _renderElement(${parentNode}, context, '${node.tagName}',`];
 
-  return [
-    `const ${nodeName} = document.createElement("${tagName}");`,
-    ...(mapAttributes(node.attributes, nodeName, context)),
-    ...(mapEvents(node.events, nodeName)),
-    `${parentNode}.appendChild(${nodeName});`,
-    `unwatchFns.push(() => ${parentNode}.removeChild(${nodeName}));`,
-    ...(node.children.map((child, i) => processNode(child, i.toString(), nodeName, childrenContext)).flat())
-  ];
+  attributes.length
+  ? code.push(
+    ...indent([
+      '[',
+      ...indent(attributes),
+      '],'
+    ])
+  )
+  : code[code.length - 1] = `${code[code.length - 1]} [],`;
+  
+  events.length
+  ? code.push(
+    ...indent([
+      '[',
+      ...indent(events),
+      ']'
+    ]),
+    ')'
+  )
+  : code[code.length - 1] = `${code[code.length - 1]} [])`;
+  
+  code.push(...node.children.map((child, i) => processNode(child, i.toString(), nodeName, compilerContext)).flat())
+  return code;
 }
 
 /**
- * Generates code that assigns attributes to a DOM element.
+ * Maps attribute nodes to their corresponding generated code lines.
  *
- * Static (string) attribute values are set once via a direct `setAttribute` call,
- * while dynamic attribute values are wrapped in an `effect` so the attribute is
- * re-evaluated and updated whenever its underlying signal dependencies change.
- * The disposer returned by the `effect` is registered in `unwatchFns` for cleanup.
- *
- * @param attributes The attribute nodes to map onto the element.
- * @param nodeName Variable name of the DOM element receiving the attributes.
- * @param context Current render scope context, used to resolve dynamic expressions.
- * @returns Array of generated code lines, one per attribute.
+ * @param attributes - The attribute nodes to map onto the element.
+ * @param compilerContext - Current render scope context, used to resolve identifier references.
+ * @returns Array of generated code strings, one per attribute.
  */
-function mapAttributes(attributes: AttributeNode[], nodeName: string, context: Context): string[] {
-  const literalsAttributes = new Array<{ name: string, value: string }>();
-  const bindingsAttributes = new Array<{ name: string, value: InterpolationNode }>();
-
-  attributes?.forEach(({ name, value }) => typeof value === "string" ? literalsAttributes.push({ name, value }) : bindingsAttributes.push({ name, value }));
-  
-  const mappedAttributes = literalsAttributes.map(attr => `${nodeName}.setAttribute("${attr.name}", "${attr.value}");`);
-  const mappedBindingAttributes = bindingsAttributes.map(attr => `effect(() => ${nodeName}.setAttribute("${attr.name}", ${resolveExpression(attr.value.expression, context)})),`);
-  
-  if (mappedBindingAttributes.length) {
-    mappedAttributes.push(
-    `unwatchFns.push(`,
-    ...indent(mappedBindingAttributes),
-    `);`
-    )
-  }
-
-  return mappedAttributes;
+function mapAttributes(attributes: AttributeNode[], compilerContext: CompilerContext): string[] {
+  return attributes?.map(({ name, value }) => {
+    const isLiteral = typeof value === 'string';
+    return `{ name: '${name}', value: () => ${isLiteral ? `'${value}'` : resolveExpression(value.expression, compilerContext)}, literal: ${isLiteral} },`
+  })
 }
 
 /**
@@ -70,10 +67,9 @@ function mapAttributes(attributes: AttributeNode[], nodeName: string, context: C
  * For each event node an `addEventListener` call is emitted, binding the event
  * to the component instance handler and exposing the native event as `$event`.
  *
- * @param events The event nodes to bind to the element.
- * @param nodeName Variable name of the DOM element receiving the listeners.
+ * @param events - The event nodes to bind to the element.
  * @returns Array of generated code lines, one per event listener.
  */
-function mapEvents(events: EventNode[], nodeName: string): string[] {
-  return events?.map(event => `${nodeName}.addEventListener("${event.name}", ($event) => this.${event.handler});`) ?? [];
+function mapEvents(events: EventNode[]): string[] {
+  return events?.map(event => `{ name: '${event.name}', handler: '${event.handler}' }`);
 }

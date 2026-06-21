@@ -2,6 +2,11 @@ import { Computed } from '../models/computed/computed';
 import { State } from '../models/state/state';
 import { SignalEqual } from './signal-equal.type';
 
+/**
+ * Configuration options for creating a `State` or `Computed` signal.
+ *
+ * @template T - The value type held by the signal.
+ */
 export type SignalOptions<T> = {
   /**
    * Custom comparison function between old and new value. Default: Object.is.

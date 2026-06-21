@@ -37,9 +37,5 @@ export enum ASTNodeType {
   /**
    * A `@case` or `@default` branch inside a `@switch`.
    */
-  Case,
-  /**
-   * A `@const` declaration node.
-   */
-  ConstDeclaration
+  Case
 }

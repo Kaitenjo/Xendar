@@ -10,8 +10,8 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * brace depth. Emits an INTERPOLATION_EXPRESSION token and pops the state stack to
  * return to the previous state (ATTRIBUTE or TEXT).
  *
- * @param cursor The lexer cursor positioned at the first character of the expression.
- * @param context Lexer context used to retrieve the previous state for restoration.
+ * @param cursor - The lexer cursor positioned at the first character of the expression.
+ * @param context - The lexer context used to retrieve the previous state for restoration.
  * @returns Transition result with the INTERPOLATION_EXPRESSION token and restored state.
  */
 export function consumeInterpolationExpression(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
@@ -83,9 +83,9 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
 /**
  * Advances the cursor by one character and appends it to the accumulator string.
  *
- * @param cursor The lexer cursor to advance.
- * @param interpolation The current accumulated string.
- * @returns The updated string with the new character appended.
+ * @param cursor - The lexer cursor to advance.
+ * @param interpolation - The current accumulated expression string.
+ * @returns The updated string with the newly consumed character appended.
  */
 function addCharacter(cursor: LexerCursor, interpolation: string): string {
   cursor.advance(1);

@@ -10,8 +10,8 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * Advances past `{` and any leading spaces, then inspects the next character:
  * a backtick routes to INTERPOLATION_LITERAL, a JS identifier start routes to INTERPOLATION_EXPRESSION.
  *
- * @param cursor The lexer cursor positioned on the `{` character.
- * @param _context Unused lexer context.
+ * @param cursor - The lexer cursor positioned on the `{` character.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the appropriate interpolation sub-state.
  */
 export function consumeInterpolation(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {

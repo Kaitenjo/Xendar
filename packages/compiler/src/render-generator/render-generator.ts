@@ -1,15 +1,14 @@
 import { indent } from "@xaendar/common";
-import { NoArgsFunction, Function } from "@xaendar/types";
+import { Function } from "@xaendar/types";
 import { ASTNode } from "../parser/types/ast.type.js";
 import { ASTNodeType } from "../parser/types/node.enum.js";
-import { Context } from "./models/render-context.model.js";
-import { processConstDeclaration } from "./states/process-const-declaration.state.js";
+import { CompilerContext } from "./models/compiler-context.model.js";
 import { processElement } from "./states/process-element.state.js";
 import { processFor } from "./states/process-for.state.js";
 import { processIf } from "./states/process-if.state.js";
 import { processSwitch } from "./states/process-switch.state.js";
 import { processTextAndInterpolation } from "./states/process-text-and-interpolation.state.js";
-import { getElementIdentifier, getTextIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
+import { getElementIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
 
 const nodeToProcess = new Map<string, {
   fn: Function<string[], string[]>,
@@ -22,18 +21,20 @@ const nodeToProcess = new Map<string, {
 /**
  * Generates the TypeScript body of a render function from an AST.
  *
- * @param ast Top-level AST nodes produced by the Parser
- * @returns String containing the render function body
+ * @param ast - Top-level AST nodes produced by the Parser.
+ * @param cssVariableName - Optional name of the CSS variable to inject into
+ *   the generated `adoptedStyleSheets` assignment.
+ * @returns A string containing the render function body.
  */
 export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string): string {
   nodeToProcess.clear();
-  const context = new Context([ROOT_NODE]);
+  const compilerContext = new CompilerContext();
 
   const renderFunctions = [
     '_render() {',
     ...indent([
       `const ${ROOT_NODE} = this._root;`,
-      'const context = new Context()'
+      'const context = new Context(this)'
     ])
   ]
 
@@ -43,9 +44,8 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
 
   renderFunctions.push(
     ...indent([
-      'let unwatchFns = [];',
-      ...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, context)]).flat(),
-      'return unwatchFns;'
+      ...ast.map((node, i) => [...processNode(node, i.toString(), ROOT_NODE, compilerContext)]).flat(),
+      'return context;'
     ]),
     '}'
   )
@@ -55,10 +55,9 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
     renderFunctions.push(
       `${key}(${fnData.args.join(', ')}) {`,
       ...indent([
-        'const context = new Context([], parentContext)',
-        'let unwatchFns = [];',
+        'const context = new Context(this, parentContext)',
         ...fnData.fn(...fnData.args),
-        'return unwatchFns;'
+        'return context'
       ]),
       '}',
     );
@@ -73,32 +72,29 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
  * For flow control nodes no single var is produced; instead multiple children
  * are appended directly inside the control flow block.
  */
-export function processNode(node: ASTNode, nodeName: string, parentNode: string, context: Context): string[] {
+export function processNode(node: ASTNode, nodeName: string, parentNode: string, compilerContext: CompilerContext): string[] {
   switch (node.type) {
     case ASTNodeType.Text:
     case ASTNodeType.Interpolation:
-      return processTextAndInterpolation(node, parentNode);
+      return processTextAndInterpolation(node, parentNode, compilerContext);
 
     case ASTNodeType.Element:
-      return processElement(node, getElementIdentifier(node, parentNode, nodeName), parentNode, context);
+      return processElement(node, getElementIdentifier(node, parentNode, nodeName), parentNode, compilerContext);
 
     case ASTNodeType.If:
-      const conditionalBlockData = processIf(node, nodeName, parentNode, context);
+      const conditionalBlockData = processIf(node, nodeName, parentNode, compilerContext);
       conditionalBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody.code, args: fnBody.args }));
       return conditionalBlockData.mainBlock;
 
     case ASTNodeType.For:
-      const forBlockData = processFor(node, nodeName, parentNode, context);
+      const forBlockData = processFor(node, nodeName, parentNode, compilerContext);
       forBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody.code, args: fnBody.args }));
       return forBlockData.mainBlock;
 
     case ASTNodeType.Switch:
-      const switchBlockData = processSwitch(node, nodeName, parentNode, context);
+      const switchBlockData = processSwitch(node, nodeName, parentNode, compilerContext);
       switchBlockData.fns.forEach((fnBody, key) => nodeToProcess.set(key, { fn: () => fnBody.code, args: fnBody.args }));
       return switchBlockData.mainBlock;
-
-    case ASTNodeType.ConstDeclaration:
-      return processConstDeclaration(node, nodeName, parentNode, context);
 
     default:
       return [];

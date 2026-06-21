@@ -9,8 +9,8 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * Recognises `@if`, `@for`, `@else`, `@switch`, `@case`, `@default`, and `@const`.
  * Advances the cursor past the keyword and transitions to the appropriate next state.
  *
- * @param cursor The lexer cursor positioned on the `@` character.
- * @param _context Unused lexer context.
+ * @param cursor - The lexer cursor positioned on the `@` character.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the matching flow-control token and next state.
  */
 export function consumeFlowControl(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
@@ -79,11 +79,6 @@ export function consumeFlowControl(cursor: LexerCursor, _context: LexerTransitio
       tokens: [{
         type: TokenType.DEFAULT
       }]
-    }
-  } else if (cursor.peekMatch('const ')) {
-    cursor.advance(6);
-    retVal = {
-      state: LexerState.CONST_DECLARATION
     }
   }
 

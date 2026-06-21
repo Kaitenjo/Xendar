@@ -1,6 +1,6 @@
 {
   "name": "xaendar",
-  "version": "0.6.9",
+  "version": "0.6.14",
   "author": "Kaitenjo",
   "license": "ISC",
   "type": "module",
@@ -20,7 +20,7 @@
     "start:browser": "vite",
     "test:debug": "node --inspect-brk ./node_modules/.bin/vitest run signals",
     "update:version": "npm run update-version --prefix schematics",
-    "xd": "node dist/@xaendar/cli/index.js new backoffice --style css"
+    "xd": "node dist/@xaendar/cli/dist/cli.js new backoffice --style css"
   },
   "dependencies": {
     "commander": "^15.0.0",

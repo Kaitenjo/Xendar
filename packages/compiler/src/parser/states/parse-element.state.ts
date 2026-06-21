@@ -14,9 +14,9 @@ import { parseEvent } from './parse-event.state';
  * Parses a TAG_OPEN_NAME token and the subsequent attributes, events, and children
  * into an `ElementNode`. Handles both regular and self-closing tags.
  *
- * @param cursor Parser cursor positioned at the TAG_OPEN_NAME token.
- * @param context Parser context for recursive child parsing.
- * @param token The TAG_OPEN_NAME token containing the tag name.
+ * @param cursor - Parser cursor positioned at the TAG_OPEN_NAME token.
+ * @param parseNode - Parser function for recursive child parsing.
+ * @param token - The TAG_OPEN_NAME token containing the tag name.
  * @returns The parsed `ElementNode`.
  */
 export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: TagOpenNameToken): ElementNode {
@@ -84,8 +84,8 @@ export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<AST
 /**
  * Returns `true` if the next token in the stream is a closing tag for the given tag name.
  *
- * @param cursor Parser cursor to peek from.
- * @param tagName The expected tag name to match.
+ * @param cursor - Parser cursor to peek from.
+ * @param tagName - The expected tag name to match.
  * @returns `true` if the next token is TAG_CLOSE_NAME matching `tagName`.
  */
 function isTagClose(cursor: ParserCursor, tagName: string): boolean {

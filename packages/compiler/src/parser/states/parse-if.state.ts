@@ -16,9 +16,9 @@ import { parseBlockChildren } from './parse-block-children.state';
  * Parses an `@if` directive, consuming the IF token, the CONDITION token,
  * the BLOCK_OPEN token, all consequent children, and an optional `@else` branch.
  *
- * @param cursor Parser cursor positioned at the IF token.
- * @param context Parser context for recursive child parsing.
- * @param token The IF token (unused; consumed for position advancement).
+ * @param cursor - Parser cursor positioned at the IF token.
+ * @param context - Parser function for recursive child parsing.
+ * @param token - The IF token (consumed for position advancement).
  * @returns The parsed `IfNode`.
  */
 export function parseIfControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: IfToken): IfNode {

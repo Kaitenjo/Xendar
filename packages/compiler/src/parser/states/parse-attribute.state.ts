@@ -15,9 +15,9 @@ import { InterpolationLiteralToken } from '../../lexer/types/tokens/interpolatio
  * Parses an ATTRIBUTE token into an `AttributeNode`.
  * Handles boolean attributes (no `=`), string values, and interpolation values.
  *
- * @param cursor Parser cursor; advanced past the ATTRIBUTE token.
- * @param parseNode Parser node function for recursive parsing.
- * @param token The ATTRIBUTE token to parse.
+ * @param cursor - Parser cursor; advanced past the ATTRIBUTE token.
+ * @param parseNode - Parser function for recursive child parsing.
+ * @param token - The ATTRIBUTE token to parse.
  * @returns The parsed `AttributeNode`.
  */
 export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: AttributeToken): AttributeNode {

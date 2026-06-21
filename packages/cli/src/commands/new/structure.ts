@@ -34,7 +34,7 @@ export type Entry = {
    */
   type: 'file';
   /** 
-   * The file name, including extension (e.g. `packageon`). 
+   * The file name, including extension (e.g. `package.json`). 
    */
   name: string;
   /** 
@@ -47,7 +47,7 @@ export type Entry = {
    */
   type: 'directory';
   /** 
-   * The file name, including extension (e.g. `packageon`). 
+   * The file name, including extension (e.g. `package.json`). 
    */
   name: string;
   /** 
@@ -66,15 +66,15 @@ export type Entry = {
 };
 
 /**
- * Reads the current Xaendar version from the CLI's own `packageon`.
+ * Reads the current Xaendar version from the CLI's own `package.json`.
  * Used to pin the generated project's dependencies to the same version.
  */
 function readCliVersion(): string {
   try {
-    const cliPackageJson: PackageJson = JSON.parse(readFileSync(resolve(import.meta.filename , '..', '../packageon'), 'utf8'));
+    const cliPackageJson: PackageJson = JSON.parse(readFileSync(resolve(import.meta.filename , '..', '../package.json'), 'utf8'));
     
     /*
-      This should never happen since the CLI's own packageon must have a version field
+      This should never happen since the CLI's own package.json must have a version field
       If it doesn't, something went wrong during the last publish process  
     */
     if (!cliPackageJson.version) {
@@ -107,7 +107,7 @@ export function buildStructure(context: ProjectContext): Entry[] {
   return [
     {
       type: 'file',
-      name: 'packageon',
+      name: 'package.json',
       content: packageJson(name, version),
     },
     {

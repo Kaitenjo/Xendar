@@ -16,6 +16,7 @@
     "install:clean": "rimraf package-lock.json node_modules && npm run i",
     "pack:projects": "npm run pack --prefix schematics",
     "publish:projects": "npm run publish --prefix schematics",
+    "start": "cd backoffice && npm start",
     "start:node": "nodemon --watch src --watch packages -e ts --exec \"node --inspect-brk --import tsx/esm src/test.ts\"",
     "start:browser": "vite",
     "test:debug": "node --inspect-brk ./node_modules/.bin/vitest run signals",

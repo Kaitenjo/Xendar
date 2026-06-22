@@ -64,8 +64,7 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
     $last: '${lastName}', 
     $even: '${evenName}', 
     $odd: '${oddName}' 
-  });
-`,
+  });`,
       ...node.children.flatMap((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, forContext))
     ],
     args: [parentNode, 'parentContext', itemsName, counterName]

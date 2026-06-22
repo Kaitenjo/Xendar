@@ -1,4 +1,4 @@
-import { Function, NoArgsVoidFunction } from '@xaendar/types';
+import { Function } from '@xaendar/types';
 import { effect } from '../signals';
 import { Context } from './context.util';
 

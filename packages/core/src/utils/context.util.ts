@@ -1,5 +1,4 @@
-import { NoArgsFunction, NoArgsVoidFunction } from '@xaendar/types';
-import { ContextIdentifier } from '../types/context-identifier.type';
+import { NoArgsVoidFunction } from '@xaendar/types';
 import { BaseWebComponent } from '../directives';
 
 /**

@@ -34,7 +34,7 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
     '_render() {',
     ...indent([
       `const ${ROOT_NODE} = this._root;`,
-      'const context = new Context(this)'
+      'const context = new Context(this);'
     ])
   ]
 
@@ -53,9 +53,9 @@ export function generateRenderFunction(ast: ASTNode[], cssVariableName?: string)
   while (nodeToProcess.size) {
     const [key, fnData] = nodeToProcess.entries().next().value!;
     renderFunctions.push(
-      `${key}(${fnData.args.join(', ')}) {`,
+      `\n${key}(${fnData.args.join(', ')}) {`,
       ...indent([
-        'const context = new Context(this, parentContext)',
+        'const context = new Context(this, parentContext);',
         ...fnData.fn(...fnData.args),
         'return context'
       ]),

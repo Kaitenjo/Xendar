@@ -38,19 +38,19 @@ export function _for(parentNode: HTMLElement, parentContext: Context, condition:
  *
  * @param items - The full array being iterated.
  * @param index - The current iteration index.
- * @param itemAlias - The template alias name for the current item.
- * @param indexAlias - The template alias name for the current index.
+ * @param itemName - The identifier to reference the i-th item during iteration
+ * @param aliases - Aliases for implicit variables defined in the `{@for} loop`
  * @returns A record mapping alias names and built-in variables to their values.
  */
-export function _iterationVariables(items: unknown[], index: number, itemAlias = 'item', indexAlias = 'index'): Record<string, unknown> {
+export function _iterationVariables(items: unknown[], index: number, itemName: string, aliases: { $index: string, $first: string, $last: string, $even: string, $odd: string }): Record<string, unknown> {
   const even = index % 2 === 0;
 
   return {
-    [itemAlias]: items[index],
-    [indexAlias]: index,
-    $first: index === 0,
-    $last: index === items.length - 1,
-    $even: even,
-    $odd: !even
+    [itemName]: items[index],
+    [aliases.$index]: index,
+    [aliases.$first]: index === 0,
+    [aliases.$last]: index === items.length - 1,
+    [aliases.$even]: even,
+    [aliases.$odd]: !even
   };
 }

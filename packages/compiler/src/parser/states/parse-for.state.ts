@@ -131,10 +131,10 @@ function parseImplicitAliases(source: string, baseOffset: number, out: Map<ForIm
     }
 
     cursor += entry.length + 1;
-    const implicit = trimmed.slice(0, eqIndex).trim();
-    const alias = trimmed.slice(eqIndex + 1).trim();
+    const alias = trimmed.slice(0, eqIndex).trim();
+    const implicit = trimmed.slice(eqIndex + 1).trim();
 
-    const isImplicitVariable = (value: string): value is ForImplicitVariables => IMPLICIT_VARIABLES.has(value as ForImplicitVariables);
+    const isImplicitVariable = (value: string): value is ForImplicitVariables => IMPLICIT_VARIABLES.has(value);
     
     if (!isImplicitVariable(implicit)) {
       throw new Error(`[Parser] '${implicit}' is not a known implicit variable. Known variables: ${[...IMPLICIT_VARIABLES].join(', ')}.`);
@@ -218,7 +218,7 @@ function splitForSections(source: string): string[] {
   }
 
   // Push the last section even when it has no trailing `;`.
-  if (current.trim().length > 0) {
+  if (current.trim().length) {
     sections.push(current);
   }
 

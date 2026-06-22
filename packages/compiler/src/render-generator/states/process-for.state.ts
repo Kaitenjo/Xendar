@@ -58,7 +58,14 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
   const forKey = getBlockIdentifier(parentNode, nodeName, 'for');
   functionsToProcess.set(forKey, {
     code: [
-      `const { ${node.itemAlias}, ${indexName}, ${firstName}, ${lastName}, ${evenName}, ${oddName} } = _iterationVariables(${itemsName}, ${counterName});`,
+`const { ${node.itemAlias}, ${indexName}, ${firstName}, ${lastName}, ${evenName}, ${oddName} } = _iterationVariables(${itemsName}, ${counterName}, '${node.itemAlias}', { 
+    $index: '${indexName}', 
+    $first: '${firstName}', 
+    $last: '${lastName}', 
+    $even: '${evenName}', 
+    $odd: '${oddName}' 
+  });
+`,
       ...node.children.flatMap((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, forContext))
     ],
     args: [parentNode, 'parentContext', itemsName, counterName]

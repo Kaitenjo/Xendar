@@ -35,6 +35,10 @@ export enum TokenType {
    */
   EVENT,
   /**
+   * An event paremeter included in a event call '()'
+   */
+  EVENT_PAREMETER,
+  /**
    * A template-literal interpolation string enclosed in `` {`...`} ``.
    */
   INTERPOLATION_LITERAL,

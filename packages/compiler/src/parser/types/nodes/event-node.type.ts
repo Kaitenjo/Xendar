@@ -1,3 +1,4 @@
+import { Expression } from 'typescript';
 import { InterpolationNode } from './interpolation-node.type';
 
 /**
@@ -5,11 +6,15 @@ import { InterpolationNode } from './interpolation-node.type';
  */
 export type EventNode = {
   /**
-   * The DOM event name (e.g. `click`, `input`).
+   * The DOM Event Name (e.g. `click`, `input`).
    */
   name: string;
   /**
-   * The event handler, either a method name string or an interpolation node.
+   * The Event Handler, either a method name string or an interpolation node.
    */
   handler: string | InterpolationNode;
+  /**
+   * The Event Handler parameters
+   */
+  parameters: Expression[]
 }

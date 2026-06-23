@@ -29,6 +29,10 @@ export class CompilerContext {
     this._identifiers.push(name);
   }
 
+  public removeIdentifier(name: string): void {
+    this._identifiers = this._identifiers.filter(identifier => identifier !== name);
+  }
+
   /**
    * Returns `true` if an identifier with the given name is declared in this
    * scope or any of its ancestor scopes.

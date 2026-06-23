@@ -2,20 +2,8 @@ import { compile } from "@xaendar/compiler";
 import { writeFileSync } from "fs";
 
 const template = `
-  @for (item of items; track item.id; i = $index; last = $last) {
-    <div>
-      {item, i}
-    </div>
-      @for (item of items; track item.id; i = $index; last = $last) {
-    <div>
-      {item, i}
-    </div>
-      @for (item of items; track item.id; i = $index; last = $last) {
-    <div>
-      {item, i}
-    </div>
-  }
-  }
+  <div @click="onClick($event, test, test2, 'asd')">
+  </div>
   }
   `
 

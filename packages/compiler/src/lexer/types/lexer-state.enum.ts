@@ -35,6 +35,10 @@ export enum LexerState {
    */
   EVENT = 'event',
   /**
+   * Consuming a DOM event parameter
+   */
+  EVENT_PARAMETER = 'parameter',
+  /**
    * Dispatching a flow-control keyword (@if, @for, @switch, etc.).
    */
   FLOW_CONTROL = 'flow-control',

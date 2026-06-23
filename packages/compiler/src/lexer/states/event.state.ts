@@ -1,4 +1,4 @@
-import { GREATER_THEN, LEFT_BRACE, LEFT_BRACKET, LPAREN, RPAREN, SLASH, SPACE } from '../../costants/chars.constants';
+import { COMMA, GREATER_THEN, LEFT_BRACE, LEFT_BRACKET, LPAREN, RPAREN, SLASH, SPACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -17,7 +17,6 @@ export function consumeEvent(cursor: LexerCursor, _context: LexerTransitionFunct
   let read = true;
   let event = '';
   let retVal!: LexerTransitionFunctionReturnType;
-  let deep = 0;
 
   // Consume '@' character
   cursor.advance();
@@ -27,33 +26,32 @@ export function consumeEvent(cursor: LexerCursor, _context: LexerTransitionFunct
       case SPACE:
       case SLASH:
       case GREATER_THEN:
-        if (deep === 0) {
-          retVal = {
-            state: LexerState.TAG_BODY,
-            tokens: [{ 
-              type: TokenType.EVENT, 
-              parts: [event] 
-            }]
-          };
-          read = false;
-        }
+        retVal = {
+          state: LexerState.TAG_BODY
+        };
+        read = false;
         break;
 
       case LPAREN:
-        deep++;
-        cursor.advance();
+      case COMMA:
+        retVal = {
+          state: LexerState.EVENT_PARAMETER,
+          tokens: [{ 
+            type: TokenType.EVENT, 
+            parts: [event] 
+          }]
+        };
+        read = false;
         break;
-        
+      
       case RPAREN:
-        deep--;
-        cursor.advance();
+        retVal = {
+          state: LexerState.TAG_BODY
+        }
         break;
-
       default:
         cursor.advance();
-        if (deep === 0) {
-          event = `${event}${cursor.currentChar.value}`
-        }
+        event = `${event}${cursor.currentChar.value}`
     }
   }
 

@@ -5,6 +5,7 @@ import { consumeAttributeValue } from './states/attribute-value.state';
 import { consumeAttribute } from './states/attribute.state';
 import { consumeCaseFlowControlCondition } from './states/case-flow-control-condition.state';
 import { consumeDefaultFlowControlCondition } from './states/default-flow-control-condition.state';
+import { consumeEventParameter } from './states/event-parameter.state';
 import { consumeEvent } from './states/event.state';
 import { consumeFlowControl } from './states/flow-control';
 import { consumeFlowControlBlock } from './states/flow-control-block.state';
@@ -57,11 +58,12 @@ export class Lexer {
     [LexerState.TAG_CLOSE]: consumeTagClose,
     [LexerState.ATTRIBUTE]: consumeAttribute,
     [LexerState.ATTRIBUTE_VALUE]: consumeAttributeValue,
+    [LexerState.EVENT]: consumeEvent,
+    [LexerState.EVENT_PARAMETER]: consumeEventParameter,
     [LexerState.FLOW_CONTROL]: consumeFlowControl,
     [LexerState.FLOW_CONTROL_CONDITION]: consumeDefaultFlowControlCondition,
     [LexerState.CASE_FLOW_CONTROL_CONDITION]: consumeCaseFlowControlCondition,
     [LexerState.FLOW_CONTROL_BLOCK]: consumeFlowControlBlock,
-    [LexerState.EVENT]: consumeEvent,
     [LexerState.INTERPOLATION]: consumeInterpolation,
     [LexerState.INTERPOLATION_EXPRESSION]: consumeInterpolationExpression,
     [LexerState.INTERPOLATION_LITERAL]: consumeInterpolationliteral

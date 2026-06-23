@@ -8,6 +8,7 @@ import { DefaultToken } from './tokens/default-token.type';
 import { ElseIfToken } from './tokens/else-if-token.type';
 import { ElseToken } from './tokens/else-token.type';
 import { EOFToken } from './tokens/eof-token.type';
+import { EventParemeterToken } from './tokens/event-parameter-token.type';
 import { EventToken } from './tokens/event-token.type';
 import { ForToken } from './tokens/for-token.type';
 import { IfToken } from './tokens/if-token.type';
@@ -31,6 +32,7 @@ export type Token =
   | AttributeToken
   | AttributeValueToken
   | EventToken
+  | EventParemeterToken
   | TextToken
   | InterpolationExpressionToken
   | InterpolationLiteralToken

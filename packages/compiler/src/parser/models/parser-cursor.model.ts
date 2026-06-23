@@ -1,5 +1,4 @@
 import { PositiveInteger, TupleOfLength } from '@xaendar/types';
-import { EOF } from '../../costants/chars.constants';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { Token } from '../../lexer/types/token.type';
 import { CurrentToken } from '../types/current-token.type';
@@ -35,8 +34,8 @@ export class ParserCursor {
   /**
    * Returns a read-only snapshot of the current token.
    */
-  public get currentToken(): Readonly<CurrentToken> {
-    return this._currentToken;
+  public getCcurrentToken<TokenType extends Token>(): Readonly<CurrentToken<TokenType>> {
+    return this._currentToken as Readonly<CurrentToken<TokenType>>;
   }
 
   /**

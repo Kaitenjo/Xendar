@@ -1,10 +1,9 @@
-import { Expression, Identifier } from 'typescript';
+import { indent } from '@xaendar/common';
 import { AttributeNode } from '../../parser/types/nodes/attribute-node.type';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { EventNode } from '../../parser/types/nodes/event-node.type';
-import { indent } from '@xaendar/common';
-import { processNode } from '../render-generator';
 import { CompilerContext } from '../models/compiler-context.model';
+import { processNode } from '../render-generator';
 import { resolveExpression } from '../utils/render-generator.utils';
 
 /**
@@ -19,7 +18,7 @@ import { resolveExpression } from '../utils/render-generator.utils';
  */
 export function processElement(node: ElementNode, nodeName: string, parentNode: string, compilerContext: CompilerContext): string[] {
   const attributes = mapAttributes(node.attributes, compilerContext);
-  const events = mapEvents(node.events);
+  const events = mapEvents(node.events, compilerContext);
   const code = [`const ${nodeName} = _renderElement(${parentNode}, context, '${node.tagName}',`];
 
   attributes.length
@@ -68,8 +67,17 @@ function mapAttributes(attributes: AttributeNode[], compilerContext: CompilerCon
  * to the component instance handler and exposing the native event as `$event`.
  *
  * @param events - The event nodes to bind to the element.
+ * @param compilerContext - Current render scope context, used to resolve identifier references.
  * @returns Array of generated code lines, one per event listener.
  */
-function mapEvents(events: EventNode[]): string[] {
-  return events?.map(event => `{ name: '${event.name}', handler: '${event.handler}' }`);
+function mapEvents(events: EventNode[], compilerContext: CompilerContext): string[] {
+  compilerContext.addIdentifier('$event');
+
+  const mappedEvents = events?.map(event => {
+    const parameters = event.parameters.map(parameter => `() => ${resolveExpression(parameter, compilerContext)}`);
+    return `{ name: '${event.name}', handler: '${event.handler}', parameters: ${parameters.join(', ')}} }`
+  });
+
+  compilerContext.removeIdentifier('$event');
+  return mappedEvents;
 }

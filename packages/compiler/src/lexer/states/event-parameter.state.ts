@@ -1,4 +1,4 @@
-import { COMMA } from '../../costants/chars.constants';
+import { COMMA, DOUBLE_QUOTE, LEFT_BRACE, LEFT_BRACKET, LPAREN, RPAREN, SINGLE_QUOTE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -16,7 +16,12 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
 export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let eventParameter = '';
-  let retVal!: LexerTransitionFunctionReturnType
+  let charDelimiter: '"' | "'" | '[' | '{' | '' = '';
+
+  const retVal: LexerTransitionFunctionReturnType = {
+    state: LexerState.TAG_BODY,
+    tokens: []
+  }
 
   /*
     Consume 
@@ -28,22 +33,46 @@ export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransi
 
   while (read) {
     switch (cursor.peek()) {
-      case COMMA:
-        retVal = {
-          state: LexerState.EVENT,
-          tokens: [{
-            type: TokenType.EVENT_PAREMETER,
-            parts: [eventParameter]
-          }]
+      case LEFT_BRACKET:
+      case LEFT_BRACE:
+      case DOUBLE_QUOTE:
+      case SINGLE_QUOTE:
+      case LPAREN:
+        eventParameter = addCharacter(cursor, eventParameter);
+        // Safe assumption
+        if (!charDelimiter) {
+          charDelimiter = cursor.currentChar.value as typeof charDelimiter;
+        } else if (charDelimiter === cursor.currentChar.value) {
+          charDelimiter = '';
         }
-        read = false;
         break;
 
-      default:
+      case COMMA:
+        if (!charDelimiter) {
+          retVal.tokens!.push({
+            type: TokenType.EVENT_PAREMETER,
+            parts: [eventParameter]
+          });
+          cursor.advance();
+          eventParameter = '';
+        } else {
+          eventParameter = addCharacter(cursor, eventParameter);
+        }
+        break;
+
+      case RPAREN:
         cursor.advance();
-        eventParameter = `${eventParameter}${cursor.currentChar.value}`;
+        read = false;
+
+      default:
+        eventParameter = addCharacter(cursor, eventParameter);
     }
   }
 
   return retVal;
+}
+
+function addCharacter(cursor: LexerCursor, eventParameter: string): string {
+  cursor.advance();
+  return `${eventParameter}${cursor.currentChar.value}`;
 }

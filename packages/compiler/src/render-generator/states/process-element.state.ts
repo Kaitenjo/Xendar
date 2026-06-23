@@ -74,9 +74,18 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
   compilerContext.addIdentifier('$event');
 
   const mappedEvents = events?.map(event => {
-    const parameters = event.parameters.map(parameter => `() => ${resolveExpression(parameter, compilerContext)}`);
-    return `{ name: '${event.name}', handler: '${event.handler}', parameters: ${parameters.join(', ')}} }`
-  });
+    const parameters = event.parameters.map(parameter => `() => ${resolveExpression(parameter, compilerContext)},`);
+    return [
+      '{', 
+      ...indent([
+        `name: '${event.name}',`, 
+        `handler: '${event.handler}',`, 
+        'parameters: [', 
+          ...indent(parameters), 
+        ']']), 
+      '}'
+    ]
+  }).flat();
 
   compilerContext.removeIdentifier('$event');
   return mappedEvents;

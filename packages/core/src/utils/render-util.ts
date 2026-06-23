@@ -36,7 +36,7 @@ export function _renderElement(parentNode: HTMLElement, context: Context, tagNam
 
   events.forEach(event => {
     // TODO: Support params args
-    const handler = ($event: Event) => context.getEventHandler(event.handler)();
+    const handler = ($event: Event) => context.getEventHandler(event.handler)(...event.parameters.map(event => event()));
     const name = event.name;
     element.addEventListener(name, handler);
     context.listen(() => element.removeEventListener(name, handler))

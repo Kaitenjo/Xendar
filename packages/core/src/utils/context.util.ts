@@ -1,4 +1,4 @@
-import { NoArgsVoidFunction } from '@xaendar/types';
+import { NoArgsVoidFunction, VoidFunction } from '@xaendar/types';
 import { BaseWebComponent } from '../directives';
 
 /**

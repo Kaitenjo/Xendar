@@ -24,9 +24,7 @@ export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransi
   }
 
   /*
-    Consume 
-    - '(' If is the first parameter
-    - ',' If is the n-th parameter 
+    Consume '('
   */
   cursor.advance();
   cursor.skipSpaces();
@@ -54,6 +52,7 @@ export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransi
             parts: [eventParameter]
           });
           cursor.advance();
+          cursor.skipSpaces();
           eventParameter = '';
         } else {
           eventParameter = addCharacter(cursor, eventParameter);
@@ -62,7 +61,14 @@ export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransi
 
       case RPAREN:
         cursor.advance();
-        read = false;
+
+        if (!charDelimiter) {
+            retVal.tokens!.push({
+            type: TokenType.EVENT_PAREMETER,
+            parts: [eventParameter]
+          });
+          read = false;
+        }
 
       default:
         eventParameter = addCharacter(cursor, eventParameter);

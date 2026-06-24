@@ -1,5 +1,5 @@
 import { NoArgsFunction } from '@xaendar/types';
-import ts from 'typescript';
+import { createSourceFile, isExpressionStatement, isIdentifier, ScriptTarget } from 'typescript';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { ForToken } from '../../lexer/types/tokens/for-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
@@ -241,7 +241,7 @@ function isValidIdentifier(name: string): boolean {
     return false;
   }
 
-  const sourceFile = ts.createSourceFile('__id.ts', name, ts.ScriptTarget.ESNext, false);
+  const sourceFile = createSourceFile('__id.ts', name, ScriptTarget.ESNext, false);
   const statement = sourceFile.statements[0];
-  return !!statement && ts.isExpressionStatement(statement) && ts.isIdentifier(statement.expression) && statement.expression.text === name;
+  return !!statement && isExpressionStatement(statement) && isIdentifier(statement.expression) && statement.expression.text === name;
 }

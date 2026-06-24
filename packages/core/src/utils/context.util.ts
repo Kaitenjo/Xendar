@@ -41,6 +41,7 @@ export class Context {
    * @returns The handler function, bound to the root component so `this` is correct.
    */
   public getEventHandler(handler: string): VoidFunction {
+    // We do not check if the property exists beacuse it'll be done by TCB
     return (this._root[handler] as VoidFunction).bind(this._root)
   }
 
@@ -106,3 +107,24 @@ export class Context {
     this._nodes = [];
   }
 } 
+
+/**
+ * Mounts a node into the DOM and binds it to the context lifecycle.
+ *
+ * Registers the node with the context, appends it to `parentNode`, and
+ * schedules a cleanup listener that removes the node from both the context
+ * and the DOM when the context is destroyed.
+ *
+ * @param node - The node to mount.
+ * @param parentNode - The parent HTML element to append the node to.
+ * @param context - The current template execution scope that owns the node's lifecycle.
+ */
+export function mountNode(node: Node, parentNode: HTMLElement, context: Context): void {
+  context.addNode(node);
+  parentNode.appendChild(node);
+
+  context.listen(() => {
+    context.removeNode(node);
+    parentNode.removeChild(node)
+  });
+}

@@ -29,7 +29,8 @@ export function consumeAttributeValue(cursor: LexerCursor, _context: LexerTransi
           tokens: [{
             type: TokenType.ATTRIBUTE_VALUE,
             parts: [value]
-          }]
+          }],
+          popState: true
         }
         break;
 

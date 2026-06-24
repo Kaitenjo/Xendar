@@ -1,5 +1,4 @@
 import { GRAVE_ACCENT } from '../../costants/chars.constants';
-import { isJSIdentifierStart } from '../../utils/chars.utils';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type';
@@ -15,8 +14,6 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * @returns Transition result with the appropriate interpolation sub-state.
  */
 export function consumeInterpolation(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
-  let retVal!: LexerTransitionFunctionReturnType;
-
   // Consume '{' characters
   cursor.advance();
 
@@ -28,13 +25,7 @@ export function consumeInterpolation(cursor: LexerCursor, _context: LexerTransit
   
   const nextChar = cursor.peek();
 
-  if (nextChar === GRAVE_ACCENT) {
-    retVal = { state: LexerState.INTERPOLATION_LITERAL };
-  } else if (isJSIdentifierStart(nextChar)) {
-    retVal = { state: LexerState.INTERPOLATION_EXPRESSION };
-  } else {
-    throw new Error(`Unrecognized First Character ${String.fromCharCode(nextChar)} in interpolation`);
-  }
-
-  return retVal;
+  return nextChar === GRAVE_ACCENT 
+    ? { state: LexerState.INTERPOLATION_LITERAL } 
+    : { state: LexerState.INTERPOLATION_EXPRESSION };
 }

@@ -1,5 +1,5 @@
 import { Function, NoArgsFunction } from '@xaendar/types';
-import { effect } from '../signals';
+import { effect, untracked } from '../signals';
 import { Context } from './context.util';
 
 /**
@@ -185,7 +185,7 @@ function checkAndUpdateState(
 ): State | undefined {
   if (state?.activeBranch !== newState) {
     state?.context.unlisten();
-    const context = Signal.subtle.untrack<Context>(() => conditionalBlockFn(parentNode, parentContext));
+    const context = untracked(() => conditionalBlockFn(parentNode, parentContext));
     return { activeBranch: newState, context };
   }
 }

@@ -53,19 +53,3 @@ export function isNotBlank(str: string): boolean {
   */
   return /\S/.test(str)
 }
-
-/**
- * Checks whether the given ASCII code is a valid first character for a
- * JavaScript identifier (`A`–`Z`, `a`–`z`, `$`, `_`).
- *
- * @param code - The ASCII code to evaluate.
- * @returns `true` if the code can start a JS identifier, `false` otherwise.
- */
-export function isJSIdentifierStart(code: number): boolean {
-  return (
-    (code >= 65 && code <= 90) ||    // A-Z
-    (code >= 97 && code <= 122) ||   // a-z
-    code === 36 ||                   // $
-    code === 95                      // _
-  );
-}

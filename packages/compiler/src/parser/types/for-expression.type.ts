@@ -18,7 +18,7 @@ export type ForExpression = {
   /** 
    * The iterable expression parsed and validated as a JS expression (e.g. `items`). 
    */
-  iterableExpression: ts.Expression | undefined;
+  iterableExpression: ts.Expression;
   /** 
    * The raw source string of the iterable (e.g. `"items"`). 
    */
@@ -26,7 +26,7 @@ export type ForExpression = {
   /** 
    * The track expression parsed and validated as a JS expression (e.g. `item.id`). 
    */
-  trackExpression: ts.Expression | undefined;
+  trackExpression: ts.Expression;
   /** 
    * The raw source string of the track expression (e.g. `"item.id"`). 
    */

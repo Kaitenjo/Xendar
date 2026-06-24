@@ -1,7 +1,7 @@
 import { effect } from '../signals/effect/effect';
 import { RenderElementAttribute } from '../types/render-element-attribute.type';
 import { RenderElementEvent } from '../types/render-element-event.type';
-import { Context } from './context.util';
+import { Context, mountNode } from './context.util';
 
 /**
  * Creates a DOM element, applies attributes and event listeners, appends it
@@ -22,11 +22,7 @@ import { Context } from './context.util';
  */
 export function _renderElement(parentNode: HTMLElement, context: Context, tagName: string, attributes: RenderElementAttribute[], events: RenderElementEvent[]): HTMLElement {
   const element = document.createElement(tagName);
-  parentNode.appendChild(element);
-  context.listen(() => {
-    context.removeNode(element);
-    parentNode.removeChild(element)
-  })
+  mountNode(element, parentNode, context)
 
   attributes.forEach(({ name, value, literal } )=> {
     literal

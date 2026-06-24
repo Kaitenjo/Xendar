@@ -1,4 +1,4 @@
-import ts, { Diagnostic } from 'typescript';
+import { BinaryExpression, Node, ScriptTarget, SyntaxKind, VariableStatement, createSourceFile, forEachChild } from 'typescript';
 import { ExpressionValidationResult } from '../types/expression-validation-result.type';
 import { ExpressionDiagnostic } from '../types/nodes/expression-diangnostic.type';
 
@@ -57,9 +57,9 @@ import { ExpressionDiagnostic } from '../types/nodes/expression-diangnostic.type
  */
 export function validateExpression(source: string): ExpressionValidationResult {
   const prefix = 'const x = ';
-  const sourceFile = ts.createSourceFile('expression.ts', `${prefix}${source}`, ts.ScriptTarget.ESNext, true);
+  const sourceFile = createSourceFile('expression.ts', `${prefix}${source}`, ScriptTarget.ESNext, true);
 
-  const statement = sourceFile.statements[0] as ts.VariableStatement;
+  const statement = sourceFile.statements[0] as VariableStatement;
   const expression = statement.declarationList.declarations[0]!.initializer!;
 
   const diagnostics = new Array<ExpressionDiagnostic>;
@@ -86,12 +86,12 @@ export function validateExpression(source: string): ExpressionValidationResult {
  *   to obtain offsets relative to the original expression string.
  * @param diagnostics - Accumulator for diagnostics found during the walk.
  */
-function visitNode(node: ts.Node, offset: number, diagnostics: ExpressionDiagnostic[]): void {
+function visitNode(node: Node, offset: number, diagnostics: ExpressionDiagnostic[]): void {
   if (!isAllowedNode(node)) {
     throw new Error(buildDisallowedMessage(node));
   }
 
-  ts.forEachChild(node, child => visitNode(child, offset, diagnostics));
+  forEachChild(node, child => visitNode(child, offset, diagnostics));
 
   if (diagnostics.length) {
     throw new Error(diagnostics[0]!.message);
@@ -106,115 +106,116 @@ function visitNode(node: ts.Node, offset: number, diagnostics: ExpressionDiagnos
  * separately in {@link buildDisallowedMessage} since TypeScript does not
  * distinguish them at the node-kind level.
  */
-function isAllowedNode(node: ts.Node): boolean {
+function isAllowedNode(node: Node): boolean {
   switch (node.kind) {
     // ---- Literals ----
-    case ts.SyntaxKind.StringLiteral:
-    case ts.SyntaxKind.NumericLiteral:
-    case ts.SyntaxKind.BigIntLiteral:
-    case ts.SyntaxKind.TrueKeyword:
-    case ts.SyntaxKind.FalseKeyword:
-    case ts.SyntaxKind.NullKeyword:
-    case ts.SyntaxKind.UndefinedKeyword:
+    case SyntaxKind.StringLiteral:
+    case SyntaxKind.NumericLiteral:
+    case SyntaxKind.BigIntLiteral:
+    case SyntaxKind.TrueKeyword:
+    case SyntaxKind.FalseKeyword:
+    case SyntaxKind.NullKeyword:
+    case SyntaxKind.UndefinedKeyword:
 
     // ---- Identifiers ----
-    case ts.SyntaxKind.Identifier:
+    case SyntaxKind.Identifier:
 
     // ---- Member access ----
     // user.name
-    case ts.SyntaxKind.PropertyAccessExpression:
+    case SyntaxKind.PropertyAccessExpression:
     // user['name'], items[0]
-    case ts.SyntaxKind.ElementAccessExpression:
+    case SyntaxKind.ElementAccessExpression:
 
     // ---- Call expressions ----
     // user.getFullName(), user.hasRole('admin')
-    case ts.SyntaxKind.CallExpression:
+    case SyntaxKind.CallExpression:
 
     // ---- Binary expressions ----
     // Covers arithmetic, comparison, logical, bitwise, nullish coalescing,
     // and instanceof. Assignment operators are rejected in visitNode via
     // buildDisallowedMessage before recursing into children.
-    case ts.SyntaxKind.BinaryExpression:
+    case SyntaxKind.BinaryExpression:
 
     // ---- Operator tokens — visited as children of BinaryExpression ----
     // Comparison
-    case ts.SyntaxKind.EqualsEqualsToken:            // ==
-    case ts.SyntaxKind.EqualsEqualsEqualsToken:       // ===
-    case ts.SyntaxKind.ExclamationEqualsToken:        // !=
-    case ts.SyntaxKind.ExclamationEqualsEqualsToken:  // !==
-    case ts.SyntaxKind.LessThanToken:                 // 
-    case ts.SyntaxKind.LessThanEqualsToken:           // <=
-    case ts.SyntaxKind.GreaterThanToken:              // >
-    case ts.SyntaxKind.GreaterThanEqualsToken:        // >=
+    case SyntaxKind.EqualsEqualsToken:             // ==
+    case SyntaxKind.EqualsEqualsEqualsToken:       // ===
+    case SyntaxKind.ExclamationEqualsToken:        // !=
+    case SyntaxKind.ExclamationEqualsEqualsToken:  // !==
+    case SyntaxKind.LessThanToken:                 // 
+    case SyntaxKind.LessThanEqualsToken:           // <=
+    case SyntaxKind.GreaterThanToken:              // >
+    case SyntaxKind.GreaterThanEqualsToken:        // >=
 
     // Arithmetic
-    case ts.SyntaxKind.PlusToken:                     // +
-    case ts.SyntaxKind.MinusToken:                    // -
-    case ts.SyntaxKind.AsteriskToken:                 // *
-    case ts.SyntaxKind.SlashToken:                    // /
-    case ts.SyntaxKind.PercentToken:                  // %
-    case ts.SyntaxKind.AsteriskAsteriskToken:         // **
+    case SyntaxKind.PlusToken:                     // +
+    case SyntaxKind.MinusToken:                    // -
+    case SyntaxKind.AsteriskToken:                 // *
+    case SyntaxKind.SlashToken:                    // /
+    case SyntaxKind.PercentToken:                  // %
+    case SyntaxKind.AsteriskAsteriskToken:         // **
 
     // Logical
-    case ts.SyntaxKind.AmpersandAmpersandToken:       // &&
-    case ts.SyntaxKind.BarBarToken:                   // ||
-    case ts.SyntaxKind.QuestionQuestionToken:         // ??
+    case SyntaxKind.AmpersandAmpersandToken:       // &&
+    case SyntaxKind.BarBarToken:                   // ||
+    case SyntaxKind.QuestionQuestionToken:         // ??
+    case SyntaxKind.QuestionDotToken:              // ?.
 
     // Bitwise
-    case ts.SyntaxKind.AmpersandToken:                // &
-    case ts.SyntaxKind.BarToken:                      // |
-    case ts.SyntaxKind.CaretToken:                    // ^
-    case ts.SyntaxKind.LessThanLessThanToken:         // 
-    case ts.SyntaxKind.GreaterThanGreaterThanToken:   // >>
-    case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken: // >>>
+    case SyntaxKind.AmpersandToken:                // &
+    case SyntaxKind.BarToken:                      // |
+    case SyntaxKind.CaretToken:                    // ^
+    case SyntaxKind.LessThanLessThanToken:         // 
+    case SyntaxKind.GreaterThanGreaterThanToken:   // >>
+    case SyntaxKind.GreaterThanGreaterThanGreaterThanToken: // >>>
     
     // instanceof / in
-    case ts.SyntaxKind.InstanceOfKeyword:             // instanceof
-    case ts.SyntaxKind.InKeyword:                     // in
+    case SyntaxKind.InstanceOfKeyword:             // instanceof
+    case SyntaxKind.InKeyword:                     // in
 
     // ---- Unary expressions ----
     // !isAdmin, ~flags, +n, -n, typeof x, void 0
-    case ts.SyntaxKind.PrefixUnaryExpression:
-    case ts.SyntaxKind.PostfixUnaryExpression:
+    case SyntaxKind.PrefixUnaryExpression:
+    case SyntaxKind.PostfixUnaryExpression:
     // typeof is represented as a dedicated node kind in some TS versions
-    case ts.SyntaxKind.TypeOfExpression:
-    case ts.SyntaxKind.VoidExpression:
+    case SyntaxKind.TypeOfExpression:
+    case SyntaxKind.VoidExpression:
 
     // ---- Conditional (ternary) ----
     // isAdmin ? 'yes' : 'no'
-    case ts.SyntaxKind.ConditionalExpression:
+    case SyntaxKind.ConditionalExpression:
 
     // ---- Parenthesised expressions ----
-    case ts.SyntaxKind.ParenthesizedExpression:
+    case SyntaxKind.ParenthesizedExpression:
 
     // ---- Template literals ----
     // `Hello ${user.name}`
-    case ts.SyntaxKind.TemplateExpression:
-    case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
-    case ts.SyntaxKind.TemplateHead:
-    case ts.SyntaxKind.TemplateMiddle:
-    case ts.SyntaxKind.TemplateTail:
-    case ts.SyntaxKind.TemplateSpan:
+    case SyntaxKind.TemplateExpression:
+    case SyntaxKind.NoSubstitutionTemplateLiteral:
+    case SyntaxKind.TemplateHead:
+    case SyntaxKind.TemplateMiddle:
+    case SyntaxKind.TemplateTail:
+    case SyntaxKind.TemplateSpan:
 
     // ---- Arrays ----
     // [1, 2, 3], [...items]
-    case ts.SyntaxKind.ArrayLiteralExpression:
+    case SyntaxKind.ArrayLiteralExpression:
 
     // ---- Objects ----
     // { key: value }, { ...defaults, name }
-    case ts.SyntaxKind.ObjectLiteralExpression:
-    case ts.SyntaxKind.PropertyAssignment:
-    case ts.SyntaxKind.ShorthandPropertyAssignment:
+    case SyntaxKind.ObjectLiteralExpression:
+    case SyntaxKind.PropertyAssignment:
+    case SyntaxKind.ShorthandPropertyAssignment:
     // { ...obj } inside an object literal
-    case ts.SyntaxKind.SpreadAssignment:
+    case SyntaxKind.SpreadAssignment:
 
     // ---- Spread ----
     // foo(...args), [...items]
-    case ts.SyntaxKind.SpreadElement:
+    case SyntaxKind.SpreadElement:
 
     // ---- Internal structural nodes ----
     // Visited during recursion but carry no semantic meaning of their own.
-    case ts.SyntaxKind.SyntaxList:
+    case SyntaxKind.SyntaxList:
       return true;
 
     // ---- Disallowed by default ----
@@ -230,43 +231,43 @@ function isAllowedNode(node: ts.Node): boolean {
  * Provides specific messages for the most common mistakes (assignments, `await`,
  * `new`, functions) and falls back to a generic message for anything else.
  */
-function buildDisallowedMessage(node: ts.Node): string {
+function buildDisallowedMessage(node: Node): string {
   switch (node.kind) {
-    case ts.SyntaxKind.AwaitExpression:
+    case SyntaxKind.AwaitExpression:
       return "'await' is not allowed inside template expressions.";
 
-    case ts.SyntaxKind.YieldExpression:
+    case SyntaxKind.YieldExpression:
       return "'yield' is not allowed inside template expressions.";
 
-    case ts.SyntaxKind.NewExpression:
+    case SyntaxKind.NewExpression:
       return "'new' is not allowed inside template expressions.";
 
-    case ts.SyntaxKind.ArrowFunction:
-    case ts.SyntaxKind.FunctionExpression:
+    case SyntaxKind.ArrowFunction:
+    case SyntaxKind.FunctionExpression:
       return 'Function expressions are not allowed inside template expressions.';
 
-    case ts.SyntaxKind.TaggedTemplateExpression:
+    case SyntaxKind.TaggedTemplateExpression:
       return 'Tagged template expressions are not allowed inside template expressions.';
 
-    case ts.SyntaxKind.BinaryExpression: {
-      const bin = node as ts.BinaryExpression;
+    case SyntaxKind.BinaryExpression: {
+      const bin = node as BinaryExpression;
       return isAssignmentOperator(bin.operatorToken.kind)
         ? 'Assignments are not allowed inside template expressions. Use @const to declare local template variables instead.'
-        : `'${ts.SyntaxKind[node.kind]}' is not allowed inside template expressions.`;
+        : `'${SyntaxKind[node.kind]}' is not allowed inside template expressions.`;
     }
 
     default:
-      return `'${ts.SyntaxKind[node.kind]}' is not allowed inside template expressions.`;
+      return `'${SyntaxKind[node.kind]}' is not allowed inside template expressions.`;
   }
 }
 
 /**
- * Returns `true` if the given {@link ts.SyntaxKind} is an assignment operator.
+ * Returns `true` if the given {@link SyntaxKind} is an assignment operator.
  *
  * Covers simple assignment (`=`) as well as all compound assignment operators
  * (`+=`, `-=`, `&&=`, `||=`, `??=`, etc.) as defined by the TypeScript
  * `FirstAssignment`–`LastAssignment` range.
  */
-function isAssignmentOperator(kind: ts.SyntaxKind): boolean {
-  return kind >= ts.SyntaxKind.FirstAssignment && kind <= ts.SyntaxKind.LastAssignment;
+function isAssignmentOperator(kind: SyntaxKind): boolean {
+  return kind >= SyntaxKind.FirstAssignment && kind <= SyntaxKind.LastAssignment;
 }

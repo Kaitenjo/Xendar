@@ -1,6 +1,6 @@
 import { NoArgsFunction } from '@xaendar/types';
 import { effect } from '../signals/effect/effect';
-import { Context } from './context.util';
+import { Context, mountNode } from './context.util';
 
 /**
  * Creates a reactive text node bound to a named identifier in the current scope.
@@ -15,12 +15,7 @@ import { Context } from './context.util';
  */
 export function _renderText(parentNode: HTMLElement, context: Context, textFn: NoArgsFunction<string>): void {
   const node = document.createTextNode(textFn());
-  parentNode.appendChild(node);
-  context.listen(() => {
-    context.removeNode(node);
-    parentNode.removeChild(node);
-  })
-
+  mountNode(node, parentNode, context);
   context.listen(effect(() => node.textContent = textFn()));
 }
 
@@ -37,6 +32,5 @@ export function _renderText(parentNode: HTMLElement, context: Context, textFn: N
  */
 export function _renderLiteralText(parentNode: HTMLElement, context: Context, text: string): void {
   const node = document.createTextNode(text);
-  parentNode.appendChild(node);
-  context.listen(() => parentNode.removeChild(node));
+  mountNode(node, parentNode, context);
 }

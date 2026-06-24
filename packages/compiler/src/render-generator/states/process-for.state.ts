@@ -2,7 +2,7 @@ import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-vari
 import { ForNode } from '../../parser/types/nodes/for-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { processNode } from '../render-generator';
-import { getBlockIdentifier, getTextIdentifier } from '../utils/render-generator.utils';
+import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for a `@for` iteration node.
@@ -70,7 +70,7 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
     args: [parentNode, 'parentContext', itemsName, counterName]
   });
 
-  mainBlock.push(`_for(${parentNode}, context, () => ${iterableExpr}, this.${forKey}.bind(this));`);
+  mainBlock.push(`_for(${parentNode}, context, () => ${iterableExpr}, (${node.itemAlias}) => ${resolveExpression(node.trackExpression, forContext)}, this.${forKey}.bind(this));`);
 
   return {
     mainBlock,

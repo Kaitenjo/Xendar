@@ -1,5 +1,5 @@
 import { Function } from '@xaendar/types';
-import { effect } from '../signals';
+import { effect, untracked } from '../signals';
 import { Context } from './context.util';
 
 /**
@@ -9,9 +9,16 @@ import { Context } from './context.util';
  * @param parentNode - The parent HTML element where the conditional structure is applied.
  * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param condition - A reactive function that returns the array of items to iterate over.
+ * @param trackExpression - An expression used to identify univocally single iterations to not duplicate DOM elements between different renders
  * @param forFn - A callback invoked for each item, receiving the parent node, the item, and its index. Must return an array of cleanup functions.
  */
-export function _for(parentNode: HTMLElement, parentContext: Context, condition: () => unknown[], forFn: Function<[parentNode: HTMLElement, context: Context, items: unknown[], index: number], Context>) {
+export function _for(
+  parentNode: HTMLElement, 
+  parentContext: Context, 
+  condition: () => unknown[], 
+  trackExpression: Function<[unknown], string | number>, 
+  forFn: Function<[parentNode: HTMLElement, context: Context, items: unknown[], index: number], Context>
+) {
   let contexts = new Array<Context>;
   const unlistener = effect(() => {
     contexts.forEach(context => {
@@ -19,8 +26,9 @@ export function _for(parentNode: HTMLElement, parentContext: Context, condition:
       parentContext.removeChild(context);
     });
     contexts = [];
+
     const items = condition();
-    Signal.subtle.untrack(() => {
+    untracked(() => {
       for (let i = 0; i < items.length; i++) {
         const context = forFn(parentNode, parentContext, items, i);
         contexts.push(context);

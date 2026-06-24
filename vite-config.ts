@@ -1,8 +1,8 @@
-import { readFileSync, writeFileSync, mkdirSync, cpSync, existsSync, copyFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { PackageJson } from "type-fest";
 import { PluginOption, UserConfig } from "vite";
 import dts from 'vite-plugin-dts';
-import { PackageJson } from "type-fest";
 
 export type ViteConfigOptions = {
   plugins?: PluginOption[]

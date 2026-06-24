@@ -186,7 +186,7 @@ function buildXaendarAliasMap(): Record<string, string> {
  * - If `noExternal` is set, all dependencies are bundled inline (self-contained executable).
  * - Declaration files are emitted unless `xaendar.dts` is explicitly `false`.
  */
-function buildNode(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<unknown> {
+async function buildNode(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<unknown> {
   const entry = pkg.xaendar?.entry ?? 'src/public-api.ts';
   const bundleAll = pkg.xaendar?.noExternal === true;
   const outDir = resolve(projectPath, '../../dist/@xaendar', projectName);
@@ -261,7 +261,7 @@ const require = createRequire(import.meta.url);
     }
   }
 
-  return tsupBuild({
+  await tsupBuild({
     entry: {
       [projectName]: entryPath
     },
@@ -273,7 +273,8 @@ const require = createRequire(import.meta.url);
     clean: true,
     tsconfig: resolve(projectsPath, '../tsconfig.json'),
     ...options,
-  }).then(() => writePackageJsonForNodeProject(projectName, pkg, { types, outDir, bin, dependencies }));
+  });
+  return writePackageJsonForNodeProject(projectName, pkg, { types, outDir, bin, dependencies });
 }
 
 function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackageJson, options: { types: { types: string } | object, outDir: string, bin: Record<string, string>, dependencies: PackageJson['dependencies'] }): void {

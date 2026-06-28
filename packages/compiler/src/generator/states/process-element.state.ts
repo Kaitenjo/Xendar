@@ -3,8 +3,10 @@ import { AttributeNode } from '../../parser/types/nodes/attribute-node.type';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { EventNode } from '../../parser/types/nodes/event-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
-import { processNode } from '../render-generator';
+import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
 import { resolveExpression } from '../utils/render-generator.utils';
+import { Function } from '@xaendar/types';
+import { ASTNode } from '../../parser/types/ast.type';
 
 /**
  * Generates code for an HTML element node: creates the DOM element, sets attributes,
@@ -16,10 +18,13 @@ import { resolveExpression } from '../utils/render-generator.utils';
  * @param compilerContext - Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processElement(node: ElementNode, nodeName: string, parentNode: string, compilerContext: CompilerContext): string[] {
+export function processElement(node: ElementNode, nodeName: string, parentNode: string, compilerContext: CompilerContext, processNode: Function<[ASTNode, string, string, CompilerContext, Function], string[]>): GeneratorTransitionFunctionReturnType {
   const attributes = mapAttributes(node.attributes, compilerContext);
   const events = mapEvents(node.events, compilerContext);
   const code = [`const ${nodeName} = _renderElement(${parentNode}, context, '${node.tagName}',`];
+  const retval: GeneratorTransitionFunctionReturnType = {
+    code: []
+  }
 
   attributes.length
   ? code.push(
@@ -42,8 +47,8 @@ export function processElement(node: ElementNode, nodeName: string, parentNode: 
   )
   : code[code.length - 1] = `${code[code.length - 1]} []);`;
   
-  code.push(...node.children.map((child, i) => processNode(child, i.toString(), nodeName, compilerContext)).flat())
-  return code;
+  retval.code.push(...node.children.map((child, i) => processNode(child, i.toString(), nodeName, compilerContext, processNode)).flat())
+  return retval;
 }
 
 /**

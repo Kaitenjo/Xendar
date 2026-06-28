@@ -1,6 +1,6 @@
+import { Generator } from "./generator/generator";
 import { Lexer } from "./lexer/lexer";
 import { Parser } from "./parser/parser";
-import { generateRenderFunction } from "./render-generator/render-generator";
 
 /**
  * Compiles a template string into a TypeScript render function body.
@@ -18,5 +18,5 @@ import { generateRenderFunction } from "./render-generator/render-generator";
 export function compile(input: string, cssVariableName?: string): string {
   const tokens = new Lexer(input).tokenize();
   const ast = new Parser(tokens).parse();
-  return generateRenderFunction(ast, cssVariableName);
+  return new Generator(ast, cssVariableName).generate();
 }

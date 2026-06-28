@@ -1,8 +1,10 @@
+import { Function } from '@xaendar/types';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
-import { processNode } from '../render-generator';
+import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
 import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../utils/render-generator.utils';
+import { ASTNode } from '../../parser/types/ast.type';
 
 /**
  * Generates code for a `@for` iteration node.
@@ -35,12 +37,11 @@ import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../uti
  * @param compilerContext - The enclosing scope context.
  * @returns Array of generated code lines.
  */
-export function processFor(node: ForNode, nodeName: string, parentNode: string, compilerContext: CompilerContext): { 
-  mainBlock: string[], 
-  fns: Map<string, { code: string[], args: [parentElement: string, parentContext: string, items: string, index: string] }> 
-} {
-  const mainBlock = new Array<string>;
-  const functionsToProcess = new Map<string, { code: string[], args: [parentElement: string, parentContext: string, items: string, index: string] }>();
+export function processFor(node: ForNode, nodeName: string, parentNode: string, compilerContext: CompilerContext, processNode: Function<[ASTNode, string, string, CompilerContext, Function], string[]>): GeneratorTransitionFunctionReturnType {
+  const retVal: GeneratorTransitionFunctionReturnType = {
+    code: [],
+    functionsToProcess: new Map()
+  }
 
   const iterableSource = node.iterableSource;
   const iterableExpr = compilerContext.hasIdentifier(iterableSource) ? iterableSource : `this.${iterableSource}`;
@@ -56,8 +57,8 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
   const forContext = new CompilerContext([node.itemAlias, indexName, firstName, lastName, evenName, oddName], compilerContext);
 
   const forKey = getBlockIdentifier(parentNode, nodeName, 'for');
-  functionsToProcess.set(forKey, {
-    code: [
+  retVal.functionsToProcess!.set(forKey, {
+    fn: [
 `const { ${node.itemAlias}, ${indexName}, ${firstName}, ${lastName}, ${evenName}, ${oddName} } = _iterationVariables(${itemsName}, ${counterName}, '${node.itemAlias}', { 
     $index: '${indexName}', 
     $first: '${firstName}', 
@@ -65,17 +66,14 @@ export function processFor(node: ForNode, nodeName: string, parentNode: string, 
     $even: '${evenName}', 
     $odd: '${oddName}' 
   });`,
-      ...node.children.flatMap((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, forContext))
+      ...node.children.flatMap((child, i) => processNode(child, `${nodeName}_${i}`, parentNode, forContext, processNode))
     ],
     args: [parentNode, 'parentContext', itemsName, counterName]
   });
 
-  mainBlock.push(`_for(${parentNode}, context, () => ${iterableExpr}, (${node.itemAlias}) => ${resolveExpression(node.trackExpression, forContext)}, this.${forKey}.bind(this));`);
+  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, (${node.itemAlias}) => ${resolveExpression(node.trackExpression, forContext)}, this.${forKey}.bind(this));`);
 
-  return {
-    mainBlock,
-    fns: functionsToProcess
-  }
+  return retVal
 }
 
 /**

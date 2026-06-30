@@ -49,7 +49,7 @@ function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<
 
       return {
         type: ASTNodeType.Else,
-        consequent: elseChildren
+        children: elseChildren
       };
   }
 }
@@ -86,7 +86,7 @@ function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode
     type: token.type === TokenType.IF ? ASTNodeType.If : ASTNodeType.ElseIf,
     condition,
     conditionNode: validationResult.node,
-    consequent,
+    children: consequent,
     alternate: parseElseIfRecursively(cursor, parseNode, cursor.peek<ElseIfToken | ElseToken>())
   };
 }

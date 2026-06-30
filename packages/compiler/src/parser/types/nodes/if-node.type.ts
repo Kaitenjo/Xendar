@@ -23,7 +23,7 @@ export type IfNode = {
   /**
    * Child nodes rendered when the condition is truthy.
    */
-  consequent: ASTNode[];
+  children: ASTNode[];
   /**
    * Optional `@else` branch, or `null` if no else clause is present.
    */

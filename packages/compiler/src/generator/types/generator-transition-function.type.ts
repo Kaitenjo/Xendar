@@ -1,4 +1,3 @@
-import { Function } from '@xaendar/types';
 import { ASTNode } from '../../parser/types/ast.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from './generator-transition-function-return-type.type';
@@ -21,5 +20,4 @@ export type GeneratorTransitionFunction<T extends ASTNode = ASTNode> = (
   identifier: string, 
   parentNode: string, 
   compilerContext: CompilerContext, 
-  processNode: Function<[ASTNode, string, string, CompilerContext, Function], GeneratorTransitionFunctionReturnType> 
 ) => GeneratorTransitionFunctionReturnType

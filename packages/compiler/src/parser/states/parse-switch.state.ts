@@ -92,6 +92,6 @@ export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFu
   return {
     type: ASTNodeType.Switch,
     expression,
-    cases
+    children: cases
   };
 }

@@ -36,7 +36,7 @@ const template = `
 
                       @if (suffixIcons) {
                         <div class="caep-property-grid-editor-icons-container">
-                          <ng-container ngTemplateOutlet="{suffixIcons}" ngTemplateOutletContext="{{ $implicit: property }}" />
+                          <ng-container ngTemplateOutlet="{suffixIcons}" ngTemplateOutletContext="{{ implicit: property }}" />
                         </div>
                       }
                     </div>

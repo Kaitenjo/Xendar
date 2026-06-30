@@ -59,7 +59,7 @@ export class Generator {
     }
 
     for (let i = 0; i < this._ast.length; i++) {
-      const { code, functionsToProcess } = this._processNode(this._ast[i]!, i.toString(), ROOT_NODE, compilerContext);
+      const { code, functionsToProcess } = this._processNode(this._ast[i]!, ROOT_NODE, i.toString(), compilerContext);
       functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
       renderFunctions.push(...indent(code));
     }
@@ -70,11 +70,16 @@ export class Generator {
     )
 
     for (const [key, fnData] of this._nodeToProcess.entries()) {
+      const { node, parentNode, context } = fnData.fn
       renderFunctions.push(
-        `\n${key}(${fnData.args.join(', ')}) {`,
+        `\n${key}(${fnData.args?.join(', ')}) {`,
         ...indent([
           'const context = new Context(this, parentContext);',
-          ...fnData.fn(...fnData.args),
+          ...node.children.map((child, i) => {
+            const { code, functionsToProcess } = this._processNode(child, parentNode, i.toString(), context);
+            functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
+            return code;
+          }).flat(),
           'return context'
         ]),
         '}'
@@ -89,14 +94,14 @@ export class Generator {
    * For flow control nodes no single var is produced; instead multiple children
    * are appended directly inside the control flow block.
    */
-  private _processNode(node: ASTNode, nodeName: string, parentNode: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
+  private _processNode(node: ASTNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
     const state = this._states[node.type];
 
     if (!state) {
       throw new Error(`[Parser] No transition function for token type ${ASTNodeType[node.type]}`);
     }
 
-    return state(node as never, nodeName, parentNode, compilerContext, this._processNode.bind(this));
+    return state(node as never, parentNode, index, compilerContext);
   }
 }
 

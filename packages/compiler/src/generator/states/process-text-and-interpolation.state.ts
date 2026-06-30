@@ -1,5 +1,3 @@
-import { Function } from '@xaendar/types';
-import { ASTNode } from '../../parser/types/ast.type';
 import { ASTNodeType } from '../../parser/types/node.enum';
 import { InterpolationNode } from '../../parser/types/nodes/interpolation-node.type';
 import { TextNode } from '../../parser/types/nodes/text-node.type';
@@ -18,7 +16,7 @@ import { resolveExpression } from '../utils/render-generator.utils';
  * @param parentNode - Variable name of the parent DOM node to append to.
  * @returns Array of generated code lines.
  */
-export function processTextAndInterpolation(node: TextNode | InterpolationNode, _identifier: string, parentNode: string, compilerContext: CompilerContext, _processNode: Function<[ASTNode, string, string, CompilerContext, Function], GeneratorTransitionFunctionReturnType>): GeneratorTransitionFunctionReturnType {
+export function processTextAndInterpolation(node: TextNode | InterpolationNode, parentNode: string, _index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
   return {
     code: [`${node.type === ASTNodeType.Text
       ? `_renderLiteralText(${parentNode}, context, '${node.value}');`

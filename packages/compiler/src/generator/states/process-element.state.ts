@@ -4,50 +4,55 @@ import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { EventNode } from '../../parser/types/nodes/event-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
-import { resolveExpression } from '../utils/render-generator.utils';
-import { Function } from '@xaendar/types';
-import { ASTNode } from '../../parser/types/ast.type';
+import { getElementIdentifier, resolveExpression } from '../utils/render-generator.utils';
 
 /**
  * Generates code for an HTML element node: creates the DOM element, sets attributes,
  * attaches event listeners, appends it to the parent, and recursively processes children.
  *
  * @param node - The `ElementNode` to process.
- * @param nodeName - Variable name to use for the created DOM element.
+ * @param index - Variable name to use for the created DOM element.
  * @param parentNode - Variable name of the parent DOM node to append to.
  * @param compilerContext - Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processElement(node: ElementNode, nodeName: string, parentNode: string, compilerContext: CompilerContext, processNode: Function<[ASTNode, string, string, CompilerContext, Function], string[]>): GeneratorTransitionFunctionReturnType {
+export function processElement(node: ElementNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
   const attributes = mapAttributes(node.attributes, compilerContext);
   const events = mapEvents(node.events, compilerContext);
-  const code = [`const ${nodeName} = _renderElement(${parentNode}, context, '${node.tagName}',`];
+  const nodeName = getElementIdentifier(node, parentNode, index);
   const retval: GeneratorTransitionFunctionReturnType = {
-    code: []
+    code: [`const ${nodeName} = _renderElement(${parentNode}, context, '${node.tagName}',`],
+    functionsToProcess: new Map()
   }
 
   attributes.length
-  ? code.push(
-    ...indent([
-      '[',
-      ...indent(attributes),
-      '],'
-    ])
-  )
-  : code[code.length - 1] = `${code[code.length - 1]} [],`;
-  
+    ? retval.code.push(
+      ...indent([
+        '[',
+        ...indent(attributes),
+        '],'
+      ])
+    )
+    : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} [],`;
+
   events.length
-  ? code.push(
-    ...indent([
-      '[',
-      ...indent(events),
-      ']'
-    ]),
-    ');'
-  )
-  : code[code.length - 1] = `${code[code.length - 1]} []);`;
-  
-  retval.code.push(...node.children.map((child, i) => processNode(child, i.toString(), nodeName, compilerContext, processNode)).flat())
+    ? retval.code.push(
+      ...indent([
+        '[',
+        ...indent(events),
+        ']'
+      ]),
+      ');'
+    )
+    : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} []);`;
+
+  if (node.children.length) {
+    retval.functionsToProcess!.set(`${nodeName}Children`, { 
+      fn: { node, parentNode: nodeName, context: compilerContext },
+      args: [nodeName, 'context']
+    });
+    retval.code.push(`this.${nodeName}Children(${nodeName}, context)`)
+  }
   return retval;
 }
 
@@ -81,7 +86,7 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
   const mappedEvents = events?.map(event => {
     let parsedEventParameter = false;
     const parameters = event.parameters.map(parameter => {
-      const resolvedParameter = resolveExpression(parameter, compilerContext); 
+      const resolvedParameter = resolveExpression(parameter, compilerContext);
       if (!parsedEventParameter && resolvedParameter === '$event') {
         parsedEventParameter = true;
         return `($event) => ${resolvedParameter},`
@@ -91,13 +96,13 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
     });
 
     return [
-      '{', 
+      '{',
       ...indent([
-        `name: '${event.name}',`, 
-        `handler: '${event.handler}',`, 
-        'parameters: [', 
-          ...indent(parameters), 
-        ']']), 
+        `name: '${event.name}',`,
+        `handler: '${event.handler}',`,
+        'parameters: [',
+        ...indent(parameters),
+        ']']),
       '}'
     ]
   }).flat();

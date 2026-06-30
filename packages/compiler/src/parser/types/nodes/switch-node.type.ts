@@ -17,5 +17,5 @@ export type SwitchNode = {
   /**
    * The list of `@case` and `@default` branches.
    */
-  cases: CaseNode[];
+  children: CaseNode[];
 }

@@ -24,7 +24,7 @@ export const GLOBAL_IDENTIFIERS: ReadonlySet<string> = new Set([
   'NaN',
   'Infinity',
   'globalThis',
- 
+
   // ---- Global functions ------------------------------------------------
   'eval',
   'isFinite',
@@ -38,13 +38,13 @@ export const GLOBAL_IDENTIFIERS: ReadonlySet<string> = new Set([
   // Deprecated but still Identifiers in TS
   'escape',
   'unescape',
- 
+
   // ---- Fundamental objects ---------------------------------------------
   'Object',
   'Function',
   'Boolean',
   'Symbol',
- 
+
   // ---- Error objects ---------------------------------------------------
   'Error',
   'AggregateError',
@@ -56,18 +56,18 @@ export const GLOBAL_IDENTIFIERS: ReadonlySet<string> = new Set([
   'URIError',
   'SuppressedError',       // ES2026 — explicit resource management
   'InternalError',         // Non-standard (Firefox) but common
- 
+
   // ---- Numbers and dates -----------------------------------------------
   'Number',
   'BigInt',
   'Math',
   'Date',
   'Temporal',              // ES2026 — replaces Date
- 
+
   // ---- Text processing -------------------------------------------------
   'String',
   'RegExp',
- 
+
   // ---- Indexed collections ---------------------------------------------
   'Array',
   'TypedArray',
@@ -83,24 +83,24 @@ export const GLOBAL_IDENTIFIERS: ReadonlySet<string> = new Set([
   'Float16Array',          // ES2025
   'Float32Array',
   'Float64Array',
- 
+
   // ---- Keyed collections -----------------------------------------------
   'Map',
   'Set',
   'WeakMap',
   'WeakSet',
- 
+
   // ---- Structured data -------------------------------------------------
   'ArrayBuffer',
   'SharedArrayBuffer',
   'DataView',
   'Atomics',
   'JSON',
- 
+
   // ---- Memory management -----------------------------------------------
   'WeakRef',
   'FinalizationRegistry',
- 
+
   // ---- Control abstractions --------------------------------------------
   'Iterator',              // ES2025
   'AsyncIterator',         // ES2025
@@ -112,17 +112,17 @@ export const GLOBAL_IDENTIFIERS: ReadonlySet<string> = new Set([
   'AsyncFunction',
   'DisposableStack',       // ES2026 — explicit resource management
   'AsyncDisposableStack',  // ES2026 — explicit resource management
- 
+
   // ---- Reflection ------------------------------------------------------
   'Reflect',
   'Proxy',
- 
+
   // ---- Internationalization --------------------------------------------
   'Intl',
- 
+
   // ---- WebAssembly -----------------------------------------------------
   'WebAssembly',
- 
+
   // ---- Browser / DOM globals -------------------------------------------
   // These are not part of the ECMAScript spec but are universally available
   // in browser environments and must not be treated as component properties.
@@ -181,7 +181,7 @@ export const GLOBAL_IDENTIFIERS: ReadonlySet<string> = new Set([
   'indexedDB',
   'WebSocket',
   'XMLHttpRequest',
- 
+
   // ---- DOM element constructors ----------------------------------------
   // Commonly used with instanceof in template expressions.
   'HTMLElement',
@@ -298,7 +298,7 @@ function emitNode(node: ts.Node, parent: ts.Node, compilerContext: CompilerConte
  * Short-circuits as soon as one is found to avoid visiting the whole tree.
  */
 function containsResolvableIdentifier(node: ts.Node, parent: ts.Node): boolean {
- if (ts.isIdentifier(node) && needsResolution(node, parent)) {
+  if (ts.isIdentifier(node) && needsResolution(node, parent)) {
     return true;
   }
 
@@ -337,33 +337,35 @@ function needsResolution(node: ts.Identifier, parent: ts.Node): boolean {
  * @returns A unique variable name string for the element.
  */
 export function getElementIdentifier(node: ElementNode, parentNode: string, index: string): string {
-  const identifier = parentNode !== ROOT_NODE ? `${parentNode}_${node.tagName}${index}` : `${node.tagName}${index}`;
-  return identifier.replace(/-/g, '_');
+  return getIdentifier(node.tagName, parentNode, index);
 }
 
 /**
  * Generates a unique variable name for a text or interpolation node.
  *
+ * @param prefix - Optional prefix to use instead of the default `'text'`.
  * @param parentNode - The variable name of the parent node.
  * @param index - A numeric suffix to disambiguate sibling text nodes.
- * @param prefix - Optional prefix to use instead of the default `'text'`.
  * @returns A unique variable name string for the text node.
  */
-export function getTextIdentifier(parentNode: string, index: string, prefix = 'text'): string {
-  const identifier = parentNode !== ROOT_NODE ? `${parentNode}_${prefix}${index}` : `${prefix}${index}`;
-  return identifier.replace(/-/g, '_');
+export function getTextIdentifier(prefix = 'text', parentNode: string, index: string): string {
+  return getIdentifier(prefix, parentNode, index);
 }
 
 /**
  * Generates a unique variable name for a control-flow block (if, else-if, else,
  * for, switch, case, or default).
  *
+ * @param prefix - The block type prefix (`'if'`, `'elseIf'`, `'else'`, etc.).
  * @param parentNode - The variable name of the parent node.
  * @param index - A suffix to disambiguate sibling blocks.
- * @param prefix - The block type prefix (`'if'`, `'elseIf'`, `'else'`, etc.).
  * @returns A unique variable name string for the block.
  */
-export function getBlockIdentifier(parentNode: string, index: string, prefix: 'if' | 'elseIf' | 'else' | 'for' | 'switch' | 'case' | 'default'): string {
-  const identifier = parentNode !== ROOT_NODE ? `${parentNode}_${prefix}${index}` : `${prefix}${index}`;
+export function getBlockIdentifier(prefix: 'if' | 'elseIf' | 'else' | 'for' | 'switch' | 'case' | 'default', parentNode: string, index: string): string {
+  return getIdentifier(prefix, parentNode, index);
+}
+
+function getIdentifier(prefix: string, parentNode: string, index: string): string {
+  const identifier = parentNode !== ROOT_NODE ? `${parentNode}__${prefix}${index}` : `${prefix}${index}`;
   return identifier.replace(/-/g, '_');
 }

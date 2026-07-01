@@ -6,7 +6,7 @@ import { CompilerContext } from "../models/compiler-context.model"
 export type GeneratorTransitionFunctionReturnType = {
   code: string[],
   functionsToProcess?: Map<string, {
-    fn: { node: Exclude<ASTNode, TextNode | InterpolationNode>, parentNode: string, context: CompilerContext },
+    fn: { node: Exclude<ASTNode, TextNode | InterpolationNode>, parentNode: string, context: CompilerContext, precode?: string },
     args?: string[]
   }>
 }

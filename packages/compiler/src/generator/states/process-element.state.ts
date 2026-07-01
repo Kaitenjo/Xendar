@@ -51,7 +51,7 @@ export function processElement(node: ElementNode, parentNode: string, index: str
       fn: { node, parentNode: nodeName, context: compilerContext },
       args: [nodeName, 'context']
     });
-    retval.code.push(`this.${nodeName}Children(${nodeName}, context)`)
+    retval.code.push(`this.${nodeName}Children(${nodeName}, context);`)
   }
   return retval;
 }

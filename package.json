@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.58.9",
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.1.0",
     "@vitest/coverage-v8": "^4.1.9",
     "depcheck": "^1.4.7",
     "nodemon": "^3.1.14",

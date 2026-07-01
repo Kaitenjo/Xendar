@@ -70,7 +70,7 @@ export class Generator {
     )
 
     for (const [key, fnData] of this._nodeToProcess.entries()) {
-      const { node, parentNode, context } = fnData.fn
+      const { node, parentNode, context, precode } = fnData.fn
       renderFunctions.push(
         `\n${key}(${fnData.args?.join(', ')}) {`,
         ...indent([
@@ -78,9 +78,12 @@ export class Generator {
           ...node.children.map((child, i) => {
             const { code, functionsToProcess } = this._processNode(child, parentNode, i.toString(), context);
             functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
+            if (precode) {
+              code.unshift(precode);
+            }
             return code;
           }).flat(),
-          'return context'
+          'return context;'
         ]),
         '}'
       );

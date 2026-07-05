@@ -1,4 +1,4 @@
-import { COMMA, DOUBLE_QUOTE, LEFT_BRACE, LEFT_BRACKET, LPAREN, RPAREN, SINGLE_QUOTE } from '../../costants/chars.constants';
+import { COMMA, DOUBLE_QUOTE, LEFT_BRACE, LEFT_BRACKET, LPAREN, RIGHT_BRACE, RIGHT_BRACKET, RPAREN, SINGLE_QUOTE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -13,7 +13,7 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * @param _context - Unused lexer context.
  * @returns Transition result with the EVENT_PAREMETER token and the EVENT state.
  */
-export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexEventParameter(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let eventParameter = '';
   let charDelimiter: '"' | "'" | '[' | '{' | '' = '';
@@ -23,16 +23,12 @@ export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransi
     tokens: []
   }
 
-  /*
-    Consume '('
-  */
-  cursor.advance();
-  cursor.skipSpaces();
-
   while (read) {
     switch (cursor.peek()) {
       case LEFT_BRACKET:
+      case RIGHT_BRACKET:
       case LEFT_BRACE:
+      case RIGHT_BRACE:
       case DOUBLE_QUOTE:
       case SINGLE_QUOTE:
       case LPAREN:
@@ -40,7 +36,7 @@ export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransi
         // Safe assumption
         if (!charDelimiter) {
           charDelimiter = cursor.currentChar.value as typeof charDelimiter;
-        } else if (charDelimiter === cursor.currentChar.value) {
+        } else if (charDelimiter === cursor.currentChar.value || (charDelimiter === '[' && cursor.currentChar.value === ']') || charDelimiter === '{' && cursor.currentChar.value === '}') {
           charDelimiter = '';
         }
         break;
@@ -63,7 +59,7 @@ export function consumeEventParameter(cursor: LexerCursor, _context: LexerTransi
         cursor.advance();
 
         if (!charDelimiter) {
-            retVal.tokens!.push({
+          retVal.tokens!.push({
             type: TokenType.EVENT_PAREMETER,
             parts: [eventParameter]
           });

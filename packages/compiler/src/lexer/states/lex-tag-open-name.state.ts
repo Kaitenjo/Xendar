@@ -13,7 +13,7 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * @param _context - Unused lexer context.
  * @returns Transition result with the TAG_OPEN_NAME token and the TAG_BODY state.
  */
-export function consumeTagOpenName(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexTagOpenName(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let tagName = '';
   let retVal!: LexerTransitionFunctionReturnType

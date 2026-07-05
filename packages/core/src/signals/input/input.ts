@@ -26,7 +26,7 @@ export function input<ActualValue = unknown, IncomingValue = ActualValue>(value?
   const originalSet = signal.set;
 
   const getter = function () { return signal.get(); }
-  Object.assign(signal, {
+  Object.assign(getter, {
     set(newValue: IncomingValue, symbol: symbol): void {
       assertPrivateContext(symbol);
       const transformedValue = transform ? transform(newValue) : newValue;

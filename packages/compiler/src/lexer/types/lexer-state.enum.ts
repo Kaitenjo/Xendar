@@ -3,10 +3,6 @@
  */
 export enum LexerState {
   /**
-   * Initial state before any input has been processed.
-   */
-  START = 'start',
-  /**
    * Consuming plain text content between tags or at the top level.
    */
   TEXT = 'text',

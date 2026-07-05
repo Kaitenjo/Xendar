@@ -13,7 +13,7 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * @param _context - Unused lexer context.
  * @returns Transition result with the matching flow-control token and next state.
  */
-export function consumeFlowControl(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let retVal!: LexerTransitionFunctionReturnType;
 
   // Consume '@' character

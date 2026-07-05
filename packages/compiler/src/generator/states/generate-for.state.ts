@@ -35,7 +35,7 @@ import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../uti
  * @param compilerContext - The enclosing scope context.
  * @returns Array of generated code lines.
  */
-export function processFor(node: ForNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
+export function generateFor(node: ForNode, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType {
   const retVal: GeneratorTransitionFunctionReturnType = {
     code: [],
     functionsToProcess: new Map()
@@ -52,27 +52,30 @@ export function processFor(node: ForNode, parentNode: string, index: string, com
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
-  const forContext = new CompilerContext([node.itemAlias, indexName, firstName, lastName, evenName, oddName], compilerContext);
+  const forContext = new CompilerContext([node.itemAlias, [indexName, 'signal'], [firstName, 'signal'], [lastName, 'signal'], [evenName, 'signal'], [oddName, 'signal']], compilerContext);
 
   const forKey = getBlockIdentifier('for', parentNode, index);
   retVal.functionsToProcess!.set(forKey, {
     fn: {
-      precode: 
-`const { ${node.itemAlias}, ${indexName}, ${firstName}, ${lastName}, ${evenName}, ${oddName} } = _iterationVariables(${itemsName}, ${counterName}, '${node.itemAlias}', { 
+      precode:
+`const { vars, update } = _iterationVariables(context, ${itemsName}, ${counterName}, '${node.itemAlias}', { 
     $index: '${indexName}', 
     $first: '${firstName}', 
     $last: '${lastName}', 
     $even: '${evenName}', 
     $odd: '${oddName}' 
-  });`,
+  });
+  const { ${node.itemAlias}, ${indexName}, ${firstName}, ${lastName}, ${evenName}, ${oddName} } = vars;`,
       node,
-      parentNode,
-      context: forContext
+      parentNode: forKey,
+      context: forContext,
+      anchor: 'anchor',
+      isForBody: true
     },
-    args: [parentNode, 'parentContext', itemsName, counterName]
+    args: [forKey, 'parentContext', itemsName, counterName, 'namespace', 'anchor']
   });
 
-  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, (${node.itemAlias}) => ${resolveExpression(node.trackExpression, forContext)}, this.${forKey}.bind(this));`);
+  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, ${node.itemAlias} => ${resolveExpression(node.trackExpression, forContext, true)}, this.${forKey}.bind(this));`);
 
   return retVal
 }

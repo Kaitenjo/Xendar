@@ -16,12 +16,13 @@ import { getElementIdentifier, resolveExpression } from '../utils/render-generat
  * @param compilerContext - Current render scope context.
  * @returns Array of generated code lines.
  */
-export function processElement(node: ElementNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
+export function generateElement(node: ElementNode, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType {
   const attributes = mapAttributes(node.attributes, compilerContext);
   const events = mapEvents(node.events, compilerContext);
   const nodeName = getElementIdentifier(node, parentNode, index);
+  const tagName = node.tagName;
   const retval: GeneratorTransitionFunctionReturnType = {
-    code: [`const ${nodeName} = _renderElement(${parentNode}, context, '${node.tagName}',`],
+    code: [`const ${nodeName} = _renderElement(${parentNode}, context, ${anchor}, '${tagName}',`],
     functionsToProcess: new Map()
   }
 
@@ -47,11 +48,11 @@ export function processElement(node: ElementNode, parentNode: string, index: str
     : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} []);`;
 
   if (node.children.length) {
-    retval.functionsToProcess!.set(`${nodeName}Children`, { 
+    retval.functionsToProcess!.set(`${nodeName}Children`, {
       fn: { node, parentNode: nodeName, context: compilerContext },
-      args: [nodeName, 'context']
+      args: [nodeName, 'parentContext', 'namespace']
     });
-    retval.code.push(`this.${nodeName}Children(${nodeName}, context);`)
+    retval.code.push(`this.${nodeName}Children(${nodeName}, context, ${tagName === 'svg' ? "'svg'" : 'namespace'});`)
   }
   return retval;
 }
@@ -81,9 +82,9 @@ function mapAttributes(attributes: AttributeNode[], compilerContext: CompilerCon
  * @returns Array of generated code lines, one per event listener.
  */
 function mapEvents(events: EventNode[], compilerContext: CompilerContext): string[] {
-  compilerContext.addIdentifier('$event');
+  compilerContext.addUnresolvableIdentifier('$event');
 
-  const mappedEvents = events?.map(event => {
+  const mappedEvents = events.map(event => {
     let parsedEventParameter = false;
     const parameters = event.parameters.map(parameter => {
       const resolvedParameter = resolveExpression(parameter, compilerContext);
@@ -95,16 +96,28 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
       }
     });
 
-    return [
+    const eventCode = [
       '{',
       ...indent([
         `name: '${event.name}',`,
         `handler: '${event.handler}',`,
-        'parameters: [',
-        ...indent(parameters),
-        ']']),
-      '}'
+        'parameters: ['])
     ]
+
+    if (parameters.length) {
+      eventCode.push(
+        ...indent([
+          ...indent(parameters),
+          ']'
+        ]),
+        '}'
+      );
+    } else {
+      eventCode[eventCode.length - 1] = `${eventCode[eventCode.length - 1]}]`;
+      eventCode.push('}');
+    }
+
+    return eventCode;
   }).flat();
 
   compilerContext.removeIdentifier('$event');

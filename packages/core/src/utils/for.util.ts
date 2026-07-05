@@ -1,39 +1,78 @@
 import { Function } from '@xaendar/types';
-import { effect, untracked } from '../signals';
-import { Context } from './context.util';
+import { effect, signal, untracked } from '../signals';
+import { IterationVariablesHandle } from '../types/iteration-variables.type';
+import { Context, createAnchor } from './context.util';
+
+type ForKey = string | number;
+
+type ForEntry = {
+  context: Context;
+  update?: (newIndex: number, items: unknown[]) => void;
+};
 
 /**
- * Reactively iterates over a list of items, re-running the loop whenever the tracked condition changes.
- * Previous iteration side-effects are cleaned up before each re-evaluation.
+ * Reactively iterates over a list of items. Items are matched across re-runs
+ * by the key produced by `trackExpression`:
+ * - key sopravvive → il Context e l'intero sottoalbero (stato, subscription,
+ *   richieste pendenti) vengono riusati SEMPRE, indipendentemente da un
+ *   eventuale cambio di indice: si spostano solo i nodi DOM, e se il body usa
+ *   $index/$first/$last/$even/$odd questi vengono aggiornati in-place tramite
+ *   `update`, senza ricreare nulla.
+ * - key sparita → il Context viene distrutto.
+ * - key nuova → il Context viene creato.
  *
- * @param parentNode - The parent HTML element where the conditional structure is applied.
- * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
- * @param condition - A reactive function that returns the array of items to iterate over.
- * @param trackExpression - An expression used to identify univocally single iterations to not duplicate DOM elements between different renders
- * @param forFn - A callback invoked for each item, receiving the parent node, the item, and its index. Must return an array of cleanup functions.
+ * @param forFn - Callback invocata per creare un nuovo item. Deve ritornare
+ *   sia il Context che possiede i nodi, sia (opzionalmente) una funzione
+ *   `update` per aggiornare le variabili implicite in-place quando l'item
+ *   viene riusato a un indice diverso.
  */
-export function _for(
-  parentNode: HTMLElement, 
-  parentContext: Context, 
-  condition: () => unknown[], 
-  trackExpression: Function<[unknown], string | number>, 
-  forFn: Function<[parentNode: HTMLElement, context: Context, items: unknown[], index: number], Context>
-) {
-  let contexts = new Array<Context>;
-  const unlistener = effect(() => {
-    contexts.forEach(context => {
-      context.unlisten();
-      parentContext.removeChild(context);
-    });
-    contexts = [];
+export function _for(parentNode: HTMLElement, parentContext: Context, condition: () => unknown[], trackExpression: Function<[unknown], ForKey>, forFn: Function<[HTMLElement, Context, unknown[], number, Node | null], { context: Context, update?: (newIndex: number, items: unknown[]) => void }>) {
+  const anchor = createAnchor('for', parentNode, parentContext);
+  let entries = new Map<ForKey, ForEntry>();
 
+  const unlistener = effect(() => {
     const items = condition();
+    const newKeys = items.map(item => trackExpression(item));
+    const newKeySet = new Set(newKeys);
+
     untracked(() => {
-      for (let i = 0; i < items.length; i++) {
-        const context = forFn(parentNode, parentContext, items, i);
-        contexts.push(context);
-        parentContext.addChild(context);
+      const newEntries = new Map<ForKey, ForEntry>();
+
+      for (const [key, entry] of entries) {
+        if (!newKeySet.has(key)) {
+          entry.context.unlisten();
+          parentContext.removeChild(entry.context);
+        }
       }
+
+      let nextReference: Node = anchor;
+
+      for (let i = items.length - 1; i >= 0; i--) {
+        const key = newKeys[i]!;
+        const existing = entries.get(key);
+
+        let entry: ForEntry;
+
+        if (existing) {
+          const nodes = existing.context.getNodes();
+          const lastNode = nodes[nodes.length - 1];
+          if (lastNode?.nextSibling !== nextReference) {
+            nodes.forEach(node => parentNode.insertBefore(node, nextReference));
+          }
+          existing.update?.(i, items);
+          entry = existing;
+        } else {
+          const created = forFn(parentNode, parentContext, items, i, nextReference);
+          parentContext.addChild(created.context);
+          entry = created;
+        }
+
+        newEntries.set(key, entry);
+        const ownNodes = entry.context.getNodes();
+        nextReference = ownNodes[0] ?? nextReference;
+      }
+
+      entries = newEntries;
     });
   });
 
@@ -42,23 +81,45 @@ export function _for(
 
 /**
  * Builds a record of iteration context variables for a given index in the loop.
- * Provides the current item, index, and convenience flags (`$first`, `$last`, `$even`, `$odd`).
+ * `item` is a plain value (identity-stable across moves thanks to the key),
+ * while `$index`/`$first`/`$last`/`$even`/`$odd` are signals: when an item is
+ * moved to a different position in the array, `update()` writes the new
+ * values into these signals in place, instead of recreating the item's
+ * template output. Anything bound to these variables re-runs reactively;
+ * everything else in the item's subtree (state, subscriptions, pending
+ * requests) is left completely untouched.
  *
  * @param items - The full array being iterated.
  * @param index - The current iteration index.
- * @param itemName - The identifier to reference the i-th item during iteration
- * @param aliases - Aliases for implicit variables defined in the `{@for} loop`
- * @returns A record mapping alias names and built-in variables to their values.
+ * @param itemName - The identifier to reference the i-th item during iteration.
+ * @param aliases - Aliases for implicit variables defined in the `@for` loop.
+ * @returns A handle exposing the resolved variables and an `update` function.
  */
-export function _iterationVariables(items: unknown[], index: number, itemName: string, aliases: { $index: string, $first: string, $last: string, $even: string, $odd: string }): Record<string, unknown> {
-  const even = index % 2 === 0;
+export function _iterationVariables(context: Context, items: unknown[], index: number, itemName: string, aliases: { $index: string, $first: string, $last: string, $even: string, $odd: string }): IterationVariablesHandle {
+  const $index = signal(index);
+  const $first = signal(index === 0);
+  const $last = signal(index === items.length - 1);
+  const $even = signal(index % 2 === 0);
+  const $odd = signal(index % 2 !== 0);
 
-  return {
-    [itemName]: items[index],
-    [aliases.$index]: index,
-    [aliases.$first]: index === 0,
-    [aliases.$last]: index === items.length - 1,
-    [aliases.$even]: even,
-    [aliases.$odd]: !even
+  const retVal = {
+    vars: {
+      [itemName]: items[index],
+      [aliases.$index]: $index,
+      [aliases.$first]: $first,
+      [aliases.$last]: $last,
+      [aliases.$even]: $even,
+      [aliases.$odd]: $odd,
+    },
+    update(newIndex: number, newItems: unknown[]) {
+      $index.set(newIndex);
+      $first.set(newIndex === 0);
+      $last.set(newIndex === newItems.length - 1);
+      $even.set(newIndex % 2 === 0);
+      $odd.set(newIndex % 2 !== 0);
+    }
   };
+
+  Object.entries(retVal.vars).forEach(([key, value]) => context.addIdentifier(key, value));
+  return retVal
 }

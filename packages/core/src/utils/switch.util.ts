@@ -17,8 +17,6 @@ import { _if } from './if.util';
  *
  * @param parentNode - The parent HTML element where the conditional structure is applied.
  * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
- * @param unwatchFns - Shared array that collects all active cleanup functions.
- *   Mutated in place by the underlying {@link _if} call.
  * @param expression - Function that evaluates the switch expression. Called
  *   reactively inside an effect so that signal reads are tracked.
  * @param blocks - Ordered list of case branches. Each entry contains:
@@ -33,7 +31,7 @@ export function _switch(
   expression: NoArgsFunction<unknown>,
   blocks: Array<{ 
     condition: unknown[] | null, 
-    block: Function<[HTMLElement, Context], Context> 
+    block: Function<[HTMLElement, Context, Node | null], Context> 
   }>
 ): void {
   _if(parentNode, parentContext, blocks.map(({ condition, block }) => ({

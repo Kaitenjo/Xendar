@@ -14,7 +14,7 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * @param _context - Unused lexer context.
  * @returns Transition result with the ATTRIBUTE_VALUE token and the TAG_BODY state.
  */
-export function consumeAttributeValue(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexAttributeValue(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let value = '';
   let retVal!: LexerTransitionFunctionReturnType;

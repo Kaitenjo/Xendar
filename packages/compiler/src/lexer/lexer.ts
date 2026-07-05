@@ -1,22 +1,22 @@
 import { Stack } from '@xaendar/common';
 import { Dictionary } from '@xaendar/types';
 import { EOF } from '../costants/chars.constants';
-import { consumeAttributeValue } from './states/attribute-value.state';
-import { consumeAttribute } from './states/attribute.state';
-import { consumeCaseFlowControlCondition } from './states/case-flow-control-condition.state';
-import { consumeDefaultFlowControlCondition } from './states/default-flow-control-condition.state';
-import { consumeEventParameter } from './states/event-parameter.state';
-import { consumeEvent } from './states/event.state';
-import { consumeFlowControl } from './states/flow-control';
-import { consumeFlowControlBlock } from './states/flow-control-block.state';
-import { consumeInterpolationExpression } from './states/interpolation-expression.state';
-import { consumeInterpolationliteral } from './states/interpolation-literal.state';
-import { consumeInterpolation } from './states/interpolation.state';
-import { consumeTagBody } from './states/tag-body.state';
-import { consumeTagClose } from './states/tag-close.state';
-import { consumeTagOpenEnd } from './states/tag-open-end.state';
-import { consumeTagOpenName } from './states/tag-open-name.state';
-import { consumeText } from './states/text.state';
+import { lexAttributeValue } from './states/lex-attribute-value.state';
+import { lexAttribute } from './states/lex-attribute.state';
+import { lexCaseFlowControlCondition } from './states/lex-case-flow-control-condition.state';
+import { lexDefaultFlowControlCondition } from './states/lex-default-flow-control-condition.state';
+import { lexEventParameter } from './states/lex-event-parameter.state';
+import { lexEvent } from './states/lex-event.state';
+import { lexFlowControl } from './states/lex-flow-control';
+import { lexFlowControlBlock } from './states/lex-flow-control-block.state';
+import { lexInterpolationExpression } from './states/lex-interpolation-expression.state';
+import { lexInterpolationliteral } from './states/lex-interpolation-literal.state';
+import { lexInterpolation } from './states/lex-interpolation.state';
+import { lexTagBody } from './states/lex-tag-body.state';
+import { lexTagClose } from './states/lex-tag-close.state';
+import { lexTagOpenEnd } from './states/lex-tag-open-end.state';
+import { lexTagOpenName } from './states/lex-tag-open-name.state';
+import { lexText } from './states/lex-text.state';
 import { LexerCursor } from './types/lexer-cursor.model';
 import { LexerState } from './types/lexer-state.enum';
 import { Token } from './types/token.type';
@@ -37,7 +37,7 @@ export class Lexer {
   /**
    * Current lexer state.
    */
-  private _state = LexerState.START;
+  private _state = LexerState.TEXT;
   /**
    * State stack used to support nested states (e.g. interpolations).
    */
@@ -50,23 +50,22 @@ export class Lexer {
    * Maps each lexer state to its corresponding transition function.
    */
   private readonly _states: Dictionary<LexerState, LexerTransitionFunction> = {
-    [LexerState.START]: consumeText,
-    [LexerState.TEXT]: consumeText,
-    [LexerState.TAG_OPEN_NAME]: consumeTagOpenName,
-    [LexerState.TAG_BODY]: consumeTagBody,
-    [LexerState.TAG_OPEN_END]: consumeTagOpenEnd,
-    [LexerState.TAG_CLOSE]: consumeTagClose,
-    [LexerState.ATTRIBUTE]: consumeAttribute,
-    [LexerState.ATTRIBUTE_VALUE]: consumeAttributeValue,
-    [LexerState.EVENT]: consumeEvent,
-    [LexerState.EVENT_PARAMETER]: consumeEventParameter,
-    [LexerState.FLOW_CONTROL]: consumeFlowControl,
-    [LexerState.FLOW_CONTROL_CONDITION]: consumeDefaultFlowControlCondition,
-    [LexerState.CASE_FLOW_CONTROL_CONDITION]: consumeCaseFlowControlCondition,
-    [LexerState.FLOW_CONTROL_BLOCK]: consumeFlowControlBlock,
-    [LexerState.INTERPOLATION]: consumeInterpolation,
-    [LexerState.INTERPOLATION_EXPRESSION]: consumeInterpolationExpression,
-    [LexerState.INTERPOLATION_LITERAL]: consumeInterpolationliteral
+    [LexerState.TEXT]: lexText,
+    [LexerState.TAG_OPEN_NAME]: lexTagOpenName,
+    [LexerState.TAG_BODY]: lexTagBody,
+    [LexerState.TAG_OPEN_END]: lexTagOpenEnd,
+    [LexerState.TAG_CLOSE]: lexTagClose,
+    [LexerState.ATTRIBUTE]: lexAttribute,
+    [LexerState.ATTRIBUTE_VALUE]: lexAttributeValue,
+    [LexerState.EVENT]: lexEvent,
+    [LexerState.EVENT_PARAMETER]: lexEventParameter,
+    [LexerState.FLOW_CONTROL]: lexFlowControl,
+    [LexerState.FLOW_CONTROL_CONDITION]: lexDefaultFlowControlCondition,
+    [LexerState.CASE_FLOW_CONTROL_CONDITION]: lexCaseFlowControlCondition,
+    [LexerState.FLOW_CONTROL_BLOCK]: lexFlowControlBlock,
+    [LexerState.INTERPOLATION]: lexInterpolation,
+    [LexerState.INTERPOLATION_EXPRESSION]: lexInterpolationExpression,
+    [LexerState.INTERPOLATION_LITERAL]: lexInterpolationliteral
   }
 
   /**
@@ -113,6 +112,7 @@ export class Lexer {
         if (error.cause === EOF) {
           eof = true;
         } else {
+          console.log(`Something went wrong while computing state ${this._state} at ${this._cursor.formattedPosition}`);
           throw err;
         }
       }

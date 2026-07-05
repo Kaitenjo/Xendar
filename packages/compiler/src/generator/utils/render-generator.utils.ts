@@ -228,7 +228,13 @@ export const ROOT_NODE = 'root';
  *
  * Identifiers that are not found in the active scope chain and are not
  * well-known globals are prefixed with `this.` so they resolve against
- * the component instance at runtime.
+ * the component instance at runtime. Identifiers found in the scope chain
+ * are resolved either as a bare local reference (if declared directly in
+ * the current generated function's own scope) or via a runtime
+ * `parentContext.get(...)` traversal (if inherited from an enclosing
+ * scope) — and a trailing `()` is appended in either case if the
+ * identifier was declared as a signal, so the generated code always
+ * correctly unwraps it.
  *
  * The original formatting of the expression — parentheses, spacing,
  * operator tokens, member access dots — is preserved verbatim by delegating
@@ -244,13 +250,18 @@ export const ROOT_NODE = 'root';
  * resolveExpression('items', context) // → 'this.items'
  *
  * @example
+ * // Signal identifier inherited from an ancestor scope (e.g. `$index` in a
+ * // nested @for body)
+ * resolveExpression('$index', context) // → "parentContext.get('$index')()"
+ *
+ * @example
  * // Complex expression — formatting preserved
  * resolveExpression(node, context)
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: Expression, compilerContext: CompilerContext): string {
-  return emitNode(expression, expression, compilerContext);
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext, skipResolution = false): string {
+  return emitNode(expression, expression, compilerContext, skipResolution);
 }
 
 /**
@@ -259,13 +270,19 @@ export function resolveExpression(expression: Expression, compilerContext: Compi
  * - If the node has no resolvable identifiers in its subtree, emits
  *   `node.getText()` verbatim — preserving all original spacing,
  *   parentheses, dots, and punctuation.
- * - If the node is a resolvable Identifier, emits the resolved name.
+ * - If the node is a resolvable Identifier, emits the resolved access
+ *   expression (see {@link resolveIdentifierAccess}).
  * - Otherwise recurses into children and concatenates their output.
  */
-function emitNode(node: ts.Node, parent: ts.Node, compilerContext: CompilerContext): string {
+function emitNode(node: ts.Node, parent: ts.Node, compilerContext: CompilerContext, skipResolution = false): string {
   // Leaf Identifier that needs resolution
   if (ts.isIdentifier(node) && needsResolution(node, parent)) {
-    return compilerContext.hasIdentifier(node.text) ? node.text : `this.${node.text}`;
+    const text = node.text;
+    if (compilerContext.hasUnresolvableIdentifier(text) || skipResolution) {
+      return text;
+    }
+
+    return resolveIdentifierAccess(text, compilerContext);
   }
 
   // No resolvable identifiers in this subtree — emit verbatim
@@ -283,12 +300,41 @@ function emitNode(node: ts.Node, parent: ts.Node, compilerContext: CompilerConte
   let lastEnd = node.getStart();
 
   ts.forEachChild(node, child => {
-    result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, compilerContext)}`;
+    result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, compilerContext, skipResolution)}`;
     lastEnd = child.getEnd();
   });
 
   // Append any trailing text after the last child (e.g. closing paren)
   return `${result}${sourceText.slice(lastEnd, node.getEnd())}`;
+}
+
+/**
+ * Decides how to access a resolvable identifier's value in generated code,
+ * based purely on compile-time scope information — no runtime type
+ * detection is ever needed:
+ *
+ * - Declared directly in the CURRENT generated function's own scope (e.g.
+ *   destructured from `vars` in a `@for` body) → bare reference: `name`,
+ *   or `name()` if it's a signal.
+ * - Declared in an ANCESTOR scope (an enclosing `@for`/`@if`/element-children
+ *   function) → must cross the closure boundary through the runtime
+ *   `Context` chain: `parentContext.get('name')`, or with a trailing `()`
+ *   if it's a signal.
+ * - Not declared anywhere in the template scope chain → assumed to be a
+ *   component member: `this.name`.
+ *
+ * @param text - The identifier name to resolve.
+ * @param compilerContext - The active template scope context.
+ * @returns The generated code expression that yields the identifier's value.
+ */
+function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): string {
+  if (compilerContext.hasIdentifier(text)) {
+    const kind = compilerContext.getIdentifierKind(text);
+    const access = `context.get('${text}')`;
+    return kind === 'signal' ? `${access}()` : access;
+  }
+
+  return `this.${text}`;
 }
 
 /**
@@ -319,7 +365,11 @@ function containsResolvableIdentifier(node: ts.Node, parent: ts.Node): boolean {
  * and not the property-name side of a member access expression.
  */
 function needsResolution(node: ts.Identifier, parent: ts.Node): boolean {
-  return !((ts.isPropertyAccessExpression(parent) && parent.name === node) || GLOBAL_IDENTIFIERS.has(node.text));
+  return !(
+    (ts.isPropertyAccessExpression(parent) && parent.name === node)  // obj.prop -> prop should not be resolved
+    || (ts.isPropertyAssignment(parent) && parent.name === node) // { key: value } -> key should not be resolved
+    || GLOBAL_IDENTIFIERS.has(node.text)
+  );
 }
 
 /**

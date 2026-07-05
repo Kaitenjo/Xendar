@@ -1,6 +1,6 @@
 import { Function, NoArgsFunction } from '@xaendar/types';
 import { effect, untracked } from '../signals';
-import { Context } from './context.util';
+import { Context, createAnchor } from './context.util';
 
 /**
  * Represents a single branch of a conditional structure (`if` / `else if` / `else`).
@@ -12,7 +12,7 @@ import { Context } from './context.util';
  */
 type Block = {
   condition?: NoArgsFunction<boolean>,
-  block: Function<[HTMLElement, Context], Context>
+  block: Function<[HTMLElement, Context, Node | null], Context>
 };
 
 type State = {
@@ -36,40 +36,28 @@ type State = {
  *
  * @param parentNode - The parent HTML element where the conditional structure is applied.
  * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
- * @param unwatchFns - Shared array that collects all active cleanup functions.
- *   Mutated in place: the created effect and branch functions are added to and
- *   removed from this array.
  * @param blocks - Ordered list of conditional branches to evaluate.
  */
 export function _if(parentNode: HTMLElement, parentContext: Context, blocks: Block[]): void {
+  const anchor = createAnchor('if', parentNode, parentContext);
+  
   let state: State | undefined;
   let fn: (state: State | undefined) => State | undefined;
 
   switch (blocks.length) {
     case 1:
-      fn = (state: State | undefined) => handleIf(parentNode, parentContext, blocks[0]!, state);
+      fn = (state: State | undefined) => handleIf(parentNode, parentContext, blocks[0]!, state, anchor);
       break;
 
     case 2:
-      fn = (state: State | undefined) => handleIfElse(parentNode, parentContext, blocks[0]!, blocks[1]!, state);
+      fn = (state: State | undefined) => handleIfElse(parentNode, parentContext, blocks[0]!, blocks[1]!, state, anchor);
       break;
 
     default:
-      fn = (state: State | undefined) => handleIfElseIf(parentNode, parentContext, blocks, state);
+      fn = (state: State | undefined) => handleIfElseIf(parentNode, parentContext, blocks, state, anchor);
   }
 
-  const unlistener = effect(() => {
-    if (state) {
-      state.context.unlisten();
-      parentContext.removeChild(state.context);
-    }
-    
-    state = fn!(state);
-    if (state) {
-      parentContext.addChild(state.context);
-    }
-  });
-
+  const unlistener = effect(() => state = fn(state));
   parentContext.listen(unlistener);
 }
 
@@ -91,15 +79,14 @@ function handleIf(
   parentNode: HTMLElement,
   parentContext: Context,
   ifBlock: Block,
-  state: State | undefined
+  state: State | undefined,
+  anchor: Comment
 ): State | undefined {
   if (ifBlock.condition!()) {
-    return checkAndUpdateState(parentNode, parentContext, state, 0, ifBlock.block);
-  } else if (state) {
-    const context = state.context;
-    context.unlisten();
-    parentContext.removeChild(context);
+    return checkAndUpdateState(parentNode, parentContext, state, 0, ifBlock.block, anchor);
   }
+
+  teardown(parentContext, state);
 }
 
 /**
@@ -121,11 +108,12 @@ function handleIfElse(
   parentContext: Context,
   ifBlock: Block,
   elseBlock: Block,
-  state: State | undefined
+  state: State | undefined,
+  anchor: Comment
 ): State | undefined {
   return ifBlock.condition!()
-    ? checkAndUpdateState(parentNode, parentContext, state, 0, ifBlock.block)
-    : checkAndUpdateState(parentNode, parentContext, state, 1, elseBlock.block);
+    ? checkAndUpdateState(parentNode, parentContext, state, 0, ifBlock.block, anchor)
+    : checkAndUpdateState(parentNode, parentContext, state, 1, elseBlock.block, anchor);
 }
 
 /**
@@ -146,12 +134,13 @@ function handleIfElseIf(
   parentNode: HTMLElement,
   parentContext: Context,
   blocks: Block[],
-  state: State | undefined
+  state: State | undefined,
+  anchor: Comment
 ): State | undefined {
   for (let i = 0; i < blocks.length; i++) {
     const { condition, block } = blocks[i]!;
     if (!condition || condition()) {
-      return checkAndUpdateState(parentNode, parentContext, state, i, block);
+      return checkAndUpdateState(parentNode, parentContext, state, i, block, anchor);
     }
   }
 }
@@ -167,7 +156,7 @@ function handleIfElseIf(
  *
  * If the branch has not changed, no operation is performed.
  *
-* @param parentNode - The parent HTML element where the conditional structure is applied.
+ * @param parentNode - The parent HTML element where the conditional structure is applied.
  * @param parentContext - The parent Context object containing all the variables definition from the Parent Closure
  * @param state - The current state (index of the active branch, or `null` if none).
  * @param newState - The new state to set (index of the branch to activate, or `null`).
@@ -181,11 +170,41 @@ function checkAndUpdateState(
   parentContext: Context,
   state: State | undefined,
   newState: number | null,
-  conditionalBlockFn: Function<[HTMLElement, Context], Context>
+  conditionalBlockFn: Function<[HTMLElement, Context, Node | null], Context>,
+  anchor: Comment
 ): State | undefined {
-  if (state?.activeBranch !== newState) {
-    state?.context.unlisten();
-    const context = untracked(() => conditionalBlockFn(parentNode, parentContext));
-    return { activeBranch: newState, context };
+ if (state?.activeBranch === newState) {
+    return state;
+  }
+
+  if (state) {
+    state.context.unlisten();
+    parentContext.removeChild(state.context);
+  }
+
+  const context = untracked(() => conditionalBlockFn(parentNode, parentContext, anchor));
+  parentContext.addChild(context);
+
+  return { 
+    activeBranch: newState, 
+    context 
+  };
+}
+
+/**
+ * Handles the case where no branch condition matched: tears down the previously
+ * active branch, if one existed, by unlistening its context (running cleanup
+ * functions and destroying its subtree) and detaching it from the parent context.
+ * A no-op if no branch was previously active.
+ *
+ * @param parentContext - The parent Context from which the previous branch's
+ *   context should be detached.
+ * @param state - The current state (active branch index and its context), or
+ *   `undefined` if no branch is currently active.
+ */
+function teardown(parentContext: Context, state: State | undefined): void {
+  if (state) {
+    state.context.unlisten();
+    parentContext.removeChild(state.context);
   }
 }

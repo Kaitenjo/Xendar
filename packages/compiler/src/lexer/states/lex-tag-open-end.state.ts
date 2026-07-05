@@ -13,7 +13,7 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * @param _context - Unused lexer context.
  * @returns Transition result with TAG_OPEN_END or TAG_SELF_CLOSE and the TEXT state.
  */
-export function consumeTagOpenEnd(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexTagOpenEnd(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let retVal!: LexerTransitionFunctionReturnType
 
   // We arrive in this point by reading '>' or '/' at the end of a Open Tag 

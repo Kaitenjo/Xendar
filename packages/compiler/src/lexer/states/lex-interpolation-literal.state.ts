@@ -1,4 +1,4 @@
-import { DOUBLE_QUOTE, LEFT_BRACE, RIGHT_BRACE, SPACE } from '../../costants/chars.constants';
+import { GRAVE_ACCENT, RIGHT_BRACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -6,34 +6,30 @@ import { LexerTransitionFunctionContext } from '../types/transition-function/tra
 import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type';
 
 /**
- * Consumes a JavaScript expression interpolation `{ expression }`, tracking nested
- * brace depth. Emits an INTERPOLATION_EXPRESSION token and pops the state stack to
- * return to the previous state (ATTRIBUTE or TEXT).
+ * Consumes a template-literal interpolation `` {`...`} ``, collecting characters
+ * until the closing backtick followed by `}`. Emits an INTERPOLATION_LITERAL token
+ * and pops the state stack to return to the previous state.
  *
- * @param cursor - The lexer cursor positioned at the first character of the expression.
+ * @param cursor - The lexer cursor positioned at the opening backtick.
  * @param context - The lexer context used to retrieve the previous state for restoration.
- * @returns Transition result with the INTERPOLATION_EXPRESSION token and restored state.
+ * @returns Transition result with the INTERPOLATION_LITERAL token and restored state.
  */
-export function consumeInterpolationExpression(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexInterpolationliteral(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
-  let interpolation = '';
-  let deep = 1
+  let interpolation = '`';
   let retVal!: LexerTransitionFunctionReturnType;
+
+  // Consume '`' character
+  cursor.advance();
 
   while (read) {
     switch (cursor.peek()) {
-      case LEFT_BRACE:
-        deep++;
+      case GRAVE_ACCENT:
         interpolation = addCharacter(cursor, interpolation);
-        break;
 
-      case RIGHT_BRACE:
-        deep--;
-
-        if (deep === 0) {
+        if (cursor.peek() === RIGHT_BRACE) {
+          // Consume '}'
           cursor.advance();
-          interpolation = interpolation.trimEnd();
-
           /*
             After an interpolation we have to understanad where to transite
             The next state depends from the previous state
@@ -43,13 +39,6 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
 
           switch (previousState) {
             case LexerState.ATTRIBUTE:
-              if (cursor.peek() !== DOUBLE_QUOTE) {
-                const { row, column } = cursor.position;
-                throw new Error(`Interpolation must be end with double quotes '"' Found ${String.fromCharCode(cursor.peek())}. \nRow ${row} Col ${column}`);
-              }
-
-              // Consume '"'
-              cursor.advance();
               state = LexerState.TAG_BODY
               break;
 
@@ -60,16 +49,22 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
           retVal = {
             state,
             tokens: [{
-              type: TokenType.INTERPOLATION_EXPRESSION,
+              type: TokenType.INTERPOLATION_LITERAL,
               parts: [interpolation]
             }],
             popState: true
           }
           read = false;
         } else {
-          interpolation = addCharacter(cursor, interpolation);
+          /*
+            If ` is not followed by }, it means the interpolation is not closed
+            and ` is part of the interpolated string
+                                   |
+                                   ˅
+            Example: {`text ${var} ` text`}
+          */
+          interpolation = `${interpolation}${cursor.currentChar.value}`
         }
-
         break;
 
       default:
@@ -88,6 +83,6 @@ export function consumeInterpolationExpression(cursor: LexerCursor, context: Lex
  * @returns The updated string with the newly consumed character appended.
  */
 function addCharacter(cursor: LexerCursor, interpolation: string): string {
-  cursor.advance(1);
+  cursor.advance();
   return `${interpolation}${cursor.currentChar.value}`;
 }

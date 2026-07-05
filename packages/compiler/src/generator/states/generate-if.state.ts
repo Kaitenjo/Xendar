@@ -5,33 +5,29 @@ import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
 import { getBlockIdentifier, resolveExpression } from '../utils/render-generator.utils';
 
-/**
- * Generates code for an `@if` conditional node.
- * Emits an `_if(...)` call wrapping the resolved condition blocks.
- *
- * @param node - The `IfNode` to process.
- * @param index - Base variable name prefix for child nodes.
- * @param parentNode - Variable name of the parent DOM node.
- * @param compilerContext - Current render scope context.
- * @returns An object with the main block code lines and a map of helper functions to register.
- */
-export function processIf(node: IfNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
+export function generateIf(node: IfNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
   const ifContext = new CompilerContext([], compilerContext);
   const retVal: GeneratorTransitionFunctionReturnType = {
     code: [],
     functionsToProcess: new Map()
   };
 
+  // La chiamata a _if(...) stessa non riceve né passa alcun anchor esterno:
+  // l'anchor del costrutto if viene creato internamente da _if/createAnchor.
   retVal.code.push(`_if(${parentNode}, context, [`);
   const ifKey = getBlockIdentifier('if', parentNode, index);
   retVal.code.push(
     ...indent([
       '{',
-      ...indent([`condition: () => ${node.condition.toString()},`, `block: this.${ifKey}.bind(this)`]),
+      ...indent([`condition: () => ${resolveExpression(node.conditionNode, compilerContext).toString()},`, `block: this.${ifKey}.bind(this)`]),
       '},'
     ])
   );
-  retVal.functionsToProcess!.set(ifKey, { fn: { node, parentNode, context: ifContext }, args: [parentNode, 'parentContext'] });
+  // Branch = callback di _if → riceve `anchor` come parametro e lo inoltra ai propri figli diretti.
+  retVal.functionsToProcess!.set(ifKey, {
+    fn: { node, parentNode: ifKey, context: ifContext, anchor: 'anchor' },
+    args: [ifKey, 'parentContext', 'namespace', 'anchor']
+  });
 
   let alt = node.alternate;
   let i = 0;
@@ -47,8 +43,12 @@ export function processIf(node: IfNode, parentNode: string, index: string, compi
         '},'
       ])
     );
-    
-    retVal.functionsToProcess!.set(keyElseIf, { fn: { node: alt, parentNode, context: elseIfContext }, args: [parentNode, 'parentContext'] });
+
+    // Anche l'else-if è un branch: stesso trattamento dell'if.
+    retVal.functionsToProcess!.set(keyElseIf, {
+      fn: { node: alt, parentNode, context: elseIfContext, anchor: 'anchor' },
+      args: [parentNode, 'parentContext', 'namespace', 'anchor']
+    });
     alt = alt.alternate;
     i++;
   }
@@ -63,7 +63,11 @@ export function processIf(node: IfNode, parentNode: string, index: string, compi
         '},'
       ])
     );
-    retVal.functionsToProcess!.set(keyElse, { fn: { node: alt, parentNode, context: elseContext }, args: [parentNode, 'parentContext'] });
+    // Idem per l'else.
+    retVal.functionsToProcess!.set(keyElse, {
+      fn: { node: alt, parentNode, context: elseContext, anchor: 'anchor' },
+      args: [parentNode, 'parentContext', 'namespace', 'anchor']
+    });
   }
 
   retVal.code.push(']);');

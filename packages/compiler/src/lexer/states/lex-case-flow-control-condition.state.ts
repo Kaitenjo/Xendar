@@ -1,4 +1,3 @@
-import { CR, LF } from "../../costants/chars.constants.js";
 import { LexerCursor } from "../types/lexer-cursor.model.js";
 import { LexerState } from "../types/lexer-state.enum.js";
 import { TokenType } from "../types/token-type.enum.js";
@@ -15,12 +14,15 @@ import { consumeFlowControlCondition } from "../utils/consume-flow-control-condi
  * @param _context - Unused lexer context.
  * @returns Transition result with the CONDITION token and the FLOW_CONTROL_BLOCK state.
  */
-export function consumeDefaultFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexCaseFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+  const condition = consumeFlowControlCondition(cursor, _context);
+  cursor.skipSpaces();
+
   return {
-    state: LexerState.FLOW_CONTROL_BLOCK,
+    state: cursor.peekMatch('@case') ? LexerState.FLOW_CONTROL : LexerState.FLOW_CONTROL_BLOCK,
     tokens: [{
       type: TokenType.CONDITION,
-      parts: [consumeFlowControlCondition(cursor, _context)]
+      parts: [condition]
     }],
     popState: true
   };

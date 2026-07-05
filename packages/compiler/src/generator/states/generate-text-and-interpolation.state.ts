@@ -16,7 +16,7 @@ import { resolveExpression } from '../utils/render-generator.utils';
  * @param parentNode - Variable name of the parent DOM node to append to.
  * @returns Array of generated code lines.
  */
-export function processTextAndInterpolation(node: TextNode | InterpolationNode, parentNode: string, _index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
+export function generateTextAndInterpolation(node: TextNode | InterpolationNode, parentNode: string, _index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
   return {
     code: [`${node.type === ASTNodeType.Text
       ? `_renderLiteralText(${parentNode}, context, '${node.value}');`

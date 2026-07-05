@@ -15,7 +15,7 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * @param context - The lexer context used to detect flow-control block boundaries.
  * @returns Transition result with an optional TEXT token and the next state.
  */
-export function consumeText(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexText(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let text = '';
   let retVal!: LexerTransitionFunctionReturnType

@@ -218,7 +218,7 @@ async function buildNode(projectName: string, projectPath: string, pkg: XaendarP
     };
   }
 
-  let bin: Record<string, string> = {};
+  let bin: Record<string, unknown> = {};
   let dependencies = pkg.dependencies;
   let options: Parameters<typeof tsupBuild>[0] = {
     external: Object.keys(pkg.dependencies ?? {})
@@ -226,7 +226,9 @@ async function buildNode(projectName: string, projectPath: string, pkg: XaendarP
 
   if (bundleAll) {
     bin = {
-      xd: `./dist/${projectName}.js`,
+      bin: {
+        xd: `./dist/${projectName}.js`,
+      }
     }
 
     dependencies = {};
@@ -277,7 +279,7 @@ const require = createRequire(import.meta.url);
   return writePackageJsonForNodeProject(projectName, pkg, { types, outDir, bin, dependencies });
 }
 
-function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackageJson, options: { types: { types: string } | object, outDir: string, bin: Record<string, string>, dependencies: PackageJson['dependencies'] }): void {
+function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackageJson, options: { types: { types: string } | object, outDir: string, bin: Record<string, unknown>, dependencies: PackageJson['dependencies'] }): void {
   const distPkg = {
     name: pkg.name!,
     version: pkg.version!,

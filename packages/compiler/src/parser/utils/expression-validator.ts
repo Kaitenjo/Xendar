@@ -160,6 +160,8 @@ function isAllowedNode(node: Node): boolean {
     case SyntaxKind.BarBarToken:                   // ||
     case SyntaxKind.QuestionQuestionToken:         // ??
     case SyntaxKind.QuestionDotToken:              // ?.
+    case SyntaxKind.QuestionToken:                 // ?
+    case SyntaxKind.ColonToken:                    // :
 
     // Bitwise
     case SyntaxKind.AmpersandToken:                // &

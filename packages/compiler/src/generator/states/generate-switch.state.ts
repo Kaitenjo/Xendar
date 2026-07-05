@@ -14,7 +14,7 @@ import { getBlockIdentifier, resolveExpression } from '../utils/render-generator
  * @param compilerContext - Current render scope context.
  * @returns An object with the main block code lines and a map of helper functions to register.
  */
-export function processSwitch(node: SwitchNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
+export function generateSwitch(node: SwitchNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
   const retVal: GeneratorTransitionFunctionReturnType = {
     code: [],
     functionsToProcess: new Map()
@@ -24,14 +24,14 @@ export function processSwitch(node: SwitchNode, parentNode: string, index: strin
 
   node.children.forEach((caseNode, i) => {
     const caseContext = new CompilerContext([], compilerContext);
-    const caseName = caseNode.condition ? getBlockIdentifier('case', parentNode, `${index}_${i}`) : getBlockIdentifier('default', parentNode, index);
+    const caseKey = caseNode.condition ? getBlockIdentifier('case', parentNode, `${index}_${i}`) : getBlockIdentifier('default', parentNode, index);
 
-    retVal.functionsToProcess!.set(caseName, {
-      fn: { node: caseNode, parentNode, context: caseContext },
-      args: [parentNode, 'parentContext']
+    retVal.functionsToProcess!.set(caseKey, {
+      fn: { node: caseNode, parentNode: caseKey, context: caseContext },
+      args: [caseKey, 'parentContext', 'namespace', 'anchor']
     });
 
-    const fnName = `this.${caseName}.bind(this)`;
+    const fnName = `this.${caseKey}.bind(this)`;
     retVal.code.push(
       '{',
       ...indent([`condition: ${caseNode.condition ? `[${caseNode.condition.join(', ')}]` : `null`},`, `block: ${fnName}`]),

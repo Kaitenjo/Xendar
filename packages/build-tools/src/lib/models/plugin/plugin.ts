@@ -178,9 +178,26 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
     throw new Error('Xaendar: could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.');
   }
 
-  result = `import { effect, _if, _switch, _for, Context, _iterationVariables, _renderElement, _renderText, _renderLiteralText } from '@xaendar/core';
+  const requiredImports = ['effect', '_if', '_switch', '_for', 'Context', '_iterationVariables', '_renderElement', '_renderText', '_renderLiteralText'];
+
+  const alreadyImported = new Set<string>();
+  const importRegex = /import\s*\{([^}]+)\}\s*from\s*['"][^'"]+['"]/g;
+  let match: RegExpExecArray | null;
+  while ((match = importRegex.exec(result)) !== null) {
+    match[1]
+      ?.split(',')
+      .map(s => s.trim().split(/\s+as\s+/)[0]?.trim()) // gestisce eventuali `foo as bar`
+      .filter((value): value is string => !!value)
+      .forEach(name => alreadyImported.add(name));
+  }
+
+  const missingImports = requiredImports.filter(name => !alreadyImported.has(name));
+
+  if (missingImports.length) {
+    result = `import { ${missingImports.join(', ')} } from '@xaendar/core';
 
 ${result}`;
+  }
 
   return result.replace(lastStaticBlock, (_, indent, initFn) => `${compiledMethods}\n  static {\n${indent}${initFn}();\n  }`);;
 }

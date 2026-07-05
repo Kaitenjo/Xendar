@@ -13,7 +13,7 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * @param _context - Unused lexer context.
  * @returns Transition result with the EVENT token and the TAG_BODY state.
  */
-export function consumeEvent(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexEvent(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let event = '';
   let retVal!: LexerTransitionFunctionReturnType;
@@ -33,22 +33,28 @@ export function consumeEvent(cursor: LexerCursor, _context: LexerTransitionFunct
         break;
 
       case LPAREN:
-      case COMMA:
+        let state = LexerState.EVENT_PARAMETER;
+
+        // consume '('
+        cursor.advance();
+        cursor.skipSpaces();
+
+        if (cursor.peek() === RPAREN) {
+          state = LexerState.TAG_BODY;
+          // Consume '()"'
+          cursor.advance(2);
+        }
+
         retVal = {
-          state: LexerState.EVENT_PARAMETER,
-          tokens: [{ 
-            type: TokenType.EVENT, 
-            parts: [event] 
+          state,
+          tokens: [{
+            type: TokenType.EVENT,
+            parts: [event]
           }]
         };
         read = false;
         break;
-      
-      case RPAREN:
-        retVal = {
-          state: LexerState.TAG_BODY
-        }
-        break;
+
       default:
         cursor.advance();
         event = `${event}${cursor.currentChar.value}`

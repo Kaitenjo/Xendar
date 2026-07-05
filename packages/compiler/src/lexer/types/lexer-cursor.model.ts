@@ -63,6 +63,10 @@ export class LexerCursor {
     return this._position;
   }
 
+  public get formattedPosition(): string {
+    return `[Ln ${this._position.row}, Col ${this._position.column}]`
+  }
+
   /**
    * Creates a new cursor for the given input source.
    *

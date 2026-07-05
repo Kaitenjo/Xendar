@@ -1,3 +1,4 @@
+import { SVG_NS } from '../costants';
 import { effect } from '../signals/effect/effect';
 import { RenderElementAttribute } from '../types/render-element-attribute.type';
 import { RenderElementEvent } from '../types/render-element-event.type';
@@ -20,9 +21,9 @@ import { Context, mountNode } from './context.util';
  * @param events - List of event listener descriptors to attach to the element.
  * @returns The newly created HTML element.
  */
-export function _renderElement(parentNode: HTMLElement, context: Context, tagName: string, attributes: RenderElementAttribute[], events: RenderElementEvent[]): HTMLElement {
-  const element = document.createElement(tagName);
-  mountNode(element, parentNode, context)
+export function _renderElement(parentNode: Element, context: Context, anchor: Comment | null, tagName: string, attributes: RenderElementAttribute[], events: RenderElementEvent[]): Element {
+  const element = context.namespace === 'svg' || tagName === 'svg' ? document.createElementNS(SVG_NS, tagName) : document.createElement(tagName);
+  mountNode(element, parentNode, context, anchor)
 
   attributes.forEach(({ name, value, literal } )=> {
     literal
@@ -31,7 +32,6 @@ export function _renderElement(parentNode: HTMLElement, context: Context, tagNam
   });
 
   events.forEach(event => {
-    // TODO: Support params args
     const handler = ($event: Event) => context.getEventHandler(event.handler)(...event.parameters.map(event => event($event)));
     const name = event.name;
     element.addEventListener(name, handler);

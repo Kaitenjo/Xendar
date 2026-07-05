@@ -19,7 +19,7 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * @param _context - Unused lexer context.
  * @returns Transition result with the BLOCK_OPEN token and the TEXT state.
  */
-export function consumeFlowControlBlock(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexFlowControlBlock(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   cursor.skipSpaces();
 
   if (cursor.peek() !== LEFT_BRACE) {

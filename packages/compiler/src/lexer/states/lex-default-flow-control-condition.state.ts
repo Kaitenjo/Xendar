@@ -14,15 +14,12 @@ import { consumeFlowControlCondition } from "../utils/consume-flow-control-condi
  * @param _context - Unused lexer context.
  * @returns Transition result with the CONDITION token and the FLOW_CONTROL_BLOCK state.
  */
-export function consumeCaseFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
-  const condition = consumeFlowControlCondition(cursor, _context);
-  cursor.skipSpaces();
-
+export function lexDefaultFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   return {
-    state: cursor.peekMatch('@case') ? LexerState.FLOW_CONTROL : LexerState.FLOW_CONTROL_BLOCK,
+    state: LexerState.FLOW_CONTROL_BLOCK,
     tokens: [{
       type: TokenType.CONDITION,
-      parts: [condition]
+      parts: [consumeFlowControlCondition(cursor, _context)]
     }],
     popState: true
   };

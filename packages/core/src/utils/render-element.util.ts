@@ -22,7 +22,7 @@ import { Context, mountNode } from './context.util';
  * @returns The newly created HTML element.
  */
 export function _renderElement(parentNode: Element, context: Context, anchor: Comment | null, tagName: string, attributes: RenderElementAttribute[], events: RenderElementEvent[]): Element {
-  const element = context.namespace === 'svg' || tagName === 'svg' ? document.createElementNS(SVG_NS, tagName) : document.createElement(tagName);
+  const element = context.createElement(tagName);
   mountNode(element, parentNode, context, anchor)
 
   attributes.forEach(({ name, value, literal } )=> {

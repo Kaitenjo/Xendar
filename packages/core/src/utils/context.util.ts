@@ -1,4 +1,4 @@
-import { NoArgsVoidFunction, VoidFunction } from '@xaendar/types';
+import { Function, NoArgsVoidFunction, VoidFunction } from '@xaendar/types';
 import { BaseWebComponent } from '../directives';
 
 /**
@@ -30,16 +30,9 @@ export class Context {
    * detach event listeners, and dispose signal effect subscriptions.
    */
   private _unwatchFns = new Array<NoArgsVoidFunction>;
-
-  private _namespace: 'svg' | undefined;
-
-  public get namespace(): 'svg' | undefined {
-    return this._namespace;
-  }
-
-  public set namespace(value: 'svg') {
-    this._namespace = value;
-  }
+  /**
+   */
+  public createElement: Function<[string], Element>;
 
   /**
    * Creates a new scope context.
@@ -48,10 +41,9 @@ export class Context {
    */
   constructor(
     private _root: BaseWebComponent,
-    private _parent: Context | undefined,
-    namespace: 'svg' | undefined
+    private _parent: Context,
   ) {
-    this._namespace = this._parent?.namespace ?? namespace;
+    this.createElement = this._parent.createElement;
   }
 
   /**

@@ -37,8 +37,7 @@ export class Generator {
       '_render() {',
       ...indent([
         `const ${ROOT_NODE} = this._root;`,
-        'const context = new Context(this);',
-        'const namespace = undefined;'
+        'const context = new Context(this, { createElement: document.createElement.bind(document), get: () => undefined });'
       ])
     ]
 
@@ -65,7 +64,7 @@ export class Generator {
       renderFunctions.push(
         `\n${key}(${fnData.args?.join(', ')}) {`,
         ...indent([
-          'const context = new Context(this, parentContext, namespace);',
+          'const context = new Context(this, parentContext);',
           ...node.children.map((child, i) => {
             const { code, functionsToProcess } = this._processNode(child, parentNode, i.toString(), context, anchor ?? null);
             functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));

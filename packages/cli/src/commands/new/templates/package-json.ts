@@ -24,12 +24,12 @@ export function packageJson(name: string, version: string): string {
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^8.0.2",
     "@rolldown/plugin-babel": "^0.2.3",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.10",
     "@xaendar/build-tools": "^${version}",
     "@xaendar/cli": "^${version}",
     "typescript": "^6.0.3",
     "vite": "^8.1.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   }
 }
 `;

@@ -28,7 +28,7 @@ export function generateSwitch(node: SwitchNode, parentNode: string, index: stri
 
     retVal.functionsToProcess!.set(caseKey, {
       fn: { node: caseNode, parentNode: caseKey, context: caseContext },
-      args: [caseKey, 'parentContext', 'namespace', 'anchor']
+      args: [caseKey, 'parentContext', 'anchor']
     });
 
     const fnName = `this.${caseKey}.bind(this)`;

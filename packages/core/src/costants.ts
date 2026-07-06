@@ -10,3 +10,5 @@
 export const INTERNAL_OBSERVED_ATTRIBUTES = `observedAttributes`;
 
 export const SVG_NS = 'http://www.w3.org/2000/svg';
+
+export const MATHML_NS = "http://w3.org";

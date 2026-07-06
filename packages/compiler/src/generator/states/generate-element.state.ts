@@ -49,10 +49,15 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
 
   if (node.children.length) {
     retval.functionsToProcess!.set(`${nodeName}Children`, {
-      fn: { node, parentNode: nodeName, context: compilerContext },
-      args: [nodeName, 'parentContext', 'namespace']
+      fn: { 
+        node, 
+        parentNode: nodeName, 
+        context: compilerContext,
+        precode: getPrecode(tagName)
+      },
+      args: [nodeName, 'parentContext']
     });
-    retval.code.push(`this.${nodeName}Children(${nodeName}, context, ${tagName === 'svg' ? "'svg'" : 'namespace'});`)
+    retval.code.push(`this.${nodeName}Children(${nodeName}, context);`)
   }
   return retval;
 }
@@ -122,4 +127,15 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
 
   compilerContext.removeIdentifier('$event');
   return mappedEvents;
+}
+
+function getPrecode(tagName: string): string {
+  switch (tagName) {
+    case 'svg':
+      return 'context.createElement = (tagName) => document.createElementNS.bind(document)(SVG_NS,  tagName);';
+    case 'math':
+      return 'context.createElement = (tagName) => document.createElementNS.bind(document)(MATHML_NS,  tagName);';
+    default:
+      return '';
+  }
 }

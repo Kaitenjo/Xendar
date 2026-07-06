@@ -178,7 +178,7 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
     throw new Error('Xaendar: could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.');
   }
 
-  const requiredImports = ['effect', '_if', '_switch', '_for', 'Context', '_iterationVariables', '_renderElement', '_renderText', '_renderLiteralText'];
+  const requiredImports = ['effect', '_if', '_switch', '_for', 'Context', '_iterationVariables', '_renderElement', '_renderText', '_renderLiteralText', 'SVG_NS', 'MATHML_NS'];
 
   const alreadyImported = new Set<string>();
   const importRegex = /import\s*\{([^}]+)\}\s*from\s*['"][^'"]+['"]/g;

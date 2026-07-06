@@ -26,7 +26,7 @@ export function generateIf(node: IfNode, parentNode: string, index: string, comp
   // Branch = callback di _if → riceve `anchor` come parametro e lo inoltra ai propri figli diretti.
   retVal.functionsToProcess!.set(ifKey, {
     fn: { node, parentNode: ifKey, context: ifContext, anchor: 'anchor' },
-    args: [ifKey, 'parentContext', 'namespace', 'anchor']
+    args: [ifKey, 'parentContext', 'anchor']
   });
 
   let alt = node.alternate;
@@ -47,7 +47,7 @@ export function generateIf(node: IfNode, parentNode: string, index: string, comp
     // Anche l'else-if è un branch: stesso trattamento dell'if.
     retVal.functionsToProcess!.set(keyElseIf, {
       fn: { node: alt, parentNode, context: elseIfContext, anchor: 'anchor' },
-      args: [parentNode, 'parentContext', 'namespace', 'anchor']
+      args: [parentNode, 'parentContext', 'anchor']
     });
     alt = alt.alternate;
     i++;
@@ -66,7 +66,7 @@ export function generateIf(node: IfNode, parentNode: string, index: string, comp
     // Idem per l'else.
     retVal.functionsToProcess!.set(keyElse, {
       fn: { node: alt, parentNode, context: elseContext, anchor: 'anchor' },
-      args: [parentNode, 'parentContext', 'namespace', 'anchor']
+      args: [parentNode, 'parentContext', 'anchor']
     });
   }
 

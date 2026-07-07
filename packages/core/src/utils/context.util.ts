@@ -1,5 +1,6 @@
 import { Function, NoArgsVoidFunction, VoidFunction } from '@xaendar/types';
 import { BaseWebComponent } from '../directives';
+import { createElement } from './render-element.util';
 
 /**
  * Tracks identifier scope during run time template function execution
@@ -31,6 +32,7 @@ export class Context {
    */
   private _unwatchFns = new Array<NoArgsVoidFunction>;
   /**
+   * 
    */
   public createElement: Function<[string], Element>;
 

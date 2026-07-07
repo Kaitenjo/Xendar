@@ -1,4 +1,4 @@
-import { SVG_NS } from '../costants';
+import { MATHML_NS, SVG_NS } from '../costants';
 import { effect } from '../signals/effect/effect';
 import { RenderElementAttribute } from '../types/render-element-attribute.type';
 import { RenderElementEvent } from '../types/render-element-event.type';
@@ -40,3 +40,33 @@ export function _renderElement(parentNode: Element, context: Context, anchor: Co
 
   return element;
 }
+
+/**
+ * Creates an HTML element with the specified tag name.
+ *
+ * @param tagName - The HTML tag name of the element to create.
+ * @returns The newly created HTML element.
+ */
+export function createElement(tagName: string): HTMLElement {
+  return document.createElement(tagName);
+} 
+
+/**
+ * Creates an SVG element with the specified tag name using the SVG namespace.
+ *
+ * @param tagName - The SVG tag name of the element to create.
+ * @returns The newly created SVG element.
+ */
+export function createSVGElement(tagName: string): SVGElement {
+  return document.createElementNS(SVG_NS, tagName);
+}
+
+/**
+ * Creates a MathML element with the specified tag name using the MathML namespace.
+ *
+ * @param tagName - The MathML tag name of the element to create.
+ * @returns The newly created MathML element.
+ */
+export function createMATHMLElement(tagName: string): MathMLElement {
+  return document.createElementNS(MATHML_NS, tagName);
+} 

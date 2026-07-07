@@ -45,8 +45,6 @@ export class Generator {
       renderFunctions.push(indent(`${ROOT_NODE}.adoptedStyleSheets = [${this._cssVariableName}];`));
     }
 
-    // Livello top di render(): nessun anchor disponibile, non siamo dentro
-    // nessun branch di if/for/switch.
     for (let i = 0; i < this._ast.length; i++) {
       const { code, functionsToProcess } = this._processNode(this._ast[i]!, ROOT_NODE, i.toString(), compilerContext, null);
       functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
@@ -63,14 +61,18 @@ export class Generator {
 
       renderFunctions.push(
         `\n${key}(${fnData.args?.join(', ')}) {`,
+        ...indent(['const context = new Context(this, parentContext);'])
+      );
+
+      if (precode) {
+        renderFunctions.push(indent(precode));
+      }
+
+      renderFunctions.push(
         ...indent([
-          'const context = new Context(this, parentContext);',
           ...node.children.map((child, i) => {
             const { code, functionsToProcess } = this._processNode(child, parentNode, i.toString(), context, anchor ?? null);
             functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
-            if (precode) {
-              code.unshift(precode);
-            }
             return code;
           }).flat(),
           fnData.fn.isForBody ? 'return { context, update };' : 'return context;'

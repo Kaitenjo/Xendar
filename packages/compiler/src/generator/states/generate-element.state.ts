@@ -22,10 +22,20 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
   const nodeName = getElementIdentifier(node, parentNode, index);
   const tagName = node.tagName;
   const retval: GeneratorTransitionFunctionReturnType = {
-    code: [`const ${nodeName} = _renderElement(${parentNode}, context, ${anchor}, '${tagName}',`],
+    code: [],
     functionsToProcess: new Map()
   }
 
+  switch (tagName) {
+    case 'svg':
+      retval.code.push('context.createElement = createSVGElement');
+      break;
+    case 'math':
+      retval.code.push('context.createElement = createMATHMLElement');
+  }
+
+  retval.code.push(`const ${nodeName} = _renderElement(${parentNode}, context, ${anchor}, '${tagName}',`);
+  
   attributes.length
     ? retval.code.push(
       ...indent([
@@ -46,6 +56,13 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
       ');'
     )
     : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} []);`;
+
+    
+  switch (tagName) {
+    case 'svg':
+    case 'math':
+      retval.code.push('context.createElement = createElement');
+  }
 
   if (node.children.length) {
     retval.functionsToProcess!.set(`${nodeName}Children`, {
@@ -132,9 +149,9 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
 function getPrecode(tagName: string): string {
   switch (tagName) {
     case 'svg':
-      return 'context.createElement = (tagName) => document.createElementNS.bind(document)(SVG_NS,  tagName);';
+      return 'context.createElement = createSVGElement;';
     case 'math':
-      return 'context.createElement = (tagName) => document.createElementNS.bind(document)(MATHML_NS,  tagName);';
+      return 'context.createElement = createMATHMLElement;';
     default:
       return '';
   }

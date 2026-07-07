@@ -369,6 +369,7 @@ function needsResolution(node: ts.Identifier, parent: ts.Node): boolean {
     (ts.isPropertyAccessExpression(parent) && parent.name === node)  // obj.prop -> prop should not be resolved
     || (ts.isPropertyAssignment(parent) && parent.name === node) // { key: value } -> key should not be resolved
     || GLOBAL_IDENTIFIERS.has(node.text)
+    || !node.text
   );
 }
 

@@ -44,7 +44,6 @@ export function lexInterpolationExpression(cursor: LexerCursor, context: LexerTr
           switch (previousState) {
             case LexerState.ATTRIBUTE:
               if (cursor.peek() !== DOUBLE_QUOTE) {
-                const { row, column } = cursor.position;
                 throw new Error(`Interpolation must be end with double quotes '"' Found ${String.fromCharCode(cursor.peek())} at ${cursor.formattedPosition}`);
               }
 

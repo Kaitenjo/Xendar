@@ -40,7 +40,7 @@ export function lexTagOpenEnd(cursor: LexerCursor, _context: LexerTransitionFunc
         }]
       };
     } else {
-      throw new Error(`Unexpected character ${nextChar} for closing tag.\nExpected />\nRead of /${String.fromCharCode(nextChar)}\nAt line ${cursor.position.row + 1} col ${cursor.position.column + 1}`)
+      throw new Error(`Unexpected character ${nextChar} for closing tag.\nExpected />\nRead of /${String.fromCharCode(nextChar)} at ${cursor.formattedPosition}`)
     }
   }
 

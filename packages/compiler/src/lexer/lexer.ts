@@ -9,6 +9,7 @@ import { lexEventParameter } from './states/lex-event-parameter.state';
 import { lexEvent } from './states/lex-event.state';
 import { lexFlowControl } from './states/lex-flow-control';
 import { lexFlowControlBlock } from './states/lex-flow-control-block.state';
+import { lexImport } from './states/lex-import.state';
 import { lexInterpolationExpression } from './states/lex-interpolation-expression.state';
 import { lexInterpolationliteral } from './states/lex-interpolation-literal.state';
 import { lexInterpolation } from './states/lex-interpolation.state';
@@ -65,7 +66,8 @@ export class Lexer {
     [LexerState.FLOW_CONTROL_BLOCK]: lexFlowControlBlock,
     [LexerState.INTERPOLATION]: lexInterpolation,
     [LexerState.INTERPOLATION_EXPRESSION]: lexInterpolationExpression,
-    [LexerState.INTERPOLATION_LITERAL]: lexInterpolationliteral
+    [LexerState.INTERPOLATION_LITERAL]: lexInterpolationliteral,
+    [LexerState.IMPORT]: lexImport
   }
 
   /**

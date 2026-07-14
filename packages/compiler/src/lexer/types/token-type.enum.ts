@@ -87,6 +87,11 @@ export enum TokenType {
    */
   BLOCK_CLOSE,
   /**
+   * The import keyword that rapresent the path where import the class belonging to a web component
+   * to execute type checking during compilation
+   */
+  IMPORT,
+  /**
    * Sentinel token emitted when the end of the input is reached.
    */
   EOF

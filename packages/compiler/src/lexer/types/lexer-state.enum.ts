@@ -67,4 +67,8 @@ export enum LexerState {
    * Consuming a template-literal string inside `` {`...`} ``.
    */
   INTERPOLATION_LITERAL = 'interpolation-literal',
+  /**
+   * Consuming an import statement `@import 'my\path\... '`
+   */
+  IMPORT = 'import'
 }

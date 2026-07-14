@@ -5,6 +5,7 @@ import { Parser } from './parser/parser';
 import { parseElement } from './parser/states/compiler/parse-element.state';
 import { parseForControlFlow } from './parser/states/compiler/parse-for.state';
 import { parseIfControlFlow } from './parser/states/compiler/parse-if.state';
+import { parseImport } from './parser/states/compiler/parse-import.state';
 import { parseInterpolation } from './parser/states/compiler/parse-interpolation.state';
 import { parseSwitchControlFlow } from './parser/states/compiler/parse-switch.state';
 import { parseText } from './parser/states/compiler/parse-text.state';
@@ -31,7 +32,8 @@ export function compile(input: string, cssVariableName?: string): string {
     [TokenType.TAG_OPEN_NAME]: parseElement,
     [TokenType.IF]: parseIfControlFlow,
     [TokenType.FOR]: parseForControlFlow,
-    [TokenType.SWITCH]: parseSwitchControlFlow
+    [TokenType.SWITCH]: parseSwitchControlFlow,
+    [TokenType.IMPORT]: parseImport
   }).parse();
   return new Generator(nodes, cssVariableName).generate();
 }

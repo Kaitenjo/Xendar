@@ -1,6 +1,7 @@
 import { TokenType } from "../../lexer/types/token-type.enum"
 import { ForToken } from "../../lexer/types/tokens/for-token.type"
 import { IfToken } from "../../lexer/types/tokens/if-token.type"
+import { ImportToken } from "../../lexer/types/tokens/import-token.type"
 import { InterpolationExpressionToken } from "../../lexer/types/tokens/interpolation-expression-token.type"
 import { InterpolationLiteralToken } from "../../lexer/types/tokens/interpolation-literal-token.type"
 import { SwitchToken } from "../../lexer/types/tokens/switch-token.type"
@@ -15,7 +16,8 @@ type OmittedKeys = Exclude<TokenType,
  | TokenType.TAG_OPEN_NAME
  | TokenType.IF
  | TokenType.FOR 
- | TokenType.SWITCH 
+ | TokenType.SWITCH
+ | TokenType.IMPORT 
 >
 
 /**
@@ -36,6 +38,7 @@ export type ParserStates = {
   [TokenType.IF]: ParserTransitionFunction<IfToken>,
   [TokenType.FOR]: ParserTransitionFunction<ForToken>,
   [TokenType.SWITCH]: ParserTransitionFunction<SwitchToken>
+  [TokenType.IMPORT]: ParserTransitionFunction<ImportToken>
 } & 
 { 
   [K in OmittedKeys]?: undefined 

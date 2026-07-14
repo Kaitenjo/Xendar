@@ -12,6 +12,7 @@ import { EventParemeterToken } from './tokens/event-parameter-token.type';
 import { EventToken } from './tokens/event-token.type';
 import { ForToken } from './tokens/for-token.type';
 import { IfToken } from './tokens/if-token.type';
+import { ImportToken } from './tokens/import-token.type';
 import { InterpolationExpressionToken } from './tokens/interpolation-expression-token.type';
 import { InterpolationLiteralToken } from './tokens/interpolation-literal-token.type';
 import { SwitchToken } from './tokens/switch-token.type';
@@ -46,4 +47,5 @@ export type Token =
   | ConditionToken
   | BlockOpenToken
   | BlockCloseToken
+  | ImportToken
   | EOFToken

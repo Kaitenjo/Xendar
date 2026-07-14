@@ -1,14 +1,14 @@
 import { NoArgsFunction } from '@xaendar/types';
 import { createSourceFile, isExpressionStatement, isIdentifier, ScriptTarget } from 'typescript';
-import { TokenType } from '../../lexer/types/token-type.enum';
-import { ForToken } from '../../lexer/types/tokens/for-token.type';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
-import { ForExpression } from '../types/for-expression.type';
-import { ASTNodeType } from '../types/node.enum';
-import { ForImplicitVariables } from '../types/nodes/for-implicit-variables';
-import { ForNode } from '../types/nodes/for-node.type';
-import { validateExpression } from '../utils/expression-validator';
+import { TokenType } from '../../../lexer/types/token-type.enum';
+import { ForToken } from '../../../lexer/types/tokens/for-token.type';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
+import { ForExpression } from '../../types/for-expression.type';
+import { ASTNodeType } from '../../types/node.enum';
+import { ForImplicitVariables } from '../../types/nodes/for-implicit-variables';
+import { ForNode } from '../../types/nodes/for-node.type';
+import { validateExpression } from '../../utils/expression-validator';
 import { parseBlockChildren } from './parse-block-children.state';
 
 /**

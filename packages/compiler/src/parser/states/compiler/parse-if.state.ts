@@ -1,15 +1,15 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum';
-import { ElseIfToken } from '../../lexer/types/tokens/else-if-token.type';
-import { ElseToken } from '../../lexer/types/tokens/else-token.type';
-import { IfToken } from '../../lexer/types/tokens/if-token.type';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
-import { ASTNodeType } from '../types/node.enum';
-import { ElseIfNode } from '../types/nodes/else-if-node.type';
-import { ElseNode } from '../types/nodes/else-node.type';
-import { IfNode } from '../types/nodes/if-node.type';
-import { validateExpression } from '../utils/expression-validator';
+import { TokenType } from '../../../lexer/types/token-type.enum';
+import { ElseIfToken } from '../../../lexer/types/tokens/else-if-token.type';
+import { ElseToken } from '../../../lexer/types/tokens/else-token.type';
+import { IfToken } from '../../../lexer/types/tokens/if-token.type';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
+import { ASTNodeType } from '../../types/node.enum';
+import { ElseIfNode } from '../../types/nodes/else-if-node.type';
+import { ElseNode } from '../../types/nodes/else-node.type';
+import { IfNode } from '../../types/nodes/if-node.type';
+import { validateExpression } from '../../utils/expression-validator';
 import { parseBlockChildren } from './parse-block-children.state';
 
 /**

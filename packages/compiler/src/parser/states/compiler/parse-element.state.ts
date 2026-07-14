@@ -1,12 +1,12 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum';
-import { TagOpenNameToken } from '../../lexer/types/tokens/tag-open-name-token.type';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
-import { ASTNodeType } from '../types/node.enum';
-import { AttributeNode } from '../types/nodes/attribute-node.type';
-import { ElementNode } from '../types/nodes/element-node.type';
-import { EventNode } from '../types/nodes/event-node.type';
+import { TokenType } from '../../../lexer/types/token-type.enum';
+import { TagOpenNameToken } from '../../../lexer/types/tokens/tag-open-name-token.type';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
+import { ASTNodeType } from '../../types/node.enum';
+import { AttributeNode } from '../../types/nodes/attribute-node.type';
+import { ElementNode } from '../../types/nodes/element-node.type';
+import { EventNode } from '../../types/nodes/event-node.type';
 import { parseAttribute } from './parse-attribute.state';
 import { parseEvent } from './parse-event.state';
 

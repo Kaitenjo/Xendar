@@ -1,12 +1,6 @@
 import { TokenType } from "../lexer/types/token-type.enum.js";
 import { Token } from "../lexer/types/token.type.js";
 import { ParserCursor } from "./models/parser-cursor.model.js";
-import { parseElement } from "./states/parse-element.state.js";
-import { parseForControlFlow } from "./states/parse-for.state.js";
-import { parseIfControlFlow } from "./states/parse-if.state.js";
-import { parseInterpolation } from "./states/parse-interpolation.state.js";
-import { parseSwitchControlFlow } from "./states/parse-switch.state.js";
-import { parseText } from "./states/parse-text.state.js";
 import { ASTNode } from "./types/ast.type.js";
 import { ParserStates } from "./types/parser-states.type.js";
 
@@ -27,26 +21,18 @@ export class Parser {
    * Internal cursor for navigating tokens
    */
   private readonly _cursor: ParserCursor;
-  /**
-   * Mapping of token types to their corresponding parser transition functions, 
-   * which handle the logic for parsing each token type into AST nodes.
-   */
-  private readonly _states: ParserStates = {
-    [TokenType.TEXT]: parseText,
-    [TokenType.INTERPOLATION_EXPRESSION]: parseInterpolation,
-    [TokenType.INTERPOLATION_LITERAL]: parseInterpolation,
-    [TokenType.TAG_OPEN_NAME]: parseElement,
-    [TokenType.IF]: parseIfControlFlow,
-    [TokenType.FOR]: parseForControlFlow,
-    [TokenType.SWITCH]: parseSwitchControlFlow
-  }
 
   /**
    * Creates a new Parser instance.
    *
    * @param tokens - Array of tokens produced by the Lexer.
+   * @param states - Mapping of token types to their corresponding parser transition functions, 
+   * which handle the logic for parsing each token type into AST nodes.
    */
-  constructor(private readonly tokens: Token[]) {
+  constructor(
+    private readonly tokens: Token[],
+    private readonly _states: ParserStates
+  ) {
     this._cursor = new ParserCursor(this.tokens);
   }
 
@@ -57,7 +43,7 @@ export class Parser {
    */
   public parse(): ASTNode[] {
     const nodes = new Array<ASTNode>;
-    
+
     while (this._cursor.peek().type !== TokenType.EOF) {
       const parseNode = this.parseNode();
       if (parseNode) {
@@ -79,7 +65,7 @@ export class Parser {
     if (token.type === TokenType.EOF) {
       return;
     }
-    
+
     const state = this._states[token.type];
 
     if (!state) {

@@ -1,12 +1,12 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum';
-import { SwitchToken } from '../../lexer/types/tokens/switch-token.type';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
-import { ASTNodeType } from '../types/node.enum';
-import { CaseNode } from '../types/nodes/case-node.type';
-import { SwitchNode } from '../types/nodes/switch-node.type';
-import { validateExpression } from '../utils/expression-validator';
+import { TokenType } from '../../../lexer/types/token-type.enum';
+import { SwitchToken } from '../../../lexer/types/tokens/switch-token.type';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
+import { ASTNodeType } from '../../types/node.enum';
+import { CaseNode } from '../../types/nodes/case-node.type';
+import { SwitchNode } from '../../types/nodes/switch-node.type';
+import { validateExpression } from '../../utils/expression-validator';
 import { parseBlockChildren } from './parse-block-children.state';
 
 /**

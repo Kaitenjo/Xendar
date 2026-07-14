@@ -1,15 +1,15 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum';
-import { AttributeToken } from '../../lexer/types/tokens/attribute-token.type';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
-import { AttributeNode } from '../types/nodes/attribute-node.type';
+import { TokenType } from '../../../lexer/types/token-type.enum';
+import { AttributeToken } from '../../../lexer/types/tokens/attribute-token.type';
+import { AttributeValueToken } from '../../../lexer/types/tokens/attribute-value-token.type';
+import { EventToken } from '../../../lexer/types/tokens/event-token.type';
+import { InterpolationExpressionToken } from '../../../lexer/types/tokens/interpolation-expression-token.type';
+import { InterpolationLiteralToken } from '../../../lexer/types/tokens/interpolation-literal-token.type';
+import { TagCloseNameToken } from '../../../lexer/types/tokens/tag-close-name-token.type';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
+import { AttributeNode } from '../../types/nodes/attribute-node.type';
 import { parseInterpolation } from './parse-interpolation.state';
-import { EventToken } from '../../lexer/types/tokens/event-token.type';
-import { TagCloseNameToken } from '../../lexer/types/tokens/tag-close-name-token.type';
-import { AttributeValueToken } from '../../lexer/types/tokens/attribute-value-token.type';
-import { InterpolationExpressionToken } from '../../lexer/types/tokens/interpolation-expression-token.type';
-import { InterpolationLiteralToken } from '../../lexer/types/tokens/interpolation-literal-token.type';
 
 /**
  * Parses an ATTRIBUTE token into an `AttributeNode`.

@@ -1,11 +1,11 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { InterpolationExpressionToken } from '../../lexer/types/tokens/interpolation-expression-token.type';
-import { InterpolationLiteralToken } from '../../lexer/types/tokens/interpolation-literal-token.type';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
-import { ASTNodeType } from '../types/node.enum';
-import { InterpolationNode } from '../types/nodes/interpolation-node.type';
-import { validateExpression } from '../utils/expression-validator';
+import { InterpolationExpressionToken } from '../../../lexer/types/tokens/interpolation-expression-token.type';
+import { InterpolationLiteralToken } from '../../../lexer/types/tokens/interpolation-literal-token.type';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
+import { ASTNodeType } from '../../types/node.enum';
+import { InterpolationNode } from '../../types/nodes/interpolation-node.type';
+import { validateExpression } from '../../utils/expression-validator';
 
 /**
  * Parses an interpolation expression or literal token into an `InterpolationNode`.

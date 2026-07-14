@@ -1,4 +1,4 @@
-import ts, { Expression } from 'typescript';
+import { Expression, forEachChild, Identifier, isIdentifier, isPropertyAccessExpression, isPropertyAssignment, Node } from 'typescript';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
 
@@ -241,7 +241,7 @@ export const ROOT_NODE = 'root';
  * to `node.getText()` for any subtree that contains no resolvable identifiers.
  *
  * @param expression - Either a raw identifier string or a validated
- *   `ts.Expression` node produced by `validateExpression`.
+ *   `Expression` node produced by `validateExpression`.
  * @param compilerContext - The active template scope context.
  * @returns The resolved expression as a JavaScript string ready for codegen.
  *
@@ -274,9 +274,9 @@ export function resolveExpression(expression: Expression, compilerContext: Compi
  *   expression (see {@link resolveIdentifierAccess}).
  * - Otherwise recurses into children and concatenates their output.
  */
-function emitNode(node: ts.Node, parent: ts.Node, compilerContext: CompilerContext, skipResolution = false): string {
+function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, skipResolution = false): string {
   // Leaf Identifier that needs resolution
-  if (ts.isIdentifier(node) && needsResolution(node, parent)) {
+  if (isIdentifier(node) && needsResolution(node, parent)) {
     const text = node.text;
     if (compilerContext.hasUnresolvableIdentifier(text) || skipResolution) {
       return text;
@@ -299,7 +299,7 @@ function emitNode(node: ts.Node, parent: ts.Node, compilerContext: CompilerConte
   let result = '';
   let lastEnd = node.getStart();
 
-  ts.forEachChild(node, child => {
+  forEachChild(node, child => {
     result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, compilerContext, skipResolution)}`;
     lastEnd = child.getEnd();
   });
@@ -343,14 +343,14 @@ function resolveIdentifierAccess(text: string, compilerContext: CompilerContext)
  *
  * Short-circuits as soon as one is found to avoid visiting the whole tree.
  */
-function containsResolvableIdentifier(node: ts.Node, parent: ts.Node): boolean {
-  if (ts.isIdentifier(node) && needsResolution(node, parent)) {
+function containsResolvableIdentifier(node: Node, parent: Node): boolean {
+  if (isIdentifier(node) && needsResolution(node, parent)) {
     return true;
   }
 
   let found = false;
 
-  ts.forEachChild(node, child => {
+  forEachChild(node, child => {
     if (!found) {
       found = containsResolvableIdentifier(child, node);
     }
@@ -364,10 +364,10 @@ function containsResolvableIdentifier(node: ts.Node, parent: ts.Node): boolean {
  * or prefixed with `this.` — i.e. it is not a global/builtin identifier
  * and not the property-name side of a member access expression.
  */
-function needsResolution(node: ts.Identifier, parent: ts.Node): boolean {
+function needsResolution(node: Identifier, parent: Node): boolean {
   return !(
-    (ts.isPropertyAccessExpression(parent) && parent.name === node)  // obj.prop -> prop should not be resolved
-    || (ts.isPropertyAssignment(parent) && parent.name === node) // { key: value } -> key should not be resolved
+    (isPropertyAccessExpression(parent) && parent.name === node)  // obj.prop -> prop should not be resolved
+    || (isPropertyAssignment(parent) && parent.name === node) // { key: value } -> key should not be resolved
     || GLOBAL_IDENTIFIERS.has(node.text)
     || !node.text
   );

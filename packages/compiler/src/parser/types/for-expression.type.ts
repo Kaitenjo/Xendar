@@ -1,5 +1,4 @@
-import ts from 'typescript';
-import { ExpressionDiagnostic } from './nodes/expression-diangnostic.type';
+import { Expression } from 'typescript';
 import { ForImplicitVariables } from './nodes/for-implicit-variables';
 
 /**
@@ -18,7 +17,7 @@ export type ForExpression = {
   /** 
    * The iterable expression parsed and validated as a JS expression (e.g. `items`). 
    */
-  iterableExpression: ts.Expression;
+  iterableExpression: Expression;
   /** 
    * The raw source string of the iterable (e.g. `"items"`). 
    */
@@ -26,7 +25,7 @@ export type ForExpression = {
   /** 
    * The track expression parsed and validated as a JS expression (e.g. `item.id`). 
    */
-  trackExpression: ts.Expression;
+  trackExpression: Expression;
   /** 
    * The raw source string of the track expression (e.g. `"item.id"`). 
    */

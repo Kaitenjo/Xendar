@@ -1,12 +1,12 @@
 import { NoArgsFunction } from '@xaendar/types';
 import { Expression } from 'typescript';
-import { TokenType } from '../../lexer/types/token-type.enum';
-import { EventParemeterToken } from '../../lexer/types/tokens/event-parameter-token.type';
-import { EventToken } from '../../lexer/types/tokens/event-token.type';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
-import { EventNode } from '../types/nodes/event-node.type';
-import { validateExpression } from '../utils/expression-validator';
+import { TokenType } from '../../../lexer/types/token-type.enum';
+import { EventParemeterToken } from '../../../lexer/types/tokens/event-parameter-token.type';
+import { EventToken } from '../../../lexer/types/tokens/event-token.type';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
+import { EventNode } from '../../types/nodes/event-node.type';
+import { validateExpression } from '../../utils/expression-validator';
 
 /**
  * Parses an EVENT token into an `EventNode` by splitting the raw

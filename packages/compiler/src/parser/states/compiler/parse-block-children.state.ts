@@ -1,7 +1,7 @@
 import { NoArgsFunction } from '@xaendar/types';
-import { TokenType } from '../../lexer/types/token-type.enum';
-import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
+import { TokenType } from '../../../lexer/types/token-type.enum';
+import { ParserCursor } from '../../models/parser-cursor.model';
+import { ASTNode } from '../../types/ast.type';
 
 /**
  * Parses child AST nodes inside a flow-control block until a BLOCK_CLOSE token is reached.

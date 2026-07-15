@@ -34,7 +34,7 @@ export class ParserCursor {
   /**
    * Returns a read-only snapshot of the current token.
    */
-  public getCcurrentToken<TokenType extends Token>(): Readonly<CurrentToken<TokenType>> {
+  public getCurrentToken<TokenType extends Token>(): Readonly<CurrentToken<TokenType>> {
     return this._currentToken as Readonly<CurrentToken<TokenType>>;
   }
 

@@ -15,4 +15,4 @@ import { Token } from "../../lexer/types/token.type";
  * @param token - The token that triggered this transition.
  * @returns An AST node representing the parsed structure for the given token.
  */
-export type ParserTransitionFunction<T extends Token = Token> = (cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: T) => ASTNode | undefined;
+export type ParserTransitionFunction<T extends Token = Token> = (cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: T) => ASTNode;

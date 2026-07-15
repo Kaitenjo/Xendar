@@ -29,7 +29,7 @@ export function parseEvent(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTN
   const parameters = new Array<Expression>
   while (cursor.peek().type === TokenType.EVENT_PAREMETER) {
     cursor.advance();
-    parameters.push(validateExpression(cursor.getCcurrentToken<EventParemeterToken>().value.parts[0]).node);
+    parameters.push(validateExpression(cursor.getCurrentToken<EventParemeterToken>().value.parts[0]).node);
   }
 
   return {

@@ -26,4 +26,4 @@ export type GeneratorTransitionFunction<T extends ASTNode = ASTNode> = (
   parentNode: string,
   compilerContext: CompilerContext,
   anchor: string | null
-) => GeneratorTransitionFunctionReturnType
+) => GeneratorTransitionFunctionReturnType | undefined

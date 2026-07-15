@@ -2,6 +2,9 @@ import { compile } from "@xaendar/compiler";
 import { writeFileSync } from "fs";
 
 const template = `
+@import { Pippo } from '/path/...'
+@import { Pluto } from "my/path2/..."
+
 @for (row of items(); track row.id) {
   <tr>
     <td>{{ row.id }}</td>

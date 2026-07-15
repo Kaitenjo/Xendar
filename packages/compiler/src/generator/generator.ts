@@ -10,6 +10,7 @@ import { generateTextAndInterpolation } from "./states/generate-text-and-interpo
 import { GeneratorStates } from "./types/generator-states.type.js";
 import { GeneratorTransitionFunctionReturnType } from "./types/generator-transition-function-return-type.type.js";
 import { getElementIdentifier, ROOT_NODE } from "./utils/render-generator.utils.js";
+import { skipGeneration } from "./states/skip-generation.state.js";
 
 
 export class Generator {
@@ -21,7 +22,8 @@ export class Generator {
     [ASTNodeType.Element]: generateElement,
     [ASTNodeType.If]: generateIf,
     [ASTNodeType.For]: generateFor,
-    [ASTNodeType.Switch]: generateSwitch
+    [ASTNodeType.Switch]: generateSwitch,
+    [ASTNodeType.Import]: skipGeneration
   }
 
   constructor(
@@ -46,9 +48,12 @@ export class Generator {
     }
 
     for (let i = 0; i < this._ast.length; i++) {
-      const { code, functionsToProcess } = this._processNode(this._ast[i]!, ROOT_NODE, i.toString(), compilerContext, null);
-      functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
-      renderFunctions.push(...indent(code));
+      const result = this._processNode(this._ast[i]!, ROOT_NODE, i.toString(), compilerContext, null);
+      if (result) {
+        const { code, functionsToProcess } = result;
+        functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
+        renderFunctions.push(...indent(code));
+      }
     }
 
     renderFunctions.push(
@@ -71,9 +76,14 @@ export class Generator {
       renderFunctions.push(
         ...indent([
           ...node.children.map((child, i) => {
-            const { code, functionsToProcess } = this._processNode(child, parentNode, i.toString(), context, anchor ?? null);
-            functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
-            return code;
+            const result = this._processNode(child, parentNode, i.toString(), context, anchor ?? null);
+            if (result) {
+              const { code, functionsToProcess } = result;
+              functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
+              return code;
+            }
+
+            return '';
           }).flat(),
           fnData.fn.isForBody ? 'return { context, update };' : 'return context;'
         ]),
@@ -84,7 +94,7 @@ export class Generator {
     return renderFunctions.join("\n");
   }
 
-  private _processNode(node: ASTNode, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType {
+  private _processNode(node: ASTNode, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType | undefined {
     const state = this._states[node.type];
 
     if (!state) {

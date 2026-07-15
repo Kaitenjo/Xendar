@@ -9,7 +9,7 @@ export type ImportNode = {
    */
   type: ASTNodeType.Import;
   
-  value: string;
+  values: string[];
 
   path: string;
 }

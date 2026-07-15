@@ -9,5 +9,5 @@ export type ImportToken = {
    */
   type: TokenType.IMPORT,
 
-  parts: [string]
+  parts: [import: string]
 }

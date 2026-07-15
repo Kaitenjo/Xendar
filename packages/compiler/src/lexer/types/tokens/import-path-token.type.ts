@@ -11,5 +11,5 @@ export type ImportPathToken = {
   /**
    * `parts[0]` is the raw `path` string.
    */
-  parts: [string]
+  parts: [path: string]
 }

@@ -1,0 +1,158 @@
+import { indent } from '@xaendar/common';
+import { AttributeNode } from '../../parser/types/nodes/attribute-node.type';
+import { ElementNode } from '../../parser/types/nodes/element-node.type';
+import { EventNode } from '../../parser/types/nodes/event-node.type';
+import { CompilerContext } from '../models/compiler-context.model';
+import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
+import { getElementIdentifier, resolveExpression } from '../utils/render-generator.utils';
+
+/**
+ * Generates code for an HTML element node: creates the DOM element, sets attributes,
+ * attaches event listeners, appends it to the parent, and recursively processes children.
+ *
+ * @param node - The `ElementNode` to process.
+ * @param index - Variable name to use for the created DOM element.
+ * @param parentNode - Variable name of the parent DOM node to append to.
+ * @param compilerContext - Current render scope context.
+ * @returns Array of generated code lines.
+ */
+export function generateElement(node: ElementNode, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType {
+  const attributes = mapAttributes(node.attributes, compilerContext);
+  const events = mapEvents(node.events, compilerContext);
+  const nodeName = getElementIdentifier(node, parentNode, index);
+  const tagName = node.tagName;
+  const retval: GeneratorTransitionFunctionReturnType = {
+    code: [],
+    functionsToProcess: new Map()
+  }
+
+  switch (tagName) {
+    case 'svg':
+      retval.code.push('context.createElement = createSVGElement');
+      break;
+    case 'math':
+      retval.code.push('context.createElement = createMATHMLElement');
+  }
+
+  retval.code.push(`const ${nodeName} = _renderElement(${parentNode}, context, ${anchor}, '${tagName}',`);
+  
+  attributes.length
+    ? retval.code.push(
+      ...indent([
+        '[',
+        ...indent(attributes),
+        '],'
+      ])
+    )
+    : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} [],`;
+
+  events.length
+    ? retval.code.push(
+      ...indent([
+        '[',
+        ...indent(events),
+        ']'
+      ]),
+      ');'
+    )
+    : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} []);`;
+
+    
+  switch (tagName) {
+    case 'svg':
+    case 'math':
+      retval.code.push('context.createElement = createElement');
+  }
+
+  if (node.children.length) {
+    retval.functionsToProcess!.set(`${nodeName}Children`, {
+      fn: { 
+        node, 
+        parentNode: nodeName, 
+        context: compilerContext,
+        precode: getPrecode(tagName)
+      },
+      args: [nodeName, 'parentContext']
+    });
+    retval.code.push(`this.${nodeName}Children(${nodeName}, context);`)
+  }
+  return retval;
+}
+
+/**
+ * Maps attribute nodes to their corresponding generated code lines.
+ *
+ * @param attributes - The attribute nodes to map onto the element.
+ * @param compilerContext - Current render scope context, used to resolve identifier references.
+ * @returns Array of generated code strings, one per attribute.
+ */
+function mapAttributes(attributes: AttributeNode[], compilerContext: CompilerContext): string[] {
+  return attributes?.map(({ name, value }) => {
+    const isLiteral = typeof value === 'string';
+    return `{ name: '${name}', value: () => ${isLiteral ? `'${value}'` : resolveExpression(value.expression, compilerContext)}, literal: ${isLiteral} },`
+  })
+}
+
+/**
+ * Generates code that attaches event listeners to a DOM element.
+ *
+ * For each event node an `addEventListener` call is emitted, binding the event
+ * to the component instance handler and exposing the native event as `$event`.
+ *
+ * @param events - The event nodes to bind to the element.
+ * @param compilerContext - Current render scope context, used to resolve identifier references.
+ * @returns Array of generated code lines, one per event listener.
+ */
+function mapEvents(events: EventNode[], compilerContext: CompilerContext): string[] {
+  compilerContext.addUnresolvableIdentifier('$event');
+
+  const mappedEvents = events.map(event => {
+    let parsedEventParameter = false;
+    const parameters = event.parameters.map(parameter => {
+      const resolvedParameter = resolveExpression(parameter, compilerContext);
+      if (!parsedEventParameter && resolvedParameter === '$event') {
+        parsedEventParameter = true;
+        return `($event) => ${resolvedParameter},`
+      } else {
+        return `() => ${resolvedParameter},`
+      }
+    });
+
+    const eventCode = [
+      '{',
+      ...indent([
+        `name: '${event.name}',`,
+        `handler: '${event.handler}',`,
+        'parameters: ['])
+    ]
+
+    if (parameters.length) {
+      eventCode.push(
+        ...indent([
+          ...indent(parameters),
+          ']'
+        ]),
+        '}'
+      );
+    } else {
+      eventCode[eventCode.length - 1] = `${eventCode[eventCode.length - 1]}]`;
+      eventCode.push('}');
+    }
+
+    return eventCode;
+  }).flat();
+
+  compilerContext.removeIdentifier('$event');
+  return mappedEvents;
+}
+
+function getPrecode(tagName: string): string {
+  switch (tagName) {
+    case 'svg':
+      return 'context.createElement = createSVGElement;';
+    case 'math':
+      return 'context.createElement = createMATHMLElement;';
+    default:
+      return '';
+  }
+}

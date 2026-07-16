@@ -1,4 +1,5 @@
 import { Generator } from './generator/generator';
+import { TypeChecker } from './generator/type-checker';
 import { Lexer } from './lexer/lexer';
 import { Parser } from './parser/parser';
 
@@ -15,8 +16,11 @@ import { Parser } from './parser/parser';
  *   into the generated `adoptedStyleSheets` assignment.
  * @returns A string containing the compiled Javascript render method body.
  */
-export function compile(input: string, cssVariableName?: string): string {
+export function compile(input: string, className: string, cssVariableName?: string): { javascript: string, typescript: string } {
   const tokens = new Lexer(input).tokenize();
   const nodes = new Parser(tokens).parse();
-  return new Generator(nodes, cssVariableName).generate();
+  return {
+    javascript: new Generator(nodes).generate(cssVariableName),
+    typescript: new TypeChecker(nodes).generate(className)
+  } 
 }

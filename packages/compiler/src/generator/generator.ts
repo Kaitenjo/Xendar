@@ -28,10 +28,9 @@ export class Generator {
 
   constructor(
     private _ast: ASTNode[],
-    private _cssVariableName?: string
   ) { }
 
-  public generate(): string {
+  public generate(cssVariableName?: string): string {
     this._nodeToProcess.clear();
     const compilerContext = new CompilerContext();
 
@@ -43,8 +42,8 @@ export class Generator {
       ])
     ]
 
-    if (this._cssVariableName) {
-      renderFunctions.push(indent(`${ROOT_NODE}.adoptedStyleSheets = [${this._cssVariableName}];`));
+    if (cssVariableName) {
+      renderFunctions.push(indent(`${ROOT_NODE}.adoptedStyleSheets = [${cssVariableName}];`));
     }
 
     for (let i = 0; i < this._ast.length; i++) {

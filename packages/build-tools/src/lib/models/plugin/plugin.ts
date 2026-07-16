@@ -44,6 +44,7 @@ export function xaendarPlugin(): Plugin {
 
       assertValidCustomElementName(code, id);
 
+      const className = extractClassName(id)
       const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
       if (!templatePath || !host.fileExists(templatePath)) {
         this.warn(`Xaendar: could not find template at ${templatePath}`);
@@ -65,10 +66,10 @@ export function xaendarPlugin(): Plugin {
       }
 
       let compiledMethods!: string;
-      const varName = cssContent ? `__${extractClassName(id)}_sheet` : undefined;
+      const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        compiledMethods = compile(templateSource, varName);
+        compiledMethods = compile(templateSource, className, varName).javascript;
       } catch (err) {
         this.error(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
       }

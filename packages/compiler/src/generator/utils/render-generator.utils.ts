@@ -260,8 +260,8 @@ export const ROOT_NODE = 'root';
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: Expression, compilerContext: CompilerContext, skipResolution = false): string {
-  return emitNode(expression, expression, compilerContext, skipResolution);
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options: { skipResolution: boolean, resolver: string } = { skipResolution: false, resolver: 'this' }): string {
+  return emitNode(expression, expression, compilerContext, options);
 }
 
 /**
@@ -274,15 +274,15 @@ export function resolveExpression(expression: Expression, compilerContext: Compi
  *   expression (see {@link resolveIdentifierAccess}).
  * - Otherwise recurses into children and concatenates their output.
  */
-function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, skipResolution = false): string {
+function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, options: { skipResolution: boolean, resolver: string }): string {
   // Leaf Identifier that needs resolution
   if (isIdentifier(node) && needsResolution(node, parent)) {
     const text = node.text;
-    if (compilerContext.hasUnresolvableIdentifier(text) || skipResolution) {
+    if (compilerContext.hasUnresolvableIdentifier(text) || options.skipResolution) {
       return text;
     }
 
-    return resolveIdentifierAccess(text, compilerContext);
+    return resolveIdentifierAccess(text, compilerContext, options.resolver);
   }
 
   // No resolvable identifiers in this subtree — emit verbatim
@@ -300,7 +300,7 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, sk
   let lastEnd = node.getStart();
 
   forEachChild(node, child => {
-    result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, compilerContext, skipResolution)}`;
+    result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, compilerContext, options)}`;
     lastEnd = child.getEnd();
   });
 
@@ -327,14 +327,14 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, sk
  * @param compilerContext - The active template scope context.
  * @returns The generated code expression that yields the identifier's value.
  */
-function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): string {
+function resolveIdentifierAccess(text: string, compilerContext: CompilerContext, resolver: string): string {
   if (compilerContext.hasIdentifier(text)) {
     const kind = compilerContext.getIdentifierKind(text);
     const access = `context.get('${text}')`;
     return kind === 'signal' ? `${access}()` : access;
   }
 
-  return `this.${text}`;
+  return `${resolver}.${text}`;
 }
 
 /**

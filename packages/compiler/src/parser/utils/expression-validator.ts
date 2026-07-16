@@ -215,6 +215,8 @@ function isAllowedNode(node: Node): boolean {
     // foo(...args), [...items]
     case SyntaxKind.SpreadElement:
 
+    case SyntaxKind.TaggedTemplateExpression:
+      
     // ---- Internal structural nodes ----
     // Visited during recursion but carry no semantic meaning of their own.
     case SyntaxKind.SyntaxList:
@@ -247,9 +249,6 @@ function buildDisallowedMessage(node: Node): string {
     case SyntaxKind.ArrowFunction:
     case SyntaxKind.FunctionExpression:
       return 'Function expressions are not allowed inside template expressions.';
-
-    case SyntaxKind.TaggedTemplateExpression:
-      return 'Tagged template expressions are not allowed inside template expressions.';
 
     case SyntaxKind.BinaryExpression: {
       const bin = node as BinaryExpression;

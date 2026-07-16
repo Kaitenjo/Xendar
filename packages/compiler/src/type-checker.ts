@@ -13,7 +13,7 @@ import { Parser } from './parser/parser';
  * @param input - The raw HTML-like template source to compile.
  * @returns A string containing the compiled TypeScript render method body.
  */
-export function compile(input: string): string {
+export function typeCheck(input: string): string {
   const tokens = new Lexer(input).tokenize();
   const ast = new Parser(tokens).parse(); 
   return '';

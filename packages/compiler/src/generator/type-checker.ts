@@ -28,24 +28,13 @@ export class Generator {
 
   constructor(
     private _ast: ASTNode[],
-    private _cssVariableName?: string
   ) { }
 
   public generate(): string {
     this._nodeToProcess.clear();
     const compilerContext = new CompilerContext();
 
-    const renderFunctions = [
-      '_render() {',
-      ...indent([
-        `const ${ROOT_NODE} = this._root;`,
-        'const context = new Context(this, { createElement: document.createElement.bind(document), get: () => undefined });'
-      ])
-    ]
-
-    if (this._cssVariableName) {
-      renderFunctions.push(indent(`${ROOT_NODE}.adoptedStyleSheets = [${this._cssVariableName}];`));
-    }
+    const renderFunctions = new Array<string>
 
     for (let i = 0; i < this._ast.length; i++) {
       const result = this._processNode(this._ast[i]!, ROOT_NODE, i.toString(), compilerContext, null);
@@ -56,18 +45,8 @@ export class Generator {
       }
     }
 
-    renderFunctions.push(
-      ...indent(['return context;']),
-      '}'
-    )
-
     for (const [key, fnData] of this._nodeToProcess.entries()) {
       const { node, parentNode, context, precode, anchor } = fnData.fn;
-
-      renderFunctions.push(
-        `\n${key}(${fnData.args?.join(', ')}) {`,
-        ...indent(['const context = new Context(this, parentContext);'])
-      );
 
       if (precode) {
         renderFunctions.push(indent(precode));
@@ -85,9 +64,7 @@ export class Generator {
 
             return '';
           }).flat(),
-          fnData.fn.isForBody ? 'return { context, update };' : 'return context;'
-        ]),
-        '}'
+        ])
       );
     }
 

@@ -260,8 +260,8 @@ export const ROOT_NODE = 'root';
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options: { skipResolution: boolean, resolver: string } = { skipResolution: false, resolver: 'this' }): string {
-  return emitNode(expression, expression, compilerContext, options);
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options?: { skipResolution?: boolean, resolver?: string }): string {
+  return emitNode(expression, expression, compilerContext, mapDefaultOptions(options));
 }
 
 /**
@@ -419,4 +419,11 @@ export function getBlockIdentifier(prefix: 'if' | 'elseIf' | 'else' | 'for' | 's
 function getIdentifier(prefix: string, parentNode: string, index: string): string {
   const identifier = parentNode !== ROOT_NODE ? `${parentNode}__${prefix}${index}` : `${prefix}${index}`;
   return identifier.replace(/-/g, '_');
+}
+
+function mapDefaultOptions(options?: { skipResolution?: boolean, resolver?: string }): { skipResolution: boolean, resolver: string } {
+  return {
+    skipResolution: options?.skipResolution ?? false,
+    resolver: options?.resolver ?? 'this',
+  };
 }

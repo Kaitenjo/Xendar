@@ -10,7 +10,7 @@ import { generateTextAndInterpolation } from "./states/generate-text-and-interpo
 import { skipGeneration } from "./states/skip-generation.state.js";
 import { GeneratorStates } from "./types/generator-states.type.js";
 import { GeneratorTransitionFunctionReturnType } from "./types/generator-transition-function-return-type.type.js";
-import { ROOT_NODE } from "./utils/render-generator.utils.js";
+import { ROOT_NODE } from "./utils/generator.utils.js";
 
 
 export class Generator {
@@ -34,7 +34,7 @@ export class Generator {
     this._nodeToProcess.clear();
     const compilerContext = new CompilerContext();
 
-    const renderFunctions = [
+    const generatedCode = [
       '_render() {',
       ...indent([
         `const ${ROOT_NODE} = this._root;`,
@@ -43,7 +43,7 @@ export class Generator {
     ]
 
     if (cssVariableName) {
-      renderFunctions.push(indent(`${ROOT_NODE}.adoptedStyleSheets = [${cssVariableName}];`));
+      generatedCode.push(indent(`${ROOT_NODE}.adoptedStyleSheets = [${cssVariableName}];`));
     }
 
     for (let i = 0; i < this._ast.length; i++) {
@@ -51,11 +51,11 @@ export class Generator {
       if (result) {
         const { code, functionsToProcess } = result;
         functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
-        renderFunctions.push(...indent(code));
+        generatedCode.push(...indent(code));
       }
     }
 
-    renderFunctions.push(
+    generatedCode.push(
       ...indent(['return context;']),
       '}'
     )
@@ -63,16 +63,16 @@ export class Generator {
     for (const [key, fnData] of this._nodeToProcess.entries()) {
       const { node, parentNode, context, precode, anchor } = fnData.fn;
 
-      renderFunctions.push(
-        `\n${key}(${fnData.args?.join(', ')}) {`,
+      generatedCode.push(
+        `\n${key} (${fnData.args?.join(', ')}) {`,
         ...indent(['const context = new Context(this, parentContext);'])
       );
 
       if (precode) {
-        renderFunctions.push(indent(precode));
+        generatedCode.push(indent(precode));
       }
 
-      renderFunctions.push(
+      generatedCode.push(
         ...indent([
           ...node.children.map((child, i) => {
             const result = this._processNode(child, parentNode, i.toString(), context, anchor ?? null);
@@ -90,7 +90,7 @@ export class Generator {
       );
     }
 
-    return renderFunctions.join("\n");
+    return generatedCode.join("\n");
   }
 
   private _processNode(node: ASTNode, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType | undefined {

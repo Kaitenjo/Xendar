@@ -2,7 +2,7 @@ import { indent } from '@xaendar/common';
 import { SwitchNode } from '../../parser/types/nodes/switch-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
-import { getBlockIdentifier, resolveExpression } from '../utils/render-generator.utils';
+import { getBlockIdentifier, resolveExpression } from '../utils/generator.utils';
 
 /**
  * Generates code for a `@switch` node.
@@ -33,9 +33,11 @@ export function generateSwitch(node: SwitchNode, parentNode: string, index: stri
 
     const fnName = `this.${caseKey}.bind(this)`;
     retVal.code.push(
-      '{',
-      ...indent([`condition: ${caseNode.condition ? `[${caseNode.condition.join(', ')}]` : `null`},`, `block: ${fnName}`]),
-      '},'
+      ...indent([
+        '{',
+        ...indent([`condition: ${caseNode.condition ? `[${caseNode.condition.join(', ')}]` : `null`},`, `block: ${fnName}`]),
+        '},'
+      ])
     );
   });
 

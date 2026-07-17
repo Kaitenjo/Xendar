@@ -1,9 +1,9 @@
+import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { ASTNode } from '../../parser/types/ast.type';
-import { CompilerContext } from '../models/compiler-context.model';
-import { GeneratorTransitionFunctionReturnType } from './generator-transition-function-return-type.type';
+import { TypeCheckerTransitionFunctionReturnType } from './type-checker-transition-function-return-type.type';
 
 /**
- * The signature of a generator transition function.
+ * The signature of a type checker transition function.
  *
  * Each function receives the current AST node, an identifier for the generated
  * output segment, the parent node descriptor, the active compiler context, and
@@ -15,15 +15,11 @@ import { GeneratorTransitionFunctionReturnType } from './generator-transition-fu
  * @param parentNode - The identifier of the parent node in the generation flow.
  * @param index - A stable identifier for the generated output segment.
  * @param compilerContext - The current compiler context node.
- * @param anchor - The name of the anchor variable to forward to direct
- *   rendering calls emitted for this node, or `null` if none is available
- *   in the current scope.
  * @returns The generated output fragments for the provided node.
  */
-export type GeneratorTransitionFunction<T extends ASTNode = ASTNode> = (
+export type TypeCheckerTransitionFunction<T extends ASTNode = ASTNode> = (
   node: T,
-  parentNode: string,
+  parentNode: { identifier: string, type: string },
   index: string,
-  compilerContext: CompilerContext,
-  anchor: string | null
-) => GeneratorTransitionFunctionReturnType | undefined
+  compilerContext: CompilerContext
+) => TypeCheckerTransitionFunctionReturnType | undefined

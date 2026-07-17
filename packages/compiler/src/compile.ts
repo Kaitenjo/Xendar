@@ -1,7 +1,7 @@
 import { Generator } from './generator/generator';
-import { TypeChecker } from './generator/type-checker';
 import { Lexer } from './lexer/lexer';
 import { Parser } from './parser/parser';
+import { TypeChecker } from './type-checker/type-checker';
 
 /**
  * Compiles a template string into a Javascript render function body.

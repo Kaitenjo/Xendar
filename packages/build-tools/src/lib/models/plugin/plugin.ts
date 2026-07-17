@@ -37,7 +37,7 @@ export function xaendarPlugin(): Plugin {
 
   return {
     name: 'xaendar',
-    transform(code, id) {
+    async transform(code, id) {
       if (!COMPONENT_FILE_RE.test(id)) {
         return null;
       }
@@ -69,7 +69,8 @@ export function xaendarPlugin(): Plugin {
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        compiledMethods = compile(templateSource, className, varName).javascript;
+        const result = await compile(templateSource, className, varName);
+        compiledMethods = result.javascript;
       } catch (err) {
         this.error(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
       }

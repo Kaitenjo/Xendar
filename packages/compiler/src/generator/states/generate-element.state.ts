@@ -4,7 +4,7 @@ import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { EventNode } from '../../parser/types/nodes/event-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
-import { getElementIdentifier, resolveExpression } from '../utils/render-generator.utils';
+import { getElementIdentifier, resolveExpression } from '../utils/generator.utils';
 
 /**
  * Generates code for an HTML element node: creates the DOM element, sets attributes,
@@ -136,7 +136,7 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
       );
     } else {
       eventCode[eventCode.length - 1] = `${eventCode[eventCode.length - 1]}]`;
-      eventCode.push('}');
+      eventCode.push('},');
     }
 
     return eventCode;

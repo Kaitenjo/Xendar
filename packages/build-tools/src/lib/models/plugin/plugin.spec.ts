@@ -324,7 +324,7 @@ describe('xaendarPlugin()', () => {
         the source code (see note above) and always resolves to the
         '__Component' fallback — pin down the exact value once that's fixed.
       */
-      expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, expect.any(String), undefined);
+      expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, undefined);
     });
 
     it('throws via this.error when the compiler throws', async () => {
@@ -423,11 +423,7 @@ describe('xaendarPlugin()', () => {
 
       await callTransform(code, COMPONENT_ID);
 
-      expect(compile).toHaveBeenCalledWith(
-        TEMPLATE_SOURCE,
-        expect.any(String),
-        expect.stringMatching(/_sheet$/),
-      );
+      expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, expect.stringMatching(/_sheet$/));
     });
 
     it('registers the CSS file as a watch file when it exists', async () => {

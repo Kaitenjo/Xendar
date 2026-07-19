@@ -1,45 +1,52 @@
+import { indent } from '@xaendar/common';
 import { CompilerContext } from '../../generator/models/compiler-context.model';
-import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../../generator/utils/generator.utils';
+import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
-import { TypeCheckerTransitionFunctionReturnType } from '../types/type-checker-transition-function-return-type.type';
+import { ProcessNode } from '../types/type-checker-process-node.type';
 
-export function typeCheckFor(node: ForNode, parentNode: { identifier: string, type: string }, index: string, compilerContext: CompilerContext): TypeCheckerTransitionFunctionReturnType {
-  const retVal: TypeCheckerTransitionFunctionReturnType = {
-    code: [],
-    functionsToProcess: new Map()
-  }
-
-  const iterableSource = node.iterableSource;
-  const iterableExpr = compilerContext.hasIdentifier(iterableSource) ? iterableSource : `root.${iterableSource}`;
-
-  const itemsName = getTextIdentifier('items', parentNode.identifier, index);
-  const counterName = getTextIdentifier('i', parentNode.identifier, index);
+/**
+ * Type-checks an `@for` block using a real `for...of` loop.
+ *
+ * This replaces the previous "synthetic function with a `typeof array`
+ * parameter" trick, which mistyped the loop variable as the *whole array*
+ * rather than a single element. A real `for (const item of array)` lets
+ * TypeScript infer `item`'s type correctly as the array's element type —
+ * exactly like it would for a loop written by hand — with no synthetic
+ * function boundary needed.
+ */
+export function typeCheckFor(node: ForNode, context: CompilerContext, index: string, processNode: ProcessNode): string[] {
+  const iterableExpr = context.hasIdentifier(node.iterableSource)
+    ? node.iterableSource
+    : `root.${node.iterableSource}`;
 
   const indexName = resolveImplicit(node, '$index');
   const firstName = resolveImplicit(node, '$first');
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
-  const forContext = new CompilerContext([node.itemAlias, [indexName, 'signal'], [firstName, 'signal'], [lastName, 'signal'], [evenName, 'signal'], [oddName, 'signal']], compilerContext);
 
-  const forKey = getBlockIdentifier('for', parentNode.identifier, index);
-  retVal.functionsToProcess!.set(forKey, {
-    fn: {
-      node,
-      parentNode: {
-        identifier: forKey,
-        type: 'HTMLElement'
-      },
-      context: forContext,
-    },
-    args: [`${itemsName}: typeof ${iterableExpr}`, `${counterName}: number`]
-  });
+  const forContext = new CompilerContext(
+    [node.itemAlias, [indexName, 'signal'], [firstName, 'signal'], [lastName, 'signal'], [evenName, 'signal'], [oddName, 'signal']],
+    context,
+  );
 
-  retVal.code.push(`const ${forKey}_${itemsName} = ${iterableExpr};`);
-  retVal.code.push(`const ${forKey}_${node.itemAlias} = ${resolveExpression(node.trackExpression, forContext, { skipResolution: true, resolver: `${iterableExpr}` })};`);
+  const lines: string[] = [];
+  lines.push(`for (const ${node.itemAlias} of ${iterableExpr}) {`);
+  lines.push(...indent([
+    // Implicit loop variables have no expression to derive a type from —
+    // their types are well-known constants, so they're declared directly.
+    `let ${indexName}!: number;`,
+    `let ${firstName}!: boolean;`,
+    `let ${lastName}!: boolean;`,
+    `let ${evenName}!: boolean;`,
+    `let ${oddName}!: boolean;`,
+    `${resolveExpression(node.trackExpression, forContext, { resolver: 'root' })};`,
+    ...node.children.flatMap((child, i) => processNode(child, forContext, i.toString())),
+  ]));
+  lines.push('}');
 
-  return retVal
+  return lines;
 }
 
 /**

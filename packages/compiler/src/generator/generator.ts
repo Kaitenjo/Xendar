@@ -97,7 +97,7 @@ export class Generator {
     const state = this._states[node.type];
 
     if (!state) {
-      throw new Error(`[Parser] No transition function for token type ${ASTNodeType[node.type]}`);
+      throw new Error(`[Generator] No transition function for token type ${ASTNodeType[node.type]}`);
     }
 
     return state(node as never, parentNode, index, compilerContext, anchor);

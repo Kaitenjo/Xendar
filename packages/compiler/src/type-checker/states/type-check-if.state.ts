@@ -1,67 +1,49 @@
+import { indent } from '@xaendar/common';
 import { CompilerContext } from '../../generator/models/compiler-context.model';
-import { getBlockIdentifier, resolveExpression } from '../../generator/utils/generator.utils';
+import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ASTNodeType } from '../../parser/types/node.enum';
 import { IfNode } from '../../parser/types/nodes/if-node.type';
-import { TypeCheckerTransitionFunctionReturnType } from '../types/type-checker-transition-function-return-type.type';
+import { ProcessNode } from '../types/type-checker-process-node.type';
 
-export function typeCheckIf(node: IfNode, parentNode: { identifier: string, type: string }, index: string, compilerContext: CompilerContext): TypeCheckerTransitionFunctionReturnType {
-  const ifContext = new CompilerContext([], compilerContext);
-  const retVal: TypeCheckerTransitionFunctionReturnType = {
-    code: [],
-    functionsToProcess: new Map()
-  };
+/**
+ * Type-checks an `@if`/`@else if`/`@else` chain using real TypeScript
+ * `if` / `else if` / `else` blocks.
+ *
+ * This is a genuine correctness improvement over the previous
+ * sibling-functions approach, not just a simplification: a real
+ * `if`/`else if` chain gives the TS compiler's control-flow analysis the
+ * negated narrowing of every preceding condition for free (e.g. inside an
+ * `else if`, TS already knows the first condition was false) — something
+ * flat sibling functions could never express.
+ */
+export function typeCheckIf(node: IfNode, context: CompilerContext, index: string, processNode: ProcessNode): string[] {
+  const lines: string[] = [];
 
-  const ifKey = getBlockIdentifier('if', parentNode.identifier, index);
-  retVal.code.push(`const ${ifKey} = ${resolveExpression(node.conditionNode, compilerContext, { resolver: 'root' })};`);
+  const condition = resolveExpression(node.conditionNode, context, { resolver: 'root' });
+  const ifContext = new CompilerContext([], context);
 
-  retVal.functionsToProcess!.set(ifKey, {
-    fn: {
-      node,
-      parentNode: {
-        identifier: ifKey,
-        type: 'HTMLElement'
-      },
-      context: ifContext
-    }
-  });
+  lines.push(`if (${condition}) {`);
+  lines.push(...indent(node.children.flatMap((child, i) => processNode(child, ifContext, i.toString()))));
+  lines.push('}');
 
   let alt = node.alternate;
-  let i = 0;
   while (alt?.type === ASTNodeType.ElseIf) {
-    const elseIfContext = new CompilerContext([], compilerContext);
-    const keyElseIf = getBlockIdentifier('elseIf', parentNode.identifier, `${index}_${i}`);
-    const conditionNode = alt.conditionNode;
+    const elseIfCondition = resolveExpression(alt.conditionNode, context, { resolver: 'root' });
+    const elseIfContext = new CompilerContext([], context);
 
-    retVal.code.push(`const ${keyElseIf} = ${resolveExpression(conditionNode, compilerContext, { resolver: 'root' })};`);
+    lines.push(`else if (${elseIfCondition}) {`);
+    lines.push(...indent(alt.children.flatMap((child, i) => processNode(child, elseIfContext, i.toString()))));
+    lines.push('}');
 
-    retVal.functionsToProcess!.set(keyElseIf, {
-      fn: {
-        node: alt,
-        parentNode: {
-          identifier: keyElseIf,
-          type: 'HTMLElement'
-        },
-        context: elseIfContext
-      }
-    });
     alt = alt.alternate;
-    i++;
   }
 
   if (alt) {
-    const elseContext = new CompilerContext([], compilerContext);
-    const keyElse = getBlockIdentifier('else', parentNode.identifier, index);
-    retVal.functionsToProcess!.set(keyElse, {
-      fn: {
-        node: alt,
-        parentNode: {
-          identifier: getBlockIdentifier('else', parentNode.identifier, index),
-          type: 'HTMLElement'
-        },
-        context: elseContext
-      }
-    });
+    const elseContext = new CompilerContext([], context);
+    lines.push('else {');
+    lines.push(...indent(alt.children.flatMap((child, i) => processNode(child, elseContext, i.toString()))));
+    lines.push('}');
   }
 
-  return retVal
+  return lines;
 }

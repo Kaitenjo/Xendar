@@ -70,38 +70,39 @@ export function xaendarPlugin(): Plugin {
         cssContent = host.readFile(stylePath);
       }
 
-      let compiledMethods!: string;
+      let compiledMethods: string | undefined;
       let typecheckBody: string | undefined;
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        const result = compile(templateSource, className, varName);
+        const result = compile(templateSource, varName);
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
         this.error(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
+        process.exit(1);
       }
 
-      let transformed!: string;
+      let transformed: string | undefined;
+      
       try {
         transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
       } catch (err) {
         this.error(String(err));
+        process.exit(1);
       }
 
-      if (typecheckBody) {
-        compilerOptions ??= loadCompilerOptions(dirname(id));
-        registerRealFile(id);
+      compilerOptions ??= loadCompilerOptions(dirname(id));
+      registerRealFile(id);
 
-        const shimPath = `${id}.__typecheck__.ts`;
-        upsertVirtualFile(shimPath, buildTypecheckShim(className, id, typecheckBody));
+      const shimPath = `${id}.__typecheck__.ts`;
+      upsertVirtualFile(shimPath, buildTypecheckShim(className, id, typecheckBody));
 
-        const languageService = getLanguageService(compilerOptions);
-        const diagnostics = languageService.getSemanticDiagnostics(shimPath);
+      const languageService = getLanguageService(compilerOptions);
+      const diagnostics = languageService.getSemanticDiagnostics(shimPath);
 
-        for (const diagnostic of diagnostics) {
-          this.warn(`Xaendar: ${describeDiagnostic(diagnostic)}`);
-        }
+      for (const diagnostic of diagnostics) {
+        this.warn(`Xaendar: ${describeDiagnostic(diagnostic)}`);
       }
 
       return {

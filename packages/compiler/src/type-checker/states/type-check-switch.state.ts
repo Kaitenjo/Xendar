@@ -1,35 +1,46 @@
+import { indent } from '@xaendar/common';
 import { CompilerContext } from '../../generator/models/compiler-context.model';
-import { getBlockIdentifier, resolveExpression } from '../../generator/utils/generator.utils';
+import { resolveExpression } from '../../generator/utils/generator.utils';
 import { SwitchNode } from '../../parser/types/nodes/switch-node.type';
-import { TypeCheckerTransitionFunctionReturnType } from '../types/type-checker-transition-function-return-type.type';
+import { ProcessNode } from '../types/type-checker-process-node.type';
 
-export function typeCheckSwitch(node: SwitchNode, parentNode: { identifier: string, type: string }, index: string, compilerContext: CompilerContext): TypeCheckerTransitionFunctionReturnType {
-  const retVal: TypeCheckerTransitionFunctionReturnType = {
-    code: [],
-    functionsToProcess: new Map()
-  }
-
-  const expression = resolveExpression(node.expression, compilerContext, { resolver: 'root' });
-  const keySwitch = getBlockIdentifier('switch', parentNode.identifier, index);
-  retVal.code.push(`const ${keySwitch} = ${expression};`);
+/**
+ * Type-checks a `@switch` block using a real TypeScript `switch` statement.
+ *
+ * This drops the previous `const case_0: typeof switchExpr = 'literal';`
+ * trick entirely: a real `switch (expr) { case 'literal': ... }` already
+ * makes TS validate that each case value is assignable to the switch
+ * expression's type as part of ordinary switch-statement semantics — and,
+ * as a bonus, narrows the switch expression's type inside each case block
+ * (e.g. from a `'loading' | 'error' | 'idle'` union down to just
+ * `'loading'`), which the previous approach never provided.
+ *
+ * Multiple case labels that shared one body in the AST (fallthrough) are
+ * emitted as stacked `case` labels sharing that same body, matching real
+ * JS/TS fallthrough syntax directly.
+ */
+export function typeCheckSwitch(node: SwitchNode, context: CompilerContext, index: string, processNode: ProcessNode): string[] {
+  const expression = resolveExpression(node.expression, context, { resolver: 'root' });
+  const lines: string[] = [`switch (${expression}) {`];
 
   node.children.forEach((caseNode, i) => {
-    const caseContext = new CompilerContext([], compilerContext);
-    const caseKey = caseNode.condition ? getBlockIdentifier('case', parentNode.identifier, `${index}_${i}`) : getBlockIdentifier('default', parentNode.identifier, index);
-    
-    retVal.functionsToProcess!.set(caseKey, {
-      fn: { 
-        node: caseNode, 
-        parentNode: {
-          identifier: caseKey,
-          type: 'HTMLElement'
-        },
-        context: caseContext 
-      }
-    });
+    const caseContext = new CompilerContext([], context);
 
-    caseNode.condition?.forEach((condition, i) => retVal.code.push(`const ${caseKey}_${i}: typeof ${expression} = ${condition};`));
+    if (caseNode.condition?.length) {
+      caseNode.condition.forEach(conditionValue => {
+        lines.push(`  case ${conditionValue}:`);
+      });
+    } else {
+      lines.push('  default:');
+    }
+
+    lines.push(...indent(indent([
+      ...caseNode.children.flatMap((child, ci) => processNode(child, caseContext, ci.toString())),
+      'break;',
+    ])));
   });
 
-  return retVal;
+  lines.push('}');
+
+  return lines;
 }

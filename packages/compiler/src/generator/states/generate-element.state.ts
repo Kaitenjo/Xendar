@@ -74,8 +74,9 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
       },
       args: [nodeName, 'parentContext']
     });
-    retVal.code.push(`this.${nodeName}Children(${nodeName}, context);`)
+    retVal.code.push(`this.${nodeName}Children(${nodeName}, context);`);
   }
+  
   return retVal;
 }
 

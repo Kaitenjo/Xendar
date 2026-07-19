@@ -30,8 +30,21 @@ export function typeCheckElement(node: ElementNode, parentNode: { identifier: st
       }
     }).join(', ');
     const beginning = parsedEventParameter ? '($event)' : '()'
-    retVal.code.push(`const ${nodeName}_${name} = ${beginning} => root.${handler}(${mappedParameters})`)
+    retVal.code.push(`const ${nodeName}_${name} = ${beginning} => root.${handler}(${mappedParameters});`)
   });
+
+  if (node.children.length) {
+    retVal.functionsToProcess!.set(`${nodeName}Children`, {
+      fn: { 
+        node, 
+        parentNode: {
+          identifier: nodeName,
+          type: 'HTMLElement'
+        }, 
+        context: context,
+      }
+    });
+  }
 
   return retVal;
 }

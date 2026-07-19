@@ -64,7 +64,7 @@ export class Generator {
       const { node, parentNode, context, precode, anchor } = fnData.fn;
 
       generatedCode.push(
-        `\n${key} (${fnData.args?.join(', ')}) {`,
+        `\n${key}(${fnData.args?.join(', ')}) {`,
         ...indent(['const context = new Context(this, parentContext);'])
       );
 

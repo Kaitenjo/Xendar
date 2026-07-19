@@ -27,14 +27,17 @@ export function typeCheckFor(node: ForNode, parentNode: { identifier: string, ty
   retVal.functionsToProcess!.set(forKey, {
     fn: {
       node,
-      parentNode,
+      parentNode: {
+        identifier: forKey,
+        type: 'HTMLElement'
+      },
       context: forContext,
     },
     args: [`${itemsName}: typeof ${iterableExpr}`, `${counterName}: number`]
   });
 
-  retVal.code.push(`const ${forKey}_${itemsName} = ${iterableExpr}`);
-  retVal.code.push(`const ${forKey}_${node.itemAlias} = ${resolveExpression(node.trackExpression, forContext, { skipResolution: true, resolver: `${iterableExpr}` })}`);
+  retVal.code.push(`const ${forKey}_${itemsName} = ${iterableExpr};`);
+  retVal.code.push(`const ${forKey}_${node.itemAlias} = ${resolveExpression(node.trackExpression, forContext, { skipResolution: true, resolver: `${iterableExpr}` })};`);
 
   return retVal
 }

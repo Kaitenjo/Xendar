@@ -8,6 +8,6 @@ import { TypeCheckerTransitionFunctionReturnType } from '../types/type-checker-t
 
 export function typeCheckTextAndInterpolation(node: TextNode | InterpolationNode, parentNode: { identifier: string, type: string }, index: string, compilerContext: CompilerContext): TypeCheckerTransitionFunctionReturnType {
   return {
-    code: [`const ${getTextIdentifier('text', parentNode.identifier, index)} = ${node.type === ASTNodeType.Text ? node.value : resolveExpression(node.expression, compilerContext, { resolver: 'root' })};`]
+    code: [`const ${getTextIdentifier('text', parentNode.identifier, index)} = ${node.type === ASTNodeType.Text ? `'${node.value}'` : resolveExpression(node.expression, compilerContext, { resolver: 'root' })};`]
   };
 }

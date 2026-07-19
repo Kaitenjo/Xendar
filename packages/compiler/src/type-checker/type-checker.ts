@@ -1,19 +1,16 @@
-import { indent } from "@xaendar/common";
-import { CompilerContext } from "../generator/models/compiler-context.model.js";
-import { skipGeneration } from "../generator/states/skip-generation.state.js";
-import { GeneratorTransitionFunctionReturnType } from "../generator/types/generator-transition-function-return-type.type.js";
-import { ROOT_NODE } from "../generator/utils/generator.utils.js";
-import { ASTNode } from "../parser/types/ast.type.js";
-import { ASTNodeType } from "../parser/types/node.enum.js";
-import { ForNode } from "../parser/types/nodes/for-node.type.js";
-import { SwitchNode } from "../parser/types/nodes/switch-node.type.js";
-import { typeCheckElement } from "./states/type-check-element.state.js";
-import { typeCheckFor } from "./states/type-check-for.state.js";
-import { typeCheckIf } from "./states/type-check-if.state.js";
-import { typeCheckSwitch } from "./states/type-check-switch.state.js";
-import { typeCheckTextAndInterpolation } from "./states/type-check-text-and-interpolation.state.js";
-import { TypeCheckerStates } from "./types/type-checker-states.type.js";
-import { TypeCheckerTransitionFunctionReturnType } from "./types/type-checker-transition-function-return-type.type.js";
+import { indent } from '@xaendar/common';
+import { CompilerContext } from '../generator/models/compiler-context.model.js';
+import { skipGeneration } from '../generator/states/skip-generation.state.js';
+import { ROOT_NODE } from '../generator/utils/generator.utils.js';
+import { ASTNode } from '../parser/types/ast.type.js';
+import { ASTNodeType } from '../parser/types/node.enum.js';
+import { typeCheckElement } from './states/type-check-element.state.js';
+import { typeCheckFor } from './states/type-check-for.state.js';
+import { typeCheckIf } from './states/type-check-if.state.js';
+import { typeCheckSwitch } from './states/type-check-switch.state.js';
+import { typeCheckTextAndInterpolation } from './states/type-check-text-and-interpolation.state.js';
+import { TypeCheckerStates } from './types/type-checker-states.type.js';
+import { TypeCheckerTransitionFunctionReturnType } from './types/type-checker-transition-function-return-type.type.js';
 
 export class TypeChecker {
   private readonly _nodeToProcess: Required<TypeCheckerTransitionFunctionReturnType>['functionsToProcess'] = new Map();
@@ -37,8 +34,6 @@ export class TypeChecker {
 
     const context = new CompilerContext();
     const generatedCode = [
-      `let ${ROOT_NODE}!: ${className};`,
-      '',
       'function typeCheck() {',
     ]
     
@@ -57,7 +52,7 @@ export class TypeChecker {
       const { node, parentNode, precode, context } = fnData.fn;
 
       generatedCode.push(
-        `\nfunction ${key} (${fnData.args?.join(', ') ?? ''}) {`,
+        `\nfunction ${key}(${fnData.args?.join(', ') ?? ''}): void {`,
       );
 
       if (precode) {
@@ -81,7 +76,7 @@ export class TypeChecker {
       );
     }
 
-    return generatedCode.join("\n");
+    return generatedCode.join('\n');
   }
 
   private _processNode(node: ASTNode, parentNode: { identifier: string, type: string }, index: string, context: CompilerContext): TypeCheckerTransitionFunctionReturnType | undefined {
@@ -92,18 +87,5 @@ export class TypeChecker {
     }
 
     return state(node as never, parentNode, index, context);
-  }
-}
-
-function generateSwitch(node: SwitchNode, identifier: string, parentNode: string): GeneratorTransitionFunctionReturnType | undefined {
-  return {
-    code: []
-  }
-}
-
-
-function generateFor(node: ForNode, identifier: string, parentNode: string): GeneratorTransitionFunctionReturnType | undefined {
-  return {
-    code: []
   }
 }

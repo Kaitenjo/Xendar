@@ -1,9 +1,12 @@
 import { isValidCustomElementName } from '@xaendar/common';
 import { compile } from '@xaendar/compiler';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, extname, resolve } from 'node:path';
+import { CompilerOptions, Diagnostic, findConfigFile, parseJsonConfigFileContent, readConfigFile, sys } from 'typescript';
 import type { Plugin } from 'vite';
 import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex';
+import { disposeLanguageService, getLanguageService, registerRealFile, removeRealFile, removeVirtualFile, upsertVirtualFile } from '../language-service';
 import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model';
+import { clearTemplateRegistry, findComponentForTemplate, registerTemplateMapping, removeTemplateMapping } from '../template-registry';
 
 /**
  * Vite plugin that compiles Xaendar DSL template files (`.xd.component.html`)
@@ -34,6 +37,7 @@ import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model
  */
 export function xaendarPlugin(): Plugin {
   const host = new NodeCompilerHost;
+  let compilerOptions: CompilerOptions | undefined;
 
   return {
     name: 'xaendar',
@@ -44,7 +48,7 @@ export function xaendarPlugin(): Plugin {
 
       assertValidCustomElementName(code, id);
 
-      const className = extractClassName(id)
+      const className = extractClassName(code)
       const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
       if (!templatePath || !host.fileExists(templatePath)) {
         this.warn(`Xaendar: could not find template at ${templatePath}`);
@@ -52,6 +56,7 @@ export function xaendarPlugin(): Plugin {
       }
 
       this.addWatchFile(templatePath);
+      registerTemplateMapping(templatePath, id);
       const templateSource = host.readFile(templatePath);
       if (templateSource === undefined) {
         this.warn(`Xaendar: could not read template at ${templatePath}`);
@@ -66,11 +71,13 @@ export function xaendarPlugin(): Plugin {
       }
 
       let compiledMethods!: string;
+      let typecheckBody: string | undefined;
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        const result = await compile(templateSource, className, varName);
+        const result = compile(templateSource, className, varName);
         compiledMethods = result.javascript;
+        typecheckBody = result.typescript;
       } catch (err) {
         this.error(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
       }
@@ -82,9 +89,44 @@ export function xaendarPlugin(): Plugin {
         this.error(String(err));
       }
 
+      if (typecheckBody) {
+        compilerOptions ??= loadCompilerOptions(dirname(id));
+        registerRealFile(id);
+
+        const shimPath = `${id}.__typecheck__.ts`;
+        upsertVirtualFile(shimPath, buildTypecheckShim(className, id, typecheckBody));
+
+        const languageService = getLanguageService(compilerOptions);
+        const diagnostics = languageService.getSemanticDiagnostics(shimPath);
+
+        for (const diagnostic of diagnostics) {
+          this.warn(`Xaendar: ${describeDiagnostic(diagnostic)}`);
+        }
+      }
+
       return {
         code: transformed
       };
+    },
+    watchChange(id, change) {
+      if (change.event === 'delete') {
+        if (COMPONENT_FILE_RE.test(id)) {
+          removeVirtualFile(`${id}.__typecheck__.ts`);
+          removeRealFile(id);
+        } else if (id.endsWith('.html')) {
+          const componentId = findComponentForTemplate(id);
+          if (componentId) {
+            removeVirtualFile(`${componentId}.__typecheck__.ts`);
+            removeTemplateMapping(id);
+          }
+        }
+      }
+    },
+    configureServer(server) {
+      server.httpServer?.on('close', () => {
+        clearTemplateRegistry();
+        disposeLanguageService()
+      });
     },
   };
 }
@@ -255,4 +297,75 @@ function buildStyleSnippet(varName: string, css: string): string {
  */
 function fixDecoratorExport(code: string): string {
   return code.replace(/^export\s+(@\w+[\s\S]*?)\s+(class\s)/gm, '$1\nexport $2');
+}
+
+/**
+ * Loads the `tsconfig.json` compilerOptions applicable to the given
+ * directory, using TypeScript's standard config file resolution
+ * (`findConfigFile` walks up parent directories). Falls back to an empty
+ * options object if no config file is found, rather than throwing —
+ * type checking simply runs with default settings in that case.
+ *
+ * @param fromDir - Directory to start searching for `tsconfig.json` from,
+ *   typically the directory of the component file being transformed.
+ */
+function loadCompilerOptions(fromDir: string): CompilerOptions {
+  const configPath = findConfigFile(fromDir, sys.fileExists, 'tsconfig.json');
+  if (!configPath) {
+    return {};
+  }
+
+  const configFile = readConfigFile(configPath, sys.readFile);
+  const parsed = parseJsonConfigFileContent(configFile.config, sys, dirname(configPath));
+  return parsed.options;
+}
+
+/**
+ * Wraps the compiler's fictitious type-check body with the import of the
+ * real component class and the `declare const root` binding, so the shim
+ * type-checks the DSL expressions against the actual class members.
+ *
+ * The shim is generated as a sibling of the real component file (same
+ * directory, `.__typecheck__.ts` suffix) so that the relative import below
+ * resolves correctly via the LanguageServiceHost's standard module
+ * resolution against the real filesystem.
+ *
+ * @param className - Name of the exported component class, as extracted
+ *   from the transpiled source.
+ * @param componentFilePath - Absolute path of the real component file.
+ * @param body - The fictitious-TS type-check body produced by the compiler
+ *   (the `function typeCheck() {...}` blocks and friends).
+ * @returns The full shim source, ready to be passed to `updateVirtualFile`.
+ */
+function buildTypecheckShim(className: string, componentFilePath: string, body: string): string {
+  const importSpecifier = `./${basename(componentFilePath, extname(componentFilePath))}`;
+
+  return [
+    `import { ${className} } from '${importSpecifier}';`,
+    '',
+    `declare const root: ${className};`,
+    '',
+    body,
+  ].join('\n');
+}
+
+/**
+ * Formats a single TS diagnostic into a human-readable, single-line message
+ * including its location in the generated shim.
+ *
+ * Note: the location currently points into the generated shim file, not
+ * the original DSL template — remapping to template positions is not yet
+ * implemented (see the module-level doc comment on `xaendarPlugin`).
+ */
+function describeDiagnostic(diagnostic: Diagnostic): string {
+  const message = flattenMessage(diagnostic);
+  if (diagnostic.file && diagnostic.start !== undefined) {
+    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+    return `${diagnostic.file.fileName}:${line + 1}:${character + 1} - ${message}`;
+  }
+  return message;
+}
+
+function flattenMessage(diagnostic: Diagnostic): string {
+  return typeof diagnostic.messageText === 'string' ? diagnostic.messageText : diagnostic.messageText.messageText;
 }

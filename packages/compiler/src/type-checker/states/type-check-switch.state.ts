@@ -18,7 +18,14 @@ export function typeCheckSwitch(node: SwitchNode, parentNode: { identifier: stri
     const caseKey = caseNode.condition ? getBlockIdentifier('case', parentNode.identifier, `${index}_${i}`) : getBlockIdentifier('default', parentNode.identifier, index);
     
     retVal.functionsToProcess!.set(caseKey, {
-      fn: { node: caseNode, parentNode, context: caseContext }
+      fn: { 
+        node: caseNode, 
+        parentNode: {
+          identifier: caseKey,
+          type: 'HTMLElement'
+        },
+        context: caseContext 
+      }
     });
 
     caseNode.condition?.forEach((condition, i) => retVal.code.push(`const ${caseKey}_${i}: typeof ${expression} = ${condition};`));

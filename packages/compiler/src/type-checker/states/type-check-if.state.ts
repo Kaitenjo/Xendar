@@ -1,9 +1,8 @@
-import { indent } from '@xaendar/common';
+import { CompilerContext } from '../../generator/models/compiler-context.model';
+import { getBlockIdentifier, resolveExpression } from '../../generator/utils/generator.utils';
 import { ASTNodeType } from '../../parser/types/node.enum';
 import { IfNode } from '../../parser/types/nodes/if-node.type';
 import { TypeCheckerTransitionFunctionReturnType } from '../types/type-checker-transition-function-return-type.type';
-import { CompilerContext } from '../../generator/models/compiler-context.model';
-import { getBlockIdentifier, resolveExpression } from '../../generator/utils/generator.utils';
 
 export function typeCheckIf(node: IfNode, parentNode: { identifier: string, type: string }, index: string, compilerContext: CompilerContext): TypeCheckerTransitionFunctionReturnType {
   const ifContext = new CompilerContext([], compilerContext);
@@ -16,7 +15,14 @@ export function typeCheckIf(node: IfNode, parentNode: { identifier: string, type
   retVal.code.push(`const ${ifKey} = ${resolveExpression(node.conditionNode, compilerContext, { resolver: 'root' })};`);
 
   retVal.functionsToProcess!.set(ifKey, {
-    fn: { node, parentNode, context: ifContext }
+    fn: {
+      node,
+      parentNode: {
+        identifier: ifKey,
+        type: 'HTMLElement'
+      },
+      context: ifContext
+    }
   });
 
   let alt = node.alternate;
@@ -29,7 +35,14 @@ export function typeCheckIf(node: IfNode, parentNode: { identifier: string, type
     retVal.code.push(`const ${keyElseIf} = ${resolveExpression(conditionNode, compilerContext, { resolver: 'root' })};`);
 
     retVal.functionsToProcess!.set(keyElseIf, {
-      fn: { node: alt, parentNode, context: elseIfContext }
+      fn: {
+        node: alt,
+        parentNode: {
+          identifier: keyElseIf,
+          type: 'HTMLElement'
+        },
+        context: elseIfContext
+      }
     });
     alt = alt.alternate;
     i++;
@@ -39,7 +52,14 @@ export function typeCheckIf(node: IfNode, parentNode: { identifier: string, type
     const elseContext = new CompilerContext([], compilerContext);
     const keyElse = getBlockIdentifier('else', parentNode.identifier, index);
     retVal.functionsToProcess!.set(keyElse, {
-      fn: { node: alt, parentNode, context: elseContext }
+      fn: {
+        node: alt,
+        parentNode: {
+          identifier: getBlockIdentifier('else', parentNode.identifier, index),
+          type: 'HTMLElement'
+        },
+        context: elseContext
+      }
     });
   }
 

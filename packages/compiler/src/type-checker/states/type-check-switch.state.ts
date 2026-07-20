@@ -1,5 +1,4 @@
 import { indent } from '@xaendar/common';
-import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { SwitchNode } from '../../parser/types/nodes/switch-node.type';
 import { ProcessNode } from '../types/type-checker-process-node.type';
@@ -19,12 +18,11 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * emitted as stacked `case` labels sharing that same body, matching real
  * JS/TS fallthrough syntax directly.
  */
-export function typeCheckSwitch(node: SwitchNode, context: CompilerContext, index: string, processNode: ProcessNode): string[] {
-  const expression = resolveExpression(node.expression, context, { resolver: 'root' });
+export function typeCheckSwitch(node: SwitchNode, processNode: ProcessNode): string[] {
+  const expression = resolveExpression(node.expression, { resolver: 'root' });
   const lines: string[] = [`switch (${expression}) {`];
 
   node.children.forEach((caseNode, i) => {
-    const caseContext = new CompilerContext([], context);
 
     if (caseNode.condition?.length) {
       caseNode.condition.forEach(conditionValue => {
@@ -35,7 +33,7 @@ export function typeCheckSwitch(node: SwitchNode, context: CompilerContext, inde
     }
 
     lines.push(...indent(indent([
-      ...caseNode.children.flatMap((child, ci) => processNode(child, caseContext, ci.toString())),
+      ...caseNode.children.flatMap(child => processNode(child)),
       'break;',
     ])));
   });

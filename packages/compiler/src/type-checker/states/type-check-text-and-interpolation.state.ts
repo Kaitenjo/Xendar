@@ -12,8 +12,8 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * interpolation's expression is emitted as a bare statement — enough for
  * TS to validate it, with no name needing to be bound to the result.
  */
-export function typeCheckTextAndInterpolation(node: TextNode | InterpolationNode, context: CompilerContext, index: string, processNode: ProcessNode): string[] {
+export function typeCheckTextAndInterpolation(node: TextNode | InterpolationNode, _processNode: ProcessNode): string[] {
   return node.type === ASTNodeType.Interpolation
-    ? [`${resolveExpression(node.expression, context, { resolver: 'root' })};`]
+    ? [`${resolveExpression(node.expression, { resolver: 'root' })};`]
     : [];
 }

@@ -11,4 +11,4 @@ import { ASTNode } from '../../parser/types/ast.type';
  * so there is nothing to defer: everything can be produced in a single,
  * synchronous, depth-first walk.
  */
-export type ProcessNode = (node: ASTNode, context: CompilerContext, index: string) => string[];
+export type ProcessNode = (node: ASTNode) => string[];

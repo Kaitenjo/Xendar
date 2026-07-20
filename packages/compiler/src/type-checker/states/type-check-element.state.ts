@@ -1,4 +1,3 @@
-import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { ProcessNode } from '../types/type-checker-process-node.type';
@@ -11,21 +10,20 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * `TypeChecker` for why) — attribute expressions and event calls are
  * emitted as bare statements, validated in place.
  */
-export function typeCheckElement(node: ElementNode, context: CompilerContext, index: string, processNode: ProcessNode): string[] {
+export function typeCheckElement(node: ElementNode, processNode: ProcessNode): string[] {
   const lines: string[] = [];
 
   node.attributes.forEach(({ value }) => {
     if (typeof value !== 'string') {
       // A bare expression statement is enough to have TS validate it —
       // no name needs to be bound to it.
-      lines.push(`${resolveExpression(value.expression, context, { resolver: 'root' })};`);
+      lines.push(`${resolveExpression(value.expression, { resolver: 'root' })};`);
     }
   });
 
-  context.addUnresolvableIdentifier('$event');
   node.events.forEach(({ handler, parameters }) => {
     const args = parameters
-      .map(parameter => resolveExpression(parameter, context, { resolver: 'root' }))
+      .map(parameter => resolveExpression(parameter, { resolver: 'root' }))
       .join(', ');
 
     // Calling the real handler with the real (resolved) arguments checks
@@ -35,7 +33,7 @@ export function typeCheckElement(node: ElementNode, context: CompilerContext, in
   });
 
   node.children.forEach((child, i) => {
-    lines.push(...processNode(child, context, i.toString()));
+    lines.push(...processNode(child));
   });
 
   return lines;

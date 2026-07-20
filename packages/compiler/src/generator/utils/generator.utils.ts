@@ -1,6 +1,7 @@
 import { Expression, forEachChild, Identifier, isIdentifier, isPropertyAccessExpression, isPropertyAssignment, Node } from 'typescript';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
+import { ResolveExpressionOptions } from '../types/resolve-expresion-options.type';
 
 /**
  * Complete set of JavaScript global identifiers up to ES2026.
@@ -260,8 +261,19 @@ export const ROOT_NODE = 'root';
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options?: { skipResolution?: boolean, resolver?: string }): string {
-  return emitNode(expression, expression, compilerContext, mapDefaultOptions(options));
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options?: ResolveExpressionOptions): string;
+export function resolveExpression(expression: Expression, options: ResolveExpressionOptions): string;
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext | ResolveExpressionOptions, options?: ResolveExpressionOptions): string {
+  let actualCompilerContext: CompilerContext | undefined;
+  let actualOptions: ResolveExpressionOptions | undefined
+
+  if (compilerContext instanceof CompilerContext) {
+    actualCompilerContext = compilerContext;
+  } else {
+    actualOptions = compilerContext;
+  }
+
+  return emitNode(expression, expression, actualCompilerContext, mapDefaultOptions(actualOptions));
 }
 
 /**
@@ -274,15 +286,24 @@ export function resolveExpression(expression: Expression, compilerContext: Compi
  *   expression (see {@link resolveIdentifierAccess}).
  * - Otherwise recurses into children and concatenates their output.
  */
-function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, options: { skipResolution: boolean, resolver: string }): string {
+
+function emitNode(node: Node, parent: Node, compilerContext: CompilerContext | undefined, options: Required<ResolveExpressionOptions>): string {
   // Leaf Identifier that needs resolution
   if (isIdentifier(node) && needsResolution(node, parent)) {
     const text = node.text;
-    if (compilerContext.hasUnresolvableIdentifier(text) || options.skipResolution) {
+    if (compilerContext?.hasUnresolvableIdentifier(text) || options.skipResolution) {
       return text;
     }
 
-    return resolveIdentifierAccess(text, compilerContext, options.resolver);
+    if (options.resolver) {
+      return `${options.resolver}.${text}`;
+    }
+
+    if (compilerContext) {
+      return resolveIdentifierAccess(text, compilerContext);
+    }
+
+    return text;
   }
 
   // No resolvable identifiers in this subtree — emit verbatim
@@ -327,14 +348,14 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
  * @param compilerContext - The active template scope context.
  * @returns The generated code expression that yields the identifier's value.
  */
-function resolveIdentifierAccess(text: string, compilerContext: CompilerContext, resolver: string): string {
+function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): string {
   if (compilerContext.hasIdentifier(text)) {
     const kind = compilerContext.getIdentifierKind(text);
     const access = `context.get('${text}')`;
     return kind === 'signal' ? `${access}()` : access;
   }
 
-  return `${resolver}.${text}`;
+  return text;
 }
 
 /**

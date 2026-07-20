@@ -1,5 +1,4 @@
 import { indent } from '@xaendar/common';
-import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
@@ -15,24 +14,15 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * exactly like it would for a loop written by hand — with no synthetic
  * function boundary needed.
  */
-export function typeCheckFor(node: ForNode, context: CompilerContext, index: string, processNode: ProcessNode): string[] {
-  const iterableExpr = context.hasIdentifier(node.iterableSource)
-    ? node.iterableSource
-    : `root.${node.iterableSource}`;
-
+export function typeCheckFor(node: ForNode, processNode: ProcessNode): string[] {
   const indexName = resolveImplicit(node, '$index');
   const firstName = resolveImplicit(node, '$first');
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
 
-  const forContext = new CompilerContext(
-    [node.itemAlias, [indexName, 'signal'], [firstName, 'signal'], [lastName, 'signal'], [evenName, 'signal'], [oddName, 'signal']],
-    context,
-  );
-
   const lines: string[] = [];
-  lines.push(`for (const ${node.itemAlias} of ${iterableExpr}) {`);
+  lines.push(`for (const ${node.itemAlias} of root.${node.iterableSource}) {`);
   lines.push(...indent([
     // Implicit loop variables have no expression to derive a type from —
     // their types are well-known constants, so they're declared directly.
@@ -41,8 +31,8 @@ export function typeCheckFor(node: ForNode, context: CompilerContext, index: str
     `let ${lastName}!: boolean;`,
     `let ${evenName}!: boolean;`,
     `let ${oddName}!: boolean;`,
-    `${resolveExpression(node.trackExpression, forContext, { skipResolution:  true })};`,
-    ...node.children.flatMap((child, i) => processNode(child, forContext, i.toString())),
+    `${resolveExpression(node.trackExpression, { skipResolution:  true })};`,
+    ...node.children.flatMap((child, i) => processNode(child)),
   ]));
   lines.push('}');
 

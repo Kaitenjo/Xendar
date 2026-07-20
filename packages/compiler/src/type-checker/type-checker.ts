@@ -1,5 +1,4 @@
 import { indent } from '@xaendar/common';
-import { CompilerContext } from '../generator/models/compiler-context.model.js';
 import { skipGeneration } from '../generator/states/skip-generation.state.js';
 import { ASTNode } from '../parser/types/ast.type.js';
 import { ASTNodeType } from '../parser/types/node.enum.js';
@@ -55,8 +54,7 @@ export class TypeChecker {
    * relevant if the consuming project has `noUnusedLocals` enabled.
    */
   public generate(): string {
-    const context = new CompilerContext();
-    const body = this._ast.flatMap((node, i) => this._processNode(node, context, i.toString()));
+    const body = this._ast.flatMap((node, i) => this._processNode(node));
 
     const usesEvent = body.some(line => line.includes('$event'));
 
@@ -72,13 +70,13 @@ export class TypeChecker {
    * back down as `processNode` so state functions can recurse into their
    * own children inline.
    */
-  private _processNode = (node: ASTNode, context: CompilerContext, index: string): string[] => {
+  private _processNode = (node: ASTNode): string[] => {
     const state = this._states[node.type];
 
     if (!state) {
       throw new Error(`[Type Checker] No transition function for token type ${ASTNodeType[node.type]}`);
     }
 
-    return state(node as never, context, index, this._processNode);
+    return state(node as never, this._processNode);
   };
 }

@@ -41,7 +41,7 @@ export function typeCheckFor(node: ForNode, context: CompilerContext, index: str
     `let ${lastName}!: boolean;`,
     `let ${evenName}!: boolean;`,
     `let ${oddName}!: boolean;`,
-    `${resolveExpression(node.trackExpression, forContext, { resolver: 'root' })};`,
+    `${resolveExpression(node.trackExpression, forContext, { skipResolution:  true })};`,
     ...node.children.flatMap((child, i) => processNode(child, forContext, i.toString())),
   ]));
   lines.push('}');

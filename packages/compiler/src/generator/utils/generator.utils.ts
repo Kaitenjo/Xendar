@@ -261,19 +261,8 @@ export const ROOT_NODE = 'root';
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options?: ResolveExpressionOptions): string;
-export function resolveExpression(expression: Expression, options: ResolveExpressionOptions): string;
-export function resolveExpression(expression: Expression, compilerContext: CompilerContext | ResolveExpressionOptions, options?: ResolveExpressionOptions): string {
-  let actualCompilerContext: CompilerContext | undefined;
-  let actualOptions: ResolveExpressionOptions | undefined
-
-  if (compilerContext instanceof CompilerContext) {
-    actualCompilerContext = compilerContext;
-  } else {
-    actualOptions = compilerContext;
-  }
-
-  return emitNode(expression, expression, actualCompilerContext, mapDefaultOptions(actualOptions));
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options?: ResolveExpressionOptions): string {
+  return emitNode(expression, expression, compilerContext, mapDefaultOptions(options));
 }
 
 /**
@@ -287,7 +276,7 @@ export function resolveExpression(expression: Expression, compilerContext: Compi
  * - Otherwise recurses into children and concatenates their output.
  */
 
-function emitNode(node: Node, parent: Node, compilerContext: CompilerContext | undefined, options: Required<ResolveExpressionOptions>): string {
+function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, options: Required<ResolveExpressionOptions>): string {
   // Leaf Identifier that needs resolution
   if (isIdentifier(node) && needsResolution(node, parent)) {
     const text = node.text;

@@ -1,5 +1,5 @@
-import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { ASTNode } from '../../parser/types/ast.type';
+import { TypeCheckContext } from '../models/type-checker-context';
 
 /**
  * Recursively processes a single AST node into type-checkable TypeScript
@@ -11,4 +11,4 @@ import { ASTNode } from '../../parser/types/ast.type';
  * so there is nothing to defer: everything can be produced in a single,
  * synchronous, depth-first walk.
  */
-export type ProcessNode = (node: ASTNode) => string[];
+export type ProcessNode = (node: ASTNode, context: TypeCheckContext) => string[];

@@ -1,13 +1,16 @@
 import { indent } from '@xaendar/common';
-import { skipGeneration } from '../generator/states/skip-generation.state.js';
 import { ASTNode } from '../parser/types/ast.type.js';
 import { ASTNodeType } from '../parser/types/node.enum.js';
+import { ImportNode } from '../parser/types/nodes/import-node.type.js';
+import { TypeCheckContext } from './models/type-checker-context.js';
 import { typeCheckElement } from './states/type-check-element.state.js';
 import { typeCheckFor } from './states/type-check-for.state.js';
 import { typeCheckIf } from './states/type-check-if.state.js';
+import { typeCheckImport } from './states/type-check-import.state.js';
 import { typeCheckSwitch } from './states/type-check-switch.state.js';
 import { typeCheckTextAndInterpolation } from './states/type-check-text-and-interpolation.state.js';
 import { TypeCheckerStates } from './types/type-checker-states.type.js';
+import { extractComponentMetadata } from './utils/component-metadata-extractor.js';
 
 /**
  * Generates a single, flat TypeScript function body ("shim") from a
@@ -32,6 +35,8 @@ import { TypeCheckerStates } from './types/type-checker-states.type.js';
  * one single `typeCheck()` function.
  */
 export class TypeChecker {
+  private readonly _context = new TypeCheckContext();
+
   private readonly _states: TypeCheckerStates = {
     [ASTNodeType.Text]: typeCheckTextAndInterpolation,
     [ASTNodeType.Interpolation]: typeCheckTextAndInterpolation,
@@ -39,10 +44,39 @@ export class TypeChecker {
     [ASTNodeType.If]: typeCheckIf,
     [ASTNodeType.For]: typeCheckFor,
     [ASTNodeType.Switch]: typeCheckSwitch,
-    [ASTNodeType.Import]: skipGeneration as never,
+    [ASTNodeType.Import]: typeCheckImport,
   };
 
   constructor(private _ast: ASTNode[]) { }
+
+  /**
+   * Pre-populates the shared context with component and directive metadata
+   * by parsing source files for all `@import` nodes in the AST.
+   *
+   * Must be awaited before calling `generate()` if metadata-driven
+   * validation (e.g. unknown component inputs) is desired.
+   *
+   * @param baseDir - Absolute path used to resolve relative import paths.
+   */
+  public async populateImportMetadata(baseDir: string): Promise<void> {
+    const importNodes = this._ast.filter(
+      (node): node is ImportNode => node.type === ASTNodeType.Import
+    );
+
+    await Promise.all(
+      importNodes.flatMap(node =>
+        node.specifiers
+          .filter(({ imported }) => imported !== '*')
+          .map(async ({ imported, local }) => {
+            const symbolName = imported === 'default' ? local : imported;
+            const metadata = await extractComponentMetadata(node.path, symbolName, baseDir);
+            if (metadata) {
+              this._context.addImport(metadata);
+            }
+          })
+      )
+    );
+  }
 
   /**
    * Generates the full `function typeCheck() { ... }` shim body for the
@@ -54,13 +88,11 @@ export class TypeChecker {
    * relevant if the consuming project has `noUnusedLocals` enabled.
    */
   public generate(): string {
-    const body = this._ast.flatMap((node, i) => this._processNode(node));
-
-    const usesEvent = body.some(line => line.includes('$event'));
+    const body = this._ast.flatMap(node => this._processNode(node, this._context));
 
     return [
       'function typeCheck() {',
-      ...indent(usesEvent ? ['let $event!: Event;', ...body] : body),
+      ...indent(body),
       '}',
     ].join('\n');
   }
@@ -70,13 +102,13 @@ export class TypeChecker {
    * back down as `processNode` so state functions can recurse into their
    * own children inline.
    */
-  private _processNode = (node: ASTNode): string[] => {
+  private _processNode = (node: ASTNode, context: TypeCheckContext): string[] => {
     const state = this._states[node.type];
 
     if (!state) {
       throw new Error(`[Type Checker] No transition function for token type ${ASTNodeType[node.type]}`);
     }
 
-    return state(node as never, this._processNode);
+    return state(node as never, this._processNode, context);
   };
 }

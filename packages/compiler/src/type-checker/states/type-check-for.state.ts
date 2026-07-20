@@ -1,7 +1,9 @@
 import { indent } from '@xaendar/common';
+import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
+import { TypeCheckContext } from '../models/type-checker-context';
 import { ProcessNode } from '../types/type-checker-process-node.type';
 
 /**
@@ -14,14 +16,17 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * exactly like it would for a loop written by hand — with no synthetic
  * function boundary needed.
  */
-export function typeCheckFor(node: ForNode, processNode: ProcessNode): string[] {
+export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: TypeCheckContext): string[] {
+  const forContext = new TypeCheckContext([], context);
   const indexName = resolveImplicit(node, '$index');
   const firstName = resolveImplicit(node, '$first');
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
 
-  const lines: string[] = [];
+  [indexName, firstName, lastName, evenName, oddName, node.itemAlias].forEach(identifier => forContext.addUnresolvableIdentifier(identifier));
+
+  const lines = new Array<string>();
   lines.push(`for (const ${node.itemAlias} of root.${node.iterableSource}) {`);
   lines.push(...indent([
     // Implicit loop variables have no expression to derive a type from —
@@ -31,8 +36,8 @@ export function typeCheckFor(node: ForNode, processNode: ProcessNode): string[] 
     `let ${lastName}!: boolean;`,
     `let ${evenName}!: boolean;`,
     `let ${oddName}!: boolean;`,
-    `${resolveExpression(node.trackExpression, { skipResolution:  true })};`,
-    ...node.children.flatMap((child, i) => processNode(child)),
+    `${resolveExpression(node.trackExpression, context, { skipResolution: true })};`,
+    ...node.children.flatMap(child => processNode(child, forContext)),
   ]));
   lines.push('}');
 

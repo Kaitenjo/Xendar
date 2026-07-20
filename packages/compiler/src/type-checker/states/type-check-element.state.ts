@@ -1,5 +1,7 @@
+import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
+import { TypeCheckContext } from '../models/type-checker-context';
 import { ProcessNode } from '../types/type-checker-process-node.type';
 
 /**
@@ -10,31 +12,28 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * `TypeChecker` for why) — attribute expressions and event calls are
  * emitted as bare statements, validated in place.
  */
-export function typeCheckElement(node: ElementNode, processNode: ProcessNode): string[] {
-  const lines: string[] = [];
+export function typeCheckElement(node: ElementNode, processNode: ProcessNode, context: TypeCheckContext): string[] {
+  const lines = new Array<string>();
 
   node.attributes.forEach(({ value }) => {
     if (typeof value !== 'string') {
-      // A bare expression statement is enough to have TS validate it —
-      // no name needs to be bound to it.
-      lines.push(`${resolveExpression(value.expression, { resolver: 'root' })};`);
+      lines.push(`${resolveExpression(value.expression, context, { resolver: 'root' })};`);
     }
   });
 
+  
   node.events.forEach(({ handler, parameters }) => {
-    const args = parameters
-      .map(parameter => resolveExpression(parameter, { resolver: 'root' }))
-      .join(', ');
+    const eventContext = new CompilerContext([], context);
+    eventContext.addUnresolvableIdentifier('$event');
 
-    // Calling the real handler with the real (resolved) arguments checks
-    // both that the handler exists and that the argument types line up —
-    // no need for an arrow-function wrapper that's never actually invoked.
+    const args = parameters
+      .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
+      .join(', ');
+    
     lines.push(`root.${handler}(${args});`);
   });
 
-  node.children.forEach((child, i) => {
-    lines.push(...processNode(child));
-  });
+  node.children.forEach(child => lines.push(...processNode(child, context)));
 
   return lines;
 }

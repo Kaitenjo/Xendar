@@ -2,6 +2,7 @@ import { indent } from '@xaendar/common';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ASTNodeType } from '../../parser/types/node.enum';
 import { IfNode } from '../../parser/types/nodes/if-node.type';
+import { TypeCheckContext } from '../models/type-checker-context';
 import { ProcessNode } from '../types/type-checker-process-node.type';
 
 /**
@@ -15,21 +16,20 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * `else if`, TS already knows the first condition was false) — something
  * flat sibling functions could never express.
  */
-export function typeCheckIf(node: IfNode, processNode: ProcessNode): string[] {
-  const lines: string[] = [];
-
-  const condition = resolveExpression(node.conditionNode, { resolver: 'root' });
+export function typeCheckIf(node: IfNode, processNode: ProcessNode, context: TypeCheckContext): string[] {
+  const lines = new Array<string>();
+  const condition = resolveExpression(node.conditionNode, context, { resolver: 'root' });
 
   lines.push(`if (${condition}) {`);
-  lines.push(...indent(node.children.flatMap(child => processNode(child))));
+  lines.push(...indent(node.children.flatMap(child => processNode(child, context))));
   lines.push('}');
 
   let alt = node.alternate;
   while (alt?.type === ASTNodeType.ElseIf) {
-    const elseIfCondition = resolveExpression(alt.conditionNode, { resolver: 'root' });
+    const elseIfCondition = resolveExpression(alt.conditionNode, context, { resolver: 'root' });
 
     lines.push(`else if (${elseIfCondition}) {`);
-    lines.push(...indent(alt.children.flatMap(child => processNode(child))));
+    lines.push(...indent(alt.children.flatMap(child => processNode(child, context))));
     lines.push('}');
 
     alt = alt.alternate;
@@ -37,7 +37,7 @@ export function typeCheckIf(node: IfNode, processNode: ProcessNode): string[] {
 
   if (alt) {
     lines.push('else {');
-    lines.push(...indent(alt.children.flatMap(child => processNode(child))));
+    lines.push(...indent(alt.children.flatMap(child => processNode(child, context))));
     lines.push('}');
   }
 

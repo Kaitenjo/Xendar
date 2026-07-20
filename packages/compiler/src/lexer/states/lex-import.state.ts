@@ -30,6 +30,14 @@ export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunction
     switch (cursor.peek()) {
       case SPACE:
         cursor.skipSpaces();
+
+        /*
+          If import is not followed by ',' or '{' it means it would be followed by 
+          the 'as' keyword to alias it
+        */
+        if (importValue && cursor.peek() !== COMMA && cursor.peek() !== RIGHT_BRACE) {
+          importValue = `${importValue} `;
+        }
         break;
 
       case COMMA:

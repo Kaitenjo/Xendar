@@ -129,6 +129,6 @@ export class CompilerContext {
    * @returns `true` if the identifier exists in the scope chain, `false` otherwise.
    */
   public hasUnresolvableIdentifier(name: string): boolean {
-    return this._unresolvableIdentifiers.includes(name);
+    return this._unresolvableIdentifiers.includes(name) || (this._parent?.hasUnresolvableIdentifier(name) ?? false);
   }
 }

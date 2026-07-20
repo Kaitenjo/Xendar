@@ -75,7 +75,7 @@ export function xaendarPlugin(): Plugin {
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        const result = await compile(templateSource, id, varName);
+        const result = await compile(templateSource, dirname(id), varName);
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {

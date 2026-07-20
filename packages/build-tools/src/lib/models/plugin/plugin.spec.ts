@@ -189,7 +189,7 @@ describe('xaendarPlugin()', () => {
     it('processes files matching .xd.component.ts', async () => {
       mockFileExists.mockReturnValue(true);
       mockReadFile.mockReturnValue(TEMPLATE_SOURCE);
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
 
       const result = await callTransform(BASE_CODE, COMPONENT_ID);
 
@@ -245,7 +245,7 @@ describe('xaendarPlugin()', () => {
     it('accepts double-quoted selectors', async () => {
       mockFileExists.mockReturnValue(true);
       mockReadFile.mockReturnValue(TEMPLATE_SOURCE);
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
 
       const code =
         `@WebComponent({ selector: "my-comp", templateUrl: "./my-comp.xd.component.html" })\n` +
@@ -297,7 +297,7 @@ describe('xaendarPlugin()', () => {
     it('registers the template as a watch file', async () => {
       mockFileExists.mockReturnValue(true);
       mockReadFile.mockReturnValue(TEMPLATE_SOURCE);
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
 
       await callTransform(BASE_CODE, COMPONENT_ID);
 
@@ -314,7 +314,7 @@ describe('xaendarPlugin()', () => {
     });
 
     it('passes the template source to the compiler', async () => {
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
 
       await callTransform(BASE_CODE, COMPONENT_ID);
 
@@ -324,7 +324,7 @@ describe('xaendarPlugin()', () => {
         the source code (see note above) and always resolves to the
         '__Component' fallback — pin down the exact value once that's fixed.
       */
-      expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, undefined);
+      expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, expect.any(String), undefined);
     });
 
     it('throws via this.error when the compiler throws', async () => {
@@ -342,7 +342,7 @@ describe('xaendarPlugin()', () => {
     beforeEach(() => {
       mockFileExists.mockReturnValue(true);
       mockReadFile.mockReturnValue(TEMPLATE_SOURCE);
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
     });
 
     it('throws via this.error when the static initializer block is missing', async () => {
@@ -391,7 +391,7 @@ describe('xaendarPlugin()', () => {
         if (path.endsWith('.css')) return cssContent;
         return undefined;
       });
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
     }
 
     it('injects a CSSStyleSheet declaration when styleUrl is present and the file exists', async () => {
@@ -409,7 +409,7 @@ describe('xaendarPlugin()', () => {
       mockReadFile.mockImplementation((path: string) =>
         path.endsWith('.html') ? TEMPLATE_SOURCE : undefined,
       );
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
 
       const code = buildComponentCode('my-comp', './my-comp.xd.component.html', STYLE_URL);
       const result = await callTransform(code, COMPONENT_ID) as { code: string };
@@ -421,9 +421,9 @@ describe('xaendarPlugin()', () => {
       setupWithCss();
       const code = buildComponentCode('my-comp', './my-comp.xd.component.html', STYLE_URL);
 
-      await callTransform(code, COMPONENT_ID);
+      await callTransform(code,  COMPONENT_ID);
 
-      expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, expect.stringMatching(/_sheet$/));
+      expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, expect.any(String), expect.stringMatching(/_sheet$/));
     });
 
     it('registers the CSS file as a watch file when it exists', async () => {
@@ -460,7 +460,7 @@ describe('xaendarPlugin()', () => {
     beforeEach(() => {
       mockFileExists.mockReturnValue(true);
       mockReadFile.mockReturnValue(TEMPLATE_SOURCE);
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
     });
 
     it('rewrites "export @Decorator class" to "@Decorator\\nexport class"', async () => {
@@ -480,7 +480,7 @@ describe('xaendarPlugin()', () => {
     beforeEach(() => {
       mockFileExists.mockReturnValue(true);
       mockReadFile.mockReturnValue(TEMPLATE_SOURCE);
-      vi.mocked(compile).mockReturnValue(COMPILE_RESULT);
+      vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
     });
 
     it('registers the component file as a real file for the Program', async () => {

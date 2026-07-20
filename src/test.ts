@@ -49,6 +49,7 @@ const template = `
   `
 
 const filePath = 'dist/compiled.js'
-const output = compile(template, 'TestComponent');
-writeFileSync(filePath, output.javascript);
-writeFileSync('dist/compiled.ts', output.typescript);
+const output = compile(template, 'TestComponent').then(output => {
+  writeFileSync(filePath, output.javascript);
+  writeFileSync('dist/compiled.ts', output.typescript);
+});

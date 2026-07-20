@@ -1,4 +1,5 @@
 import { CompilerContext } from '../../generator/models/compiler-context.model';
+import { TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
 import { TypeCheckContextImport } from '../types/type-checker-context-imports/type-check-context-import';
 
 /**
@@ -27,7 +28,7 @@ export class TypeCheckContext extends CompilerContext {
    *
    * @returns Array of all tracked imports
    */
-  public getImports(): ReadonlyArray<TypeCheckContextImport> {
-    return this._imports;
+  public getImportBySelector(tagName: string): TypeCheckContextComponentImport | undefined {
+    return this._imports.find((importValue): importValue is TypeCheckContextComponentImport => importValue.type === 'component' && importValue.selectors.includes(tagName));
   }
 }

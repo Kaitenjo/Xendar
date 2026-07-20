@@ -75,7 +75,7 @@ export function xaendarPlugin(): Plugin {
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        const result = compile(templateSource, varName);
+        const result = await compile(templateSource, id, varName);
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
@@ -89,7 +89,6 @@ export function xaendarPlugin(): Plugin {
         transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
       } catch (err) {
         this.error(String(err));
-        process.exit(1);
       }
 
       compilerOptions ??= loadCompilerOptions(dirname(id));

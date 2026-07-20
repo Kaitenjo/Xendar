@@ -58,10 +58,8 @@ export class TypeChecker {
    *
    * @param baseDir - Absolute path used to resolve relative import paths.
    */
-  public async populateImportMetadata(baseDir: string): Promise<void> {
-    const importNodes = this._ast.filter(
-      (node): node is ImportNode => node.type === ASTNodeType.Import
-    );
+  public async populateImportMetadata(baseDir?: string): Promise<void> {
+    const importNodes = this._ast.filter((node): node is ImportNode => node.type === ASTNodeType.Import);
 
     await Promise.all(
       importNodes.flatMap(node =>
@@ -73,7 +71,8 @@ export class TypeChecker {
             if (metadata) {
               this._context.addImport(metadata);
             }
-          })
+          }
+        )
       )
     );
   }
@@ -86,8 +85,11 @@ export class TypeChecker {
    * body actually references `$event` (event handler bindings), so shims
    * for templates with no event bindings don't carry an unused local —
    * relevant if the consuming project has `noUnusedLocals` enabled.
+   * 
+   * @param baseDir - Absolute path used to resolve relative import paths
    */
-  public generate(): string {
+  public async generate(baseDir?: string): Promise<string> {
+    await this.populateImportMetadata(baseDir);
     const body = this._ast.flatMap(node => this._processNode(node, this._context));
 
     return [

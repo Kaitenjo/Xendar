@@ -16,11 +16,11 @@ import { TypeChecker } from './type-checker/type-checker';
  *   into the generated `adoptedStyleSheets` assignment.
  * @returns A string containing the compiled Javascript render method body.
  */
-export function compile(input: string, cssVariableName?: string): { javascript: string, typescript: string } {
+export async function compile(input: string, baseDir: string, cssVariableName?: string): Promise<{ javascript: string; typescript: string; }> {
   const tokens = new Lexer(input).tokenize();
   const nodes = new Parser(tokens).parse();
   return {
     javascript: new Generator(nodes).generate(cssVariableName),
-    typescript: new TypeChecker(nodes).generate()
+    typescript: await new TypeChecker(nodes).generate(baseDir)
   } 
 }

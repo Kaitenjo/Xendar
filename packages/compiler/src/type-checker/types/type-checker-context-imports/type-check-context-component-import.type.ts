@@ -20,7 +20,7 @@ export type ComponentPropertyMetadata = {
   /**
    * TypeScript type of the property (e.g., 'string', 'number', 'boolean').
    */
-  type?: string;
+  type: string;
 };
 
 /**
@@ -35,7 +35,7 @@ export type ComponentEventMetadata = {
   /**
    * Detail type emitted by the event.
    */
-  detailType?: string;
+  type: string;
 };
 
 /**

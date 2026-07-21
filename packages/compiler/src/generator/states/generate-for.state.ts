@@ -1,6 +1,6 @@
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
-import { CompilerContext } from '../models/compiler-context.model';
+import { CompilerContext, IdentifierKind } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
 import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../utils/generator.utils';
 
@@ -52,7 +52,17 @@ export function generateFor(node: ForNode, parentNode: string, index: string, co
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
-  const forContext = new CompilerContext([node.itemAlias, [indexName, 'signal'], [firstName, 'signal'], [lastName, 'signal'], [evenName, 'signal'], [oddName, 'signal']], compilerContext);
+  const forContext = new CompilerContext([], compilerContext);
+
+  const unresolvableIdentifiers: Array<{ name: string, type: IdentifierKind }> = [
+    { name: node.itemAlias, type: 'value'}, 
+    { name: indexName, type: 'signal'}, 
+    { name: firstName, type: 'signal'}, 
+    { name: lastName, type: 'signal'}, 
+    { name: evenName, type: 'signal'}, 
+    { name: oddName, type: 'signal' }
+  ]
+  unresolvableIdentifiers.forEach(({ name, type }) => forContext.addUnresolvableIdentifier(name, type));
 
   const forKey = getBlockIdentifier('for', parentNode, index);
   retVal.functionsToProcess!.set(forKey, {

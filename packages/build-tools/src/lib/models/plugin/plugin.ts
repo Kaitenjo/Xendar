@@ -101,7 +101,7 @@ export function xaendarPlugin(): Plugin {
       const diagnostics = languageService.getSemanticDiagnostics(shimPath);
 
       for (const diagnostic of diagnostics) {
-        this.warn(`Xaendar: ${describeDiagnostic(diagnostic)}`);
+        this.error(`${describeDiagnostic(diagnostic)}`);
       }
 
       return {

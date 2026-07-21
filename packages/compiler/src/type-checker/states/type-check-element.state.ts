@@ -1,3 +1,4 @@
+import { indent } from '@xaendar/common';
 import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
@@ -36,22 +37,7 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
 
     lines.push(...typeCheckComponentBindings(node, metadata, context));
   } else {
-    node.attributes.forEach(({ value }) => {
-      if (typeof value !== 'string') {
-        lines.push(`${resolveExpression(value.expression, context, { resolver: 'root' })};`);
-      }
-    });
-
-    node.events.forEach(({ handler, parameters }) => {
-      const eventContext = new CompilerContext([], context);
-      eventContext.addUnresolvableIdentifier('$event');
-
-      const args = parameters
-        .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
-        .join(', ');
-
-      lines.push(`root.${handler}(${args});`);
-    });
+    lines.push(...typeCheckNativeBindings(node, context));
   }
 
   node.children.forEach(child => lines.push(...processNode(child, context)));
@@ -101,11 +87,7 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
       throw new Error(`[Type Checker] Unknown property "${name}" on <${node.tagName}> (${metadata.className} has no @Property with this name or alias).`);
     }
 
-    if (typeof value === 'string') {
-      return;
-    }
-
-    const expression = resolveExpression(value.expression, context, { resolver: 'root' });
+    const expression = typeof value === 'object' ? resolveExpression(value.expression, context, { resolver: 'root' }) : 'string';
     lines.push(property.type ? `(${expression}) satisfies ${property.type};` : `${expression};`);
   });
 
@@ -122,23 +104,73 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
       .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
       .join(', ');
 
-    // Scoped in its own block so sibling elements' `$event` (each typed
-    // differently, per event) never collide in the flat shim function.
-    lines.push('{');
-    lines.push(`  let $event!: ${event.detailType ?? 'unknown'};`);
-    lines.push(`  root.${handler}(${args});`);
-    lines.push('}');
+    /*
+      Scoped in its own block so sibling elements' `$event` (each typed
+      differently, per event) never collide in the flat shim function.
+    */
+    lines.push(
+      '{',
+      ...indent([
+        event.type !== 'void' ? `  let $event!: CustomEvent<${event.type}>;` : '',
+        `  root.${handler}(${args});`
+      ]),
+      '}'
+    );
   });
 
   return lines;
 }
 
+/**
+ * Looks up a `@Property` entry in `metadata` by its external (template-facing)
+ * name, taking `alias` into account: if the property declares an alias, that
+ * alias is what the template must use, not the class field name.
+ */
 function findProperty(metadata: TypeCheckContextComponentImport, externalName: string): ComponentPropertyMetadata | undefined {
   return metadata.properties.find(property => (property.alias ?? property.name) === externalName);
 }
 
+/**
+ * Looks up an `@Event` entry in `metadata` by its template-facing event name.
+ */
 function findEvent(metadata: TypeCheckContextComponentImport, externalName: string): ComponentEventMetadata | undefined {
   return metadata.events.find(event => event.name === externalName);
+}
+
+/**
+ * Resolves attribute/property bindings and event handlers on a native HTML
+ * element node (any tag without a hyphen).
+ *
+ * Bound attribute values (i.e. those carrying an `{ expression }` object
+ * rather than a plain string) are emitted as bare expression statements so
+ * that the TypeScript compiler validates them in the shim. Static string
+ * attributes are skipped — there is nothing to type-check.
+ *
+ * Event bindings are emitted as `root.<handler>(<args>)` calls. `$event` is
+ * registered as an unresolvable identifier in the event's own sub-context so
+ * that it is accepted without a declaration being emitted into the shim.
+ */
+function typeCheckNativeBindings(node: ElementNode, context: TypeCheckContext): string[] {
+  const lines = new Array<string>();
+
+  node.attributes.forEach(({ value }) => {
+    if (typeof value !== 'string') {
+      lines.push(`${resolveExpression(value.expression, context, { resolver: 'root' })};`);
+    }
+  });
+
+  node.events.forEach(({ handler, parameters }) => {
+    const eventContext = new CompilerContext([], context);
+    eventContext.addUnresolvableIdentifier('$event');
+
+    const args = parameters
+      .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
+      .join(', ');
+
+    lines.push(`root.${handler}(${args});`);
+  });
+
+  return lines;
 }
 
 /**

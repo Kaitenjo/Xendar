@@ -156,7 +156,7 @@ describe('xaendarPlugin()', () => {
     mockGetLanguageService.mockReturnValue({
       getSemanticDiagnostics: mockGetShimDiagnostics,
     });
-    
+
     const plugin = xaendarPlugin();
     context = makeContext();
     // Necessary cast because transform can be either a function or an object with an `handler` property, but in our case it's always a function.
@@ -332,9 +332,7 @@ describe('xaendarPlugin()', () => {
         throw new Error('unexpected token');
       });
 
-      await expect(callTransform(BASE_CODE, COMPONENT_ID)).rejects.toThrow(
-        'Xaendar: failed to compile template',
-      );
+      await expect(callTransform(BASE_CODE, COMPONENT_ID)).rejects.toThrow('Xaendar: failed to compile template');
     });
   });
 
@@ -350,9 +348,7 @@ describe('xaendarPlugin()', () => {
         `@WebComponent({ selector: 'my-comp', templateUrl: './my-comp.xd.component.html' })\n` +
         `class MyComponent extends HTMLElement {}`;
 
-      await expect(callTransform(codeWithoutBlock, COMPONENT_ID)).rejects.toThrow(
-        'static initializer block',
-      );
+      await expect(callTransform(codeWithoutBlock, COMPONENT_ID)).rejects.toThrow('static initializer block');
     });
 
     it('injects the compiled methods into the output', async () => {
@@ -421,7 +417,7 @@ describe('xaendarPlugin()', () => {
       setupWithCss();
       const code = buildComponentCode('my-comp', './my-comp.xd.component.html', STYLE_URL);
 
-      await callTransform(code,  COMPONENT_ID);
+      await callTransform(code, COMPONENT_ID);
 
       expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, expect.any(String), expect.stringMatching(/_sheet$/));
     });
@@ -531,7 +527,7 @@ describe('xaendarPlugin()', () => {
       expect(mockFindConfigFile).toHaveBeenCalledTimes(1);
     });
 
-    it('reports semantic diagnostics from the shim as warnings', async () => {
+    it('reports semantic diagnostics from the shim as errors', async () => {
       mockGetShimDiagnostics.mockReturnValue([
         {
           messageText: "Property 'pippo' does not exist on type 'MyComponent'.",
@@ -543,14 +539,7 @@ describe('xaendarPlugin()', () => {
         },
       ]);
 
-      await callTransform(BASE_CODE, COMPONENT_ID);
-
-      expect(context.warn).toHaveBeenCalledWith(
-        expect.stringContaining("Property 'pippo' does not exist on type 'MyComponent'."),
-      );
-      expect(context.warn).toHaveBeenCalledWith(
-        expect.stringContaining(`${COMPONENT_ID}.__typecheck__.ts:5:11`),
-      );
+      await expect(callTransform(BASE_CODE, COMPONENT_ID)).rejects.toThrow("Property 'pippo' does not exist on type 'MyComponent'.");
     });
 
     it('does not warn when the shim has no diagnostics', async () => {

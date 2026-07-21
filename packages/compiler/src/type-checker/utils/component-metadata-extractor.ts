@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
-import { createSourceFile, Decorator, Expression, forEachChild, getNameOfDeclaration, isAccessor, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isStringLiteral, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind } from 'typescript';
+import { createSourceFile, Decorator, Expression, forEachChild, getNameOfDeclaration, isAccessor, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
 import { ComponentEventMetadata, ComponentPropertyMetadata, TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
 
 /**
@@ -53,13 +53,12 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
         const events = new Array<ComponentEventMetadata>();
 
         node.members.forEach(member => {
-          if (!isAccessor(member)) {
+          if (!isPropertyDeclaration(member)) {
             return;
           }
 
           // Look for decorators in modifiers (TypeScript stores them there)
           const memberModifiers = member.modifiers ?? [];
-          
           const propDecorator = Array.from(memberModifiers).find(member => isPropertyDecorator(member));
           if (propDecorator) {
             const nameNode = getNameOfDeclaration(member);
@@ -232,6 +231,7 @@ function extractPropertyMetadata(propName: string, modifier: Decorator): Compone
   const metadata: ComponentPropertyMetadata = {
     name: propName,
     required: false,
+    type: 'any'
   };
 
   // modifier is a Decorator node, modifier.expression contains the decorator's expression
@@ -244,18 +244,19 @@ function extractPropertyMetadata(propName: string, modifier: Decorator): Compone
     }
   }
 
-  // Try to extract alias from decorator options
+  // Extract Alias
   if (isCallExpression(expr)) {
     const args = expr.arguments;
-    if (args.length) {
-      const arg = args[0]!;
-      if (isObjectLiteralExpression(arg)) {
-         const aliasNode = arg.properties?.find((prop): prop is PropertyAssignment => isPropertyAssignment(prop) && isIdentifier(prop.name) && prop.name.text === 'alias')
-         if (aliasNode && isStringLiteral(aliasNode.initializer)) {
-           metadata.alias = aliasNode.initializer.text;
-         } 
-      }
-    }
+    const decoratorParameters = args.length ? args.find(arg => isObjectLiteralExpression(arg))! : undefined
+    const aliasNode = decoratorParameters?.properties?.find((prop): prop is PropertyAssignment => isPropertyAssignment(prop) && isIdentifier(prop.name) && prop.name.text === 'alias')
+    if (aliasNode && isStringLiteral(aliasNode.initializer)) {
+      metadata.alias = aliasNode.initializer.text;
+    } 
+  }
+
+  // Extract Type
+  if (isPropertyDeclaration(modifier.parent)) {
+    metadata.type = extractGenericArgument(modifier.parent.type);
   }
 
   return metadata;
@@ -267,6 +268,38 @@ function extractPropertyMetadata(propName: string, modifier: Decorator): Compone
 function extractEventMetadata(eventName: string, modifier: Decorator): ComponentEventMetadata | undefined {
   const metadata: ComponentEventMetadata = {
     name: eventName,
+    type: 'void'
   };
+
+  // Extract Type
+  if (isPropertyDeclaration(modifier.parent)) {
+    metadata.type = extractGenericArgument(modifier.parent.type, true);
+  }
+
   return metadata;
+}
+
+/**
+ * Given a TypeNode like Output<boolean>, returns "boolean".
+ * If there's no generic argument, returns "void".
+ */
+function extractGenericArgument(typeNode: TypeNode | undefined, event = false): string {
+  const defaultValue = event ? 'void' : 'any';
+
+  /*
+    If no type has been provided we assume it's 
+    - Void for Events
+    - any for Properties
+  */
+  if (!typeNode || !isTypeReferenceNode(typeNode)) {
+    return defaultValue;
+  }
+
+  // No generics
+  const typeArgs = typeNode.typeArguments;
+  if (!typeArgs || typeArgs.length === 0) {
+    return defaultValue;
+  }
+
+  return typeArgs[0]!.getText();
 }

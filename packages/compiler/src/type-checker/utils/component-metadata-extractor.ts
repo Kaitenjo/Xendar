@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
-import { createSourceFile, Decorator, Expression, forEachChild, getNameOfDeclaration, isAccessor, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
+import { createSourceFile, Decorator, Expression, forEachChild, getNameOfDeclaration, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isDecorator, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
 import { ComponentEventMetadata, ComponentPropertyMetadata, TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
 
 /**
@@ -59,12 +59,19 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
 
           // Look for decorators in modifiers (TypeScript stores them there)
           const memberModifiers = member.modifiers ?? [];
-          const propDecorator = Array.from(memberModifiers).find(member => isPropertyDecorator(member));
+
+          let required = false;
+          const propDecorator = Array.from(memberModifiers).find((member): member is Decorator => {
+            const result = isPropertyDecorator(member);
+            required = !!result.required;
+            return result.decorator
+          });
+
           if (propDecorator) {
             const nameNode = getNameOfDeclaration(member);
             const propName = nameNode && isIdentifier(nameNode) ? nameNode.text : undefined;
             if (propName) {
-              const metadata = extractPropertyMetadata(propName, propDecorator);
+              const metadata = extractPropertyMetadata(propName, propDecorator, required);
               if (metadata) {
                 properties.push(metadata);
               }
@@ -114,12 +121,12 @@ function resolveModulePath(modulePath: string, baseDir: string): string | undefi
   // Handle relative imports
   if (modulePath.startsWith('.')) {
     const resolvedPath = resolve(baseDir, modulePath);
-    
+
     // Try with .ts extension
     if (existsSync(`${resolvedPath}.ts`)) {
       return resolvedPath + '.ts';
     }
-    
+
     // Try with /index.ts if directory
     if (existsSync(`${resolvedPath}/index.ts`)) {
       return `${resolvedPath}/index.ts`;
@@ -150,21 +157,40 @@ function isWebComponentDecorator(modifier: ModifierLike): modifier is Decorator 
 /**
  * Checks if a modifier is a @Property decorator.
  */
-function isPropertyDecorator(modifier: ModifierLike): modifier is Decorator {
-  if (modifier.kind !== SyntaxKind.Decorator) {
-    return false;
+function isPropertyDecorator(modifier: ModifierLike): { decorator: boolean, required?: true } {
+  if (!isDecorator(modifier)) {
+    return {
+      decorator: false
+    }
   }
 
   const expr = modifier.expression;
-  if (isCallExpression(expr)) {
-    return isIdentifier(expr.expression) && expr.expression.text === 'Property';
+  if (!isCallExpression(expr)) {
+    return {
+      decorator: false
+    }
   }
 
-  if (isPropertyAccessExpression(expr)) {
-    return isIdentifier(expr.expression) && expr.expression.text === 'Property' && isIdentifier(expr.name) && expr.name.text === 'required'
+  const subExpr = expr.expression
+
+  // @Property(...
+  if (isIdentifier(subExpr) && subExpr.text === 'Property') {
+    return {
+      decorator: true,
+    }
   }
 
-  return isIdentifier(expr) && expr.text === 'Property';
+  // @Property.required(...
+  if (isPropertyAccessExpression(subExpr) && isIdentifier(subExpr.expression) && subExpr.expression.text === 'Property' && subExpr.name.text === 'required') {
+    return {
+      decorator: true,
+      required: true
+    }
+  }
+
+  return {
+    decorator: false
+  }
 }
 
 /**
@@ -227,22 +253,14 @@ function extractStringOrStringArray(node: Expression): string[] {
 /**
  * Extracts property metadata from @Property or @Property.required decorator.
  */
-function extractPropertyMetadata(propName: string, modifier: Decorator): ComponentPropertyMetadata | undefined {
-  const metadata: ComponentPropertyMetadata = {
-    name: propName,
-    required: false,
-    type: 'any'
-  };
-
+function extractPropertyMetadata(propName: string, modifier: Decorator, required: boolean): ComponentPropertyMetadata | undefined {
   // modifier is a Decorator node, modifier.expression contains the decorator's expression
   const expr = modifier.expression;
-  
-  // Check if it's @Property.required()
-  if (isPropertyAccessExpression(expr)) {
-    if (isIdentifier(expr.name) && expr.name.text === 'required') {
-      metadata.required = true;
-    }
-  }
+  const metadata: ComponentPropertyMetadata = {
+    name: propName,
+    required,
+    type: isPropertyDeclaration(modifier.parent) ? extractGenericArgument(modifier.parent.type) : 'any'
+  };
 
   // Extract Alias
   if (isCallExpression(expr)) {
@@ -251,12 +269,7 @@ function extractPropertyMetadata(propName: string, modifier: Decorator): Compone
     const aliasNode = decoratorParameters?.properties?.find((prop): prop is PropertyAssignment => isPropertyAssignment(prop) && isIdentifier(prop.name) && prop.name.text === 'alias')
     if (aliasNode && isStringLiteral(aliasNode.initializer)) {
       metadata.alias = aliasNode.initializer.text;
-    } 
-  }
-
-  // Extract Type
-  if (isPropertyDeclaration(modifier.parent)) {
-    metadata.type = extractGenericArgument(modifier.parent.type);
+    }
   }
 
   return metadata;

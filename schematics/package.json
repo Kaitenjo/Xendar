@@ -8,6 +8,6 @@
     "check-dependencies": "node dist/check-dependencies.js",
     "pack": "node dist/pack-projects.js",
     "publish": "node dist/publish.js",
-    "update-version": "node dist/update-version.js --bump=patch"
+    "update-version": "node dist/update-version.js --bump=minor"
   }
 }

@@ -283,13 +283,16 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
     if (compilerContext?.hasUnresolvableIdentifier(text) || options.skipResolution) {
       return text;
     }
-
+    
+    if (compilerContext) {
+      const resolvedValue = resolveIdentifierAccess(text, compilerContext);
+      if (resolvedValue) {
+        return resolvedValue;
+      }
+    }
+    
     if (options.resolver) {
       return `${options.resolver}.${text}`;
-    }
-
-    if (compilerContext) {
-      return resolveIdentifierAccess(text, compilerContext);
     }
 
     return text;
@@ -337,14 +340,14 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
  * @param compilerContext - The active template scope context.
  * @returns The generated code expression that yields the identifier's value.
  */
-function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): string {
+function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): string | undefined {
   if (compilerContext.hasIdentifier(text)) {
     const kind = compilerContext.getIdentifierKind(text);
     const access = `context.get('${text}')`;
     return kind === 'signal' ? `${access}()` : access;
   }
 
-  return text;
+  return undefined;
 }
 
 /**

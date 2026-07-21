@@ -1,5 +1,5 @@
-import { statSync, writeFileSync } from 'node:fs';
-import { CompilerOptions, createDocumentRegistry, createLanguageService, Diagnostic, flattenDiagnosticMessageText, getDefaultLibFilePath, LanguageService, LanguageServiceHost, ScriptSnapshot, sys } from 'typescript';
+import { statSync } from 'node:fs';
+import { CompilerOptions, createDocumentRegistry, createLanguageService, getDefaultLibFilePath, LanguageService, LanguageServiceHost, ScriptSnapshot, sys } from 'typescript';
 
 /**
  * typecheck-service.ts
@@ -183,7 +183,6 @@ function getRealFileVersion(fileName: string): string {
 export function upsertVirtualFile(virtualPath: string, content: string): void {
   const existing = virtualFiles.get(virtualPath);
   if (existing?.content !== content) {
-    writeFileSync(virtualPath, content);
     virtualFiles.set(virtualPath, {
       content,
       version: (existing?.version ?? 0) + 1,

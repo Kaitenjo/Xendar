@@ -2,7 +2,7 @@ import { isValidCustomElementName } from '@xaendar/common';
 import { compile } from '@xaendar/compiler';
 import { basename, dirname, extname, resolve } from 'node:path';
 import { CompilerOptions, Diagnostic, findConfigFile, parseJsonConfigFileContent, readConfigFile, sys } from 'typescript';
-import type { Plugin } from 'vite';
+import type { Logger, Plugin } from 'vite';
 import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex';
 import { disposeLanguageService, getLanguageService, registerRealFile, removeRealFile, removeVirtualFile, upsertVirtualFile } from '../language-service';
 import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model';
@@ -38,6 +38,12 @@ import { clearTemplateRegistry, findComponentForTemplate, registerTemplateMappin
 export function xaendarPlugin(): Plugin {
   const host = new NodeCompilerHost;
   let compilerOptions: CompilerOptions | undefined;
+  let logger: Logger | undefined;
+
+  const reportNonFatalError = (message: string): void => {
+    const redMessage = `\x1b[31m${message}\x1b[0m`;
+    (logger ?? console).error(redMessage)
+  };
 
   return {
     name: 'xaendar',
@@ -46,7 +52,12 @@ export function xaendarPlugin(): Plugin {
         return null;
       }
 
-      assertValidCustomElementName(code, id);
+      try {
+        assertValidCustomElementName(code, id);
+      } catch (err) {
+        reportNonFatalError(String(err));
+        return null;
+      }
 
       const className = extractClassName(code)
       const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
@@ -79,8 +90,8 @@ export function xaendarPlugin(): Plugin {
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
-        this.error(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
-        process.exit(1);
+        reportNonFatalError(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
+        return null;
       }
 
       let transformed: string | undefined;
@@ -88,7 +99,8 @@ export function xaendarPlugin(): Plugin {
       try {
         transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
       } catch (err) {
-        this.error(String(err));
+        reportNonFatalError(String(err));
+        return null;
       }
 
       compilerOptions ??= loadCompilerOptions(dirname(id));
@@ -101,7 +113,7 @@ export function xaendarPlugin(): Plugin {
       const diagnostics = languageService.getSemanticDiagnostics(shimPath);
 
       for (const diagnostic of diagnostics) {
-        this.error(`${describeDiagnostic(diagnostic)}`);
+        reportNonFatalError(describeDiagnostic(diagnostic));
       }
 
       return {
@@ -123,9 +135,12 @@ export function xaendarPlugin(): Plugin {
       }
     },
     configureServer(server) {
+      logger = server.config?.logger;
+
       server.httpServer?.on('close', () => {
         clearTemplateRegistry();
-        disposeLanguageService()
+        disposeLanguageService();
+        logger = undefined;
       });
     },
   };

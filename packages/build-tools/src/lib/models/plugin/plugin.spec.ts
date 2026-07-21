@@ -198,23 +198,19 @@ describe('xaendarPlugin()', () => {
   });
 
   describe('selector validation', () => {
-    it('throws when no @WebComponent selector is found', async () => {
+    it('logs and returns null when no @WebComponent selector is found', async () => {
       const code = `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
-      await expect(callTransform(code, COMPONENT_ID)).rejects.toThrow(
-        'Xaendar: no selector found',
-      );
+      await expect(callTransform(code, COMPONENT_ID)).resolves.toBeNull();
     });
 
-    it('throws when the selector is not a valid custom element name', async () => {
+    it('logs and returns null when the selector is not a valid custom element name', async () => {
       vi.mocked(isValidCustomElementName).mockReturnValue(false);
       const code = buildComponentCode('mycomponent', './my-comp.xd.component.html');
 
-      await expect(callTransform(code, COMPONENT_ID)).rejects.toThrow(
-        'Xaendar: invalid custom element name "mycomponent"',
-      );
+      await expect(callTransform(code, COMPONENT_ID)).resolves.toBeNull();
     });
 
-    it('validates each selector when the decorator uses an array', async () => {
+    it('returns null when selector array contains an invalid value', async () => {
       vi.mocked(isValidCustomElementName)
         .mockReturnValueOnce(true)
         .mockReturnValueOnce(false);
@@ -223,12 +219,10 @@ describe('xaendarPlugin()', () => {
         `@WebComponent({ selector: ['my-comp', 'bad'] })\n` +
         `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
 
-      await expect(callTransform(code, COMPONENT_ID)).rejects.toThrow(
-        'Xaendar: invalid custom element name "bad"',
-      );
+      await expect(callTransform(code, COMPONENT_ID)).resolves.toBeNull();
     });
 
-    it('validates each selector when the array uses double-quoted strings (match[2] branch)', async () => {
+    it('returns null when a double-quoted selector array contains an invalid value', async () => {
       vi.mocked(isValidCustomElementName)
         .mockReturnValueOnce(true)
         .mockReturnValueOnce(false);
@@ -237,9 +231,7 @@ describe('xaendarPlugin()', () => {
         `@WebComponent({ selector: ["my-comp", "bad"] })\n` +
         `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
 
-      await expect(callTransform(code, COMPONENT_ID)).rejects.toThrow(
-        'Xaendar: invalid custom element name "bad"',
-      );
+      await expect(callTransform(code, COMPONENT_ID)).resolves.toBeNull();
     });
 
     it('accepts double-quoted selectors', async () => {
@@ -327,12 +319,12 @@ describe('xaendarPlugin()', () => {
       expect(compile).toHaveBeenCalledWith(TEMPLATE_SOURCE, expect.any(String), undefined);
     });
 
-    it('throws via this.error when the compiler throws', async () => {
+    it('returns null when the compiler throws', async () => {
       vi.mocked(compile).mockImplementation(() => {
         throw new Error('unexpected token');
       });
 
-      await expect(callTransform(BASE_CODE, COMPONENT_ID)).rejects.toThrow('Xaendar: failed to compile template');
+      await expect(callTransform(BASE_CODE, COMPONENT_ID)).resolves.toBeNull();
     });
   });
 
@@ -343,12 +335,12 @@ describe('xaendarPlugin()', () => {
       vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
     });
 
-    it('throws via this.error when the static initializer block is missing', async () => {
+    it('returns null when the static initializer block is missing', async () => {
       const codeWithoutBlock =
         `@WebComponent({ selector: 'my-comp', templateUrl: './my-comp.xd.component.html' })\n` +
         `class MyComponent extends HTMLElement {}`;
 
-      await expect(callTransform(codeWithoutBlock, COMPONENT_ID)).rejects.toThrow('static initializer block');
+      await expect(callTransform(codeWithoutBlock, COMPONENT_ID)).resolves.toBeNull();
     });
 
     it('injects the compiled methods into the output', async () => {
@@ -527,7 +519,7 @@ describe('xaendarPlugin()', () => {
       expect(mockFindConfigFile).toHaveBeenCalledTimes(1);
     });
 
-    it('reports semantic diagnostics from the shim as errors', async () => {
+    it('reports semantic diagnostics from the shim without aborting the transform', async () => {
       mockGetShimDiagnostics.mockReturnValue([
         {
           messageText: "Property 'pippo' does not exist on type 'MyComponent'.",
@@ -539,7 +531,9 @@ describe('xaendarPlugin()', () => {
         },
       ]);
 
-      await expect(callTransform(BASE_CODE, COMPONENT_ID)).rejects.toThrow("Property 'pippo' does not exist on type 'MyComponent'.");
+      await expect(callTransform(BASE_CODE, COMPONENT_ID)).resolves.toMatchObject({
+        code: expect.any(String),
+      });
     });
 
     it('does not warn when the shim has no diagnostics', async () => {
@@ -557,6 +551,7 @@ describe('xaendarPlugin()', () => {
       const onClose = vi.fn();
 
       (plugin.configureServer as Function)({
+        config: { logger: { error: vi.fn() } },
         httpServer: { on: onClose },
       });
 
@@ -572,7 +567,10 @@ describe('xaendarPlugin()', () => {
       const plugin = xaendarPlugin();
 
       expect(() =>
-        (plugin.configureServer as Function)({ httpServer: undefined }),
+        (plugin.configureServer as Function)({
+          config: undefined,
+          httpServer: undefined,
+        }),
       ).not.toThrow();
     });
   });

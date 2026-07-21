@@ -80,16 +80,26 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
  */
 function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContextComponentImport, context: TypeCheckContext): string[] {
   const lines = new Array<string>();
+  const requiredProperties = new Set(metadata.properties.filter(property => property.required).map(property => property.alias ?? property.name));
 
   node.attributes.forEach(({ name, value }) => {
     const property = findProperty(metadata, name);
-    if (!property) {
-      throw new Error(`[Type Checker] Unknown property "${name}" on <${node.tagName}> (${metadata.className} has no @Property with this name or alias).`);
+    if (property) {
+      requiredProperties.delete(property.alias ?? property.name);
+      lines.push(
+        '{',
+        ...indent(typeof value === 'object'
+          ? [`(${resolveExpression(value.expression, context, { resolver: 'root' })}) satisfies ${property.type};`]
+          : ['let x!: string', `x satisfies ${property.type};`]
+        ),
+        '}'
+      );
     }
-
-    const expression = typeof value === 'object' ? resolveExpression(value.expression, context, { resolver: 'root' }) : 'string';
-    lines.push(property.type ? `(${expression}) satisfies ${property.type};` : `${expression};`);
   });
+
+  if (requiredProperties.size) {
+    throw new Error(`[Type Checker] ${node.tagName} is missing the following required properties: ${Array.from(requiredProperties.values()).join(`\n`)}`)
+  }
 
   node.events.forEach(({ name, handler, parameters }) => {
     const event = findEvent(metadata, name);
@@ -108,12 +118,14 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
       Scoped in its own block so sibling elements' `$event` (each typed
       differently, per event) never collide in the flat shim function.
     */
+    lines.push('{');
+
+    if (event.type !== 'void') {
+      lines.push(indent(`let $event!: CustomEvent<${event.type}>;`))
+    }
+
     lines.push(
-      '{',
-      ...indent([
-        event.type !== 'void' ? `  let $event!: CustomEvent<${event.type}>;` : '',
-        `  root.${handler}(${args});`
-      ]),
+      indent(`root.${handler}(${args});`),
       '}'
     );
   });

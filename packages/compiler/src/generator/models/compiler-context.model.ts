@@ -24,7 +24,7 @@ export class CompilerContext {
    * and touched in anyway
    * (e.g. $event)
    */
-  private _unresolvableIdentifiers = new Map<string, IdentifierKind>()
+  private _unresolvableIdentifiers = new Array<string>()
 
   /**
    * Creates a new scope context.
@@ -68,12 +68,12 @@ export class CompilerContext {
    * @param name - The identifier name to register.
    * @throws When an identifier with the same name is already declared in this scope.
    */
-  public addUnresolvableIdentifier(name: string, type: IdentifierKind = 'value'): void {
+  public addUnresolvableIdentifier(name: string): void {
     if (this.hasIdentifier(name)) {
       throw new Error(`Identifier "${name}" is already declared in this scope.`);
     }
 
-    this._unresolvableIdentifiers.set(name, type);
+    this._unresolvableIdentifiers.push(name);
   }
 
   /**
@@ -95,7 +95,7 @@ export class CompilerContext {
    * @param name - The identifier name to remove. 
    */
   public removeUnresolvabledIdentifier(name: string): void {
-    this._unresolvableIdentifiers.delete(name);
+    this._unresolvableIdentifiers = this._unresolvableIdentifiers.filter(identifier => identifier !== name);
   }
 
   /**
@@ -129,6 +129,6 @@ export class CompilerContext {
    * @returns `true` if the identifier exists in the scope chain, `false` otherwise.
    */
   public hasUnresolvableIdentifier(name: string): boolean {
-    return this._unresolvableIdentifiers.has(name) || (this._parent?.hasUnresolvableIdentifier(name) ?? false);
+    return this._unresolvableIdentifiers.includes(name) || (this._parent?.hasUnresolvableIdentifier(name) ?? false);
   }
 }

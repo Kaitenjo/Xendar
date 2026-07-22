@@ -5,9 +5,10 @@ import { TokenType } from '../types/token-type.enum';
 import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type';
 import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type';
 
-export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexImport(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let importValue = '';
+  let importStart = cursor.currentChar.index + 1;
   let retVal: LexerTransitionFunctionReturnType = {
     state: LexerState.IMPORT_PATH,
     tokens: []
@@ -23,7 +24,7 @@ export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunction
 
   cursor.advance();
   if (cursor.currentChar.code !== LEFT_BRACE) {
-    throw new Error(`Expected { after @import at ${cursor.formattedPosition}`);
+    context.throwError(`Expected { after @import at ${cursor.formattedPosition}`);
   }
 
   while (read) {
@@ -41,12 +42,13 @@ export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunction
         break;
 
       case COMMA:
-        addImport(retVal, cursor, importValue);
+        addImport(retVal, cursor, importValue, importStart);
         importValue = '';
+        importStart = cursor.currentChar.index + 1;
         break;
 
       case RIGHT_BRACE:
-        addImport(retVal, cursor, importValue);
+        addImport(retVal, cursor, importValue, importStart);
         read = false;
         break;
 
@@ -59,10 +61,15 @@ export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunction
   return retVal
 }
 
-function addImport(retVal: LexerTransitionFunctionReturnType, cursor: LexerCursor, value: string): void {
+function addImport(retVal: LexerTransitionFunctionReturnType, cursor: LexerCursor, value: string, start: number): void {
+  const end = cursor.currentChar.index + 1;
   cursor.advance();
   retVal.tokens!.push({
     type: TokenType.IMPORT,
-    parts: [value]
+    parts: [value],
+    span: {
+      start,
+      end
+    }
   });
 }

@@ -1,7 +1,6 @@
 import { LPAREN, RPAREN } from "../../costants/chars.constants";
 import { LexerCursor } from "../types/lexer-cursor.model";
 import { LexerTransitionFunctionContext } from "../types/transition-function/transition-function-context.type";
-import { LexerTransitionFunctionReturnType } from "../types/transition-function/transition-function-return-type.type";
 
 /**
  * Consumes a parenthesised flow-control condition expression from the cursor.
@@ -11,15 +10,15 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * raw expression string (excluding the outer `(` and `)`).
  *
  * @param cursor - The lexer cursor positioned before the opening `(`.
- * @param _context - Unused lexer context (kept for signature consistency).
+ * @param context - Unused lexer context (kept for signature consistency).
  * @returns The raw expression string extracted from inside the parentheses.
  * @throws When the next non-space character is not `(`.
  */
-export function consumeFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): string {
+export function lexFlowControlCondition(cursor: LexerCursor, context: LexerTransitionFunctionContext): string {
   cursor.skipSpaces();
 
   if (cursor.peek() !== LPAREN) {
-    throw new Error(`Expected '(' but got '${String.fromCharCode(cursor.peek())}' at row ${cursor.position.row}, col ${cursor.position.column}`)
+    context.throwError(`Expected '(' but got '${String.fromCharCode(cursor.peek())}' at row ${cursor.position.row}, col ${cursor.position.column}`)
   }
 
   // consume '('

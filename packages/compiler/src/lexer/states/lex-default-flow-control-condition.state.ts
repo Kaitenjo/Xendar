@@ -3,7 +3,7 @@ import { LexerState } from "../types/lexer-state.enum.js";
 import { TokenType } from "../types/token-type.enum.js";
 import { LexerTransitionFunctionContext } from "../types/transition-function/transition-function-context.type.js";
 import { LexerTransitionFunctionReturnType } from "../types/transition-function/transition-function-return-type.type.js";
-import { consumeFlowControlCondition } from "../utils/consume-flow-control-condition.utils.js";
+import { lexFlowControlCondition } from "../utils/lex-flow-control-condition.utils.js";
 
 /**
  * Consumes the condition expression `(...)` of a flow-control directive,
@@ -19,7 +19,7 @@ export function lexDefaultFlowControlCondition(cursor: LexerCursor, _context: Le
     state: LexerState.FLOW_CONTROL_BLOCK,
     tokens: [{
       type: TokenType.CONDITION,
-      parts: [consumeFlowControlCondition(cursor, _context)]
+      parts: [lexFlowControlCondition(cursor, _context)]
     }],
     popState: true
   };

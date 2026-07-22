@@ -1,3 +1,4 @@
+import { Span } from '../../types/span.type';
 import { AttributeToken } from './tokens/attribute-token.type';
 import { AttributeValueToken } from './tokens/attribute-value-token.type';
 import { BlockCloseToken } from './tokens/block-close-token.type';
@@ -26,7 +27,7 @@ import { TextToken } from './tokens/text-token.type';
 /**
  * Union of all token types that the lexer can emit during tokenization.
  */
-export type Token =
+export type Token = (
   | TagOpenNameToken
   | TagSelfCloseToken
   | TagCloseToken
@@ -51,3 +52,6 @@ export type Token =
   | ImportToken
   | ImportPathToken
   | EOFToken
+) & {
+  span: Span
+}

@@ -10,10 +10,10 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * (space, `/`, or `>`) is found. Emits an EVENT token containing the raw binding string.
  *
  * @param cursor - The lexer cursor positioned on the `@` character.
- * @param _context - Unused lexer context.
+ * @param context - Unused lexer context.
  * @returns Transition result with the EVENT token and the TAG_BODY state.
  */
-export function lexEvent(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexEvent(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let event = '';
   let retVal!: LexerTransitionFunctionReturnType;
@@ -33,6 +33,10 @@ export function lexEvent(cursor: LexerCursor, _context: LexerTransitionFunctionC
         break;
 
       case LPAREN:
+        if (!event) {
+          context.throwError(`Event name cannot be empty at ${cursor.formattedPosition}`);
+        }
+
         let state = LexerState.EVENT_PARAMETER;
 
         // consume '('

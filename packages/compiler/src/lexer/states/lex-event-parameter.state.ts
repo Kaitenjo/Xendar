@@ -16,7 +16,8 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
 export function lexEventParameter(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let eventParameter = '';
-  let charDelimiter: '"' | "'" | '[' | '{' | '' = '';
+  let charDelimiter: '"' | "'" | '[' | '{' |'' = '';
+  let parameterStart = cursor.currentChar.index + 1;
 
   const retVal: LexerTransitionFunctionReturnType = {
     state: LexerState.TAG_BODY,
@@ -33,8 +34,8 @@ export function lexEventParameter(cursor: LexerCursor, _context: LexerTransition
       case SINGLE_QUOTE:
       case LPAREN:
         eventParameter = addCharacter(cursor, eventParameter);
-        // Safe assumption
         if (!charDelimiter) {
+          // Safe assumption
           charDelimiter = cursor.currentChar.value as typeof charDelimiter;
         } else if (charDelimiter === cursor.currentChar.value || (charDelimiter === '[' && cursor.currentChar.value === ']') || charDelimiter === '{' && cursor.currentChar.value === '}') {
           charDelimiter = '';
@@ -43,28 +44,41 @@ export function lexEventParameter(cursor: LexerCursor, _context: LexerTransition
 
       case COMMA:
         if (!charDelimiter) {
+          const parameterEnd = cursor.currentChar.index + 1;
           retVal.tokens!.push({
             type: TokenType.EVENT_PAREMETER,
-            parts: [eventParameter]
+            parts: [eventParameter],
+            span: {
+              start: parameterStart,
+              end: parameterEnd
+            }
           });
           cursor.advance();
           cursor.skipSpaces();
           eventParameter = '';
+          parameterStart = cursor.currentChar.index + 1;
         } else {
           eventParameter = addCharacter(cursor, eventParameter);
         }
         break;
 
       case RPAREN:
-        cursor.advance();
-
         if (!charDelimiter) {
+          const parameterEnd = cursor.currentChar.index + 1;
           retVal.tokens!.push({
             type: TokenType.EVENT_PAREMETER,
-            parts: [eventParameter]
+            parts: [eventParameter],
+            span: {
+              start: parameterStart,
+              end: parameterEnd
+            }
           });
           read = false;
+          break;
         }
+
+        eventParameter = addCharacter(cursor, eventParameter);
+        break;
 
       default:
         eventParameter = addCharacter(cursor, eventParameter);

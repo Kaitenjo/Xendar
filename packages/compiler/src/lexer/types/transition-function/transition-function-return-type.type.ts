@@ -25,7 +25,7 @@ export type LexerTransitionFunctionReturnType = {
    * may only advance the cursor or change state without
    * emitting any tokens.
    */
-  tokens?: Token[]
+  tokens?: (Omit<Token, 'span'> & Partial<Pick<Token, 'span'>>)[]
   /**
    * Whether the lexer should pop the previous state from the state stack
    * after this transition.

@@ -34,4 +34,11 @@ export type LexerTransitionFunctionContext = {
    * Note that this is a snapshot and should not be mutated by transition functions.
    */
   tokens: Token[]
+  /**
+   * Throws a lexer-scoped error message with a standardized prefix.
+   *
+   * States should use this instead of creating raw Error instances,
+   * so error formatting remains consistent across the lexer.
+   */
+  throwError: (message: string) => never
 }

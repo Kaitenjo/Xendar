@@ -10,10 +10,10 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * whitespace. Emits a TAG_CLOSE_NAME token with the tag name and transitions to TEXT.
  *
  * @param cursor - The lexer cursor positioned at the `<` of a closing tag.
- * @param _context - Unused lexer context.
+ * @param context - Unused lexer context.
  * @returns Transition result with the TAG_CLOSE_NAME token and the TEXT state.
  */
-export function lexTagClose(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexTagClose(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let tagName = '';
   let retVal!: LexerTransitionFunctionReturnType;
@@ -30,6 +30,9 @@ export function lexTagClose(cursor: LexerCursor, _context: LexerTransitionFuncti
   while (read) {
     switch (cursor.peek()) {
       case GREATER_THEN:
+        if (!tagName) {
+          context.throwError(`Tag close name cannot be empty at ${cursor.formattedPosition}`);
+        }
         cursor.advance();
         retVal = {
           state: LexerState.TEXT,
@@ -42,7 +45,7 @@ export function lexTagClose(cursor: LexerCursor, _context: LexerTransitionFuncti
         break;
 
       case SPACE:
-        throw new Error('Tag Close Name cannot contains spaces');
+        context.throwError(`Tag close name cannot contain spaces at ${cursor.formattedPosition}`);
 
       default:
         cursor.advance();

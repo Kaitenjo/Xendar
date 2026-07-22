@@ -1,6 +1,7 @@
 import { Stack } from '@xaendar/common';
 import { Dictionary } from '@xaendar/types';
 import { EOF } from '../costants/chars.constants';
+import { Span } from '../types/span.type';
 import { lexAttributeValue } from './states/lex-attribute-value.state';
 import { lexAttribute } from './states/lex-attribute.state';
 import { lexCaseFlowControlCondition } from './states/lex-case-flow-control-condition.state';
@@ -23,6 +24,7 @@ import { LexerCursor } from './types/lexer-cursor.model';
 import { LexerState } from './types/lexer-state.enum';
 import { Token } from './types/token.type';
 import { LexerTransitionFunction } from './types/transition-function/transition-function.type';
+import { LexerTransitionFunctionReturnType } from './types/transition-function/transition-function-return-type.type';
 
 /**
  * Utility class that emulates a cursor navigating through a template string.
@@ -89,27 +91,31 @@ export class Lexer {
    */
   public tokenize(): Token[] {
     let eof = false;
+    const cursor = this._cursor;
 
     while (!eof) {
       try {
+        const stateStartIndex = cursor.currentChar.index + 1;
         const transitionFunction = this._states[this._state];
-        const { state, tokens, popState, pushState } = transitionFunction!(this._cursor, { 
+        const { state, tokens, popState, pushState } = transitionFunction!(cursor, {
           history: this._stack.values,
-          tokens: [...this._tokens] 
+          tokens: [...this._tokens],
+          throwError: this.throwError
         });
-        
+
         if (tokens?.length) {
-          this._tokens.push(...tokens);
+          const stateEndIndex = cursor.currentChar.index + 1;
+          this._tokens.push(...this.withTokenSpans(tokens, { start: stateStartIndex, end: stateEndIndex }));
         }
-        
+
         if (pushState) {
           this._stack.push(this._state);
         }
-        
+
         if (popState) {
           this._stack.pop();
-        } 
-        
+        }
+
         this._state = state;
       } catch (err) {
         const error = err as Error;
@@ -123,5 +129,25 @@ export class Lexer {
     }
 
     return this._tokens;
+  }
+
+  /**
+   * Throws a lexer error with a standardized prefix.
+   */
+  private throwError(message: string): never {
+    throw new Error(`[Lexer] ${message}`);
+  }
+
+  /**
+   * Ensures every emitted token has a source span.
+   *
+   * States can provide a more accurate `token.span` (e.g. Event Parameter and Import States)
+   * otherwise the lexer falls back to the full state-consumption range.
+   */
+  private withTokenSpans(tokens: Required<LexerTransitionFunctionReturnType>['tokens'], fallbackSpan: Span): Token[] {
+    return tokens.map(token => ({
+      ...token,
+      span: token.span ?? fallbackSpan
+    })) as Token[];
   }
 }

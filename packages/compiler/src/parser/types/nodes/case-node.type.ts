@@ -1,5 +1,5 @@
 import { ASTNodeType } from '../node.enum';
-import { ASTNode } from '../ast.type';
+import { ASTNodeKind } from '../ast.type';
 
 /**
  * AST node representing a `@case` or `@default` branch inside a `@switch` block.
@@ -16,5 +16,5 @@ export type CaseNode = {
   /**
    * Child nodes rendered when this case matches.
    */
-  children: ASTNode[];
+  children: ASTNodeKind[];
 }

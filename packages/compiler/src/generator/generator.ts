@@ -1,5 +1,5 @@
 import { indent } from "@xaendar/common";
-import { ASTNode } from "../parser/types/ast.type.js";
+import { ASTNodeKind } from "../parser/types/ast.type.js";
 import { ASTNodeType } from "../parser/types/node.enum.js";
 import { CompilerContext } from "./models/compiler-context.model.js";
 import { generateElement } from "./states/generate-element.state.js";
@@ -27,7 +27,7 @@ export class Generator {
   }
 
   constructor(
-    private _ast: ASTNode[],
+    private _ast: ASTNodeKind[],
   ) { }
 
   public generate(cssVariableName?: string): string {
@@ -93,7 +93,7 @@ export class Generator {
     return generatedCode.join("\n");
   }
 
-  private _processNode(node: ASTNode, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType | undefined {
+  private _processNode(node: ASTNodeKind, parentNode: string, index: string, compilerContext: CompilerContext, anchor: string | null): GeneratorTransitionFunctionReturnType | undefined {
     const state = this._states[node.type];
 
     if (!state) {

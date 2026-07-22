@@ -1,3 +1,4 @@
+import { Span } from '../../types/span.type';
 import { CaseNode } from './nodes/case-node.type';
 import { ElementNode } from './nodes/element-node.type';
 import { ElseIfNode } from './nodes/else-if-node.type';
@@ -12,7 +13,7 @@ import { TextNode } from './nodes/text-node.type';
 /**
  * Union of all AST node types that the parser can produce from a token stream.
  */
-export type ASTNode =
+export type ASTNodeKind =
   | ElementNode
   | TextNode
   | InterpolationNode
@@ -23,3 +24,7 @@ export type ASTNode =
   | SwitchNode
   | CaseNode
   | ImportNode;
+
+export type ASTNode = ASTNodeKind & {
+  span: Span
+} 

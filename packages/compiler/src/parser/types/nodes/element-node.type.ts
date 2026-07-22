@@ -1,5 +1,5 @@
 import { ASTNodeType } from '../node.enum';
-import { ASTNode } from '../ast.type';
+import { ASTNodeKind } from '../ast.type';
 import { AttributeNode } from './attribute-node.type';
 import { EventNode } from './event-node.type';
 
@@ -26,5 +26,5 @@ export type ElementNode = {
   /**
    * Child AST nodes nested inside this element.
    */
-  children: ASTNode[];
+  children: ASTNodeKind[];
 }

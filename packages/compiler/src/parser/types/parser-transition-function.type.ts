@@ -1,7 +1,7 @@
 import { NoArgsFunction } from "@xaendar/types";
+import { TokenKind } from "../../lexer/types/token.type";
 import { ParserCursor } from "../models/parser-cursor.model";
-import { ASTNode } from "./ast.type";
-import { Token } from "../../lexer/types/token.type";
+import { ASTNodeKind } from "./ast.type";
 
 /**
  * The signature of a parser transition function.
@@ -15,4 +15,4 @@ import { Token } from "../../lexer/types/token.type";
  * @param token - The token that triggered this transition.
  * @returns An AST node representing the parsed structure for the given token.
  */
-export type ParserTransitionFunction<T extends Token = Token> = (cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: T) => ASTNode;
+export type ParserTransitionFunction<T extends TokenKind = TokenKind> = (cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: T) => ASTNodeKind;

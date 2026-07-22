@@ -1,9 +1,9 @@
-import { Token } from '../../lexer/types/token.type'
+import { Token, TokenKind } from '../../lexer/types/token.type'
 
 /**
  * Represents the token currently pointed to by the parser cursor.
  */
-export type CurrentToken<TokenType extends Token = Token> = {
+export type CurrentToken<TokenType extends TokenKind = Token> = {
   /**
    * The token object at the current cursor position.
    */

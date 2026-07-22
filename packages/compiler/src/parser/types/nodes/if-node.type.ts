@@ -1,5 +1,5 @@
 import { Expression } from 'typescript';
-import { ASTNode } from '../ast.type';
+import { ASTNodeKind } from '../ast.type';
 import { ASTNodeType } from '../node.enum';
 import { ElseIfNode } from './else-if-node.type';
 import { ElseNode } from './else-node.type';
@@ -23,7 +23,7 @@ export type IfNode = {
   /**
    * Child nodes rendered when the condition is truthy.
    */
-  children: ASTNode[];
+  children: ASTNodeKind[];
   /**
    * Optional `@else` branch, or `null` if no else clause is present.
    */

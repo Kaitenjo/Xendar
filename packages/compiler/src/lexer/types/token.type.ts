@@ -27,7 +27,7 @@ import { TextToken } from './tokens/text-token.type';
 /**
  * Union of all token types that the lexer can emit during tokenization.
  */
-export type Token = (
+export type TokenKind =
   | TagOpenNameToken
   | TagSelfCloseToken
   | TagCloseToken
@@ -51,7 +51,13 @@ export type Token = (
   | BlockCloseToken
   | ImportToken
   | ImportPathToken
-  | EOFToken
-) & {
+  | EOFToken;
+
+export type Token = TokenKind & {
   span: Span
 }
+
+export type MaybeTokenWithSpan = TokenKind & {
+  span?: Span
+}
+

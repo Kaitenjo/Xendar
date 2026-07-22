@@ -7,7 +7,7 @@ import { InterpolationExpressionToken } from '../../lexer/types/tokens/interpola
 import { InterpolationLiteralToken } from '../../lexer/types/tokens/interpolation-literal-token.type';
 import { TagCloseNameToken } from '../../lexer/types/tokens/tag-close-name-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
+import { ASTNodeKind } from '../types/ast.type';
 import { AttributeNode } from '../types/nodes/attribute-node.type';
 import { parseInterpolation } from './parse-interpolation.state';
 
@@ -20,7 +20,7 @@ import { parseInterpolation } from './parse-interpolation.state';
  * @param token - The ATTRIBUTE token to parse.
  * @returns The parsed `AttributeNode`.
  */
-export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: AttributeToken): AttributeNode {
+export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: AttributeToken): AttributeNode {
   // consume Attribute token
   cursor.advance();
   const name = token.parts[0];

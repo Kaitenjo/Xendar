@@ -1,5 +1,5 @@
 import { ASTNodeType } from '../node.enum';
-import { ASTNode } from '../ast.type';
+import { ASTNodeKind } from '../ast.type';
 import { ForExpression } from '../for-expression.type';
 
 /**
@@ -13,5 +13,5 @@ export type ForNode = ForExpression & {
   /**
    * Child nodes rendered for each iteration.
    */
-  children: ASTNode[];
+  children: ASTNodeKind[];
 }

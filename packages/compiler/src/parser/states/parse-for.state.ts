@@ -3,7 +3,7 @@ import { createSourceFile, isExpressionStatement, isIdentifier, ScriptTarget } f
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { ForToken } from '../../lexer/types/tokens/for-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
+import { ASTNodeKind } from '../types/ast.type';
 import { ForExpression } from '../types/for-expression.type';
 import { ASTNodeType } from '../types/node.enum';
 import { ForImplicitVariables } from '../types/nodes/for-implicit-variables';
@@ -20,7 +20,7 @@ import { parseBlockChildren } from './parse-block-children.state';
  * @param _token - The FOR token (consumed for position advancement).
  * @returns The parsed `ForNode`.
  */
-export function parseForControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, _token: ForToken): ForNode {
+export function parseForControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, _token: ForToken): ForNode {
   // consume FOR
   cursor.advance();
 

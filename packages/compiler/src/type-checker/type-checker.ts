@@ -1,5 +1,5 @@
 import { indent } from '@xaendar/common';
-import { ASTNode } from '../parser/types/ast.type.js';
+import { ASTNodeKind } from '../parser/types/ast.type.js';
 import { ASTNodeType } from '../parser/types/node.enum.js';
 import { ImportNode } from '../parser/types/nodes/import-node.type.js';
 import { TypeCheckContext } from './models/type-checker-context.js';
@@ -47,7 +47,7 @@ export class TypeChecker {
     [ASTNodeType.Import]: typeCheckImport,
   };
 
-  constructor(private _ast: ASTNode[]) { }
+  constructor(private _ast: ASTNodeKind[]) { }
 
   /**
    * Pre-populates the shared context with component and directive metadata
@@ -104,7 +104,7 @@ export class TypeChecker {
    * back down as `processNode` so state functions can recurse into their
    * own children inline.
    */
-  private _processNode = (node: ASTNode, context: TypeCheckContext): string[] => {
+  private _processNode = (node: ASTNodeKind, context: TypeCheckContext): string[] => {
     const state = this._states[node.type];
 
     if (!state) {

@@ -1,4 +1,4 @@
-import { ASTNode } from '../../parser/types/ast.type';
+import { ASTNodeKind } from '../../parser/types/ast.type';
 import { TypeCheckContext } from '../models/type-checker-context';
 import { ProcessNode } from './type-checker-process-node.type';
 
@@ -16,7 +16,7 @@ import { ProcessNode } from './type-checker-process-node.type';
  * @param context - Optional compiler context passed through from the caller.
  * @returns The generated output fragments for the provided node.
  */
-export type TypeCheckerTransitionFunction<T extends ASTNode = ASTNode> = (
+export type TypeCheckerTransitionFunction<T extends ASTNodeKind = ASTNodeKind> = (
   node: T,
   processNode: ProcessNode,
   context: TypeCheckContext,

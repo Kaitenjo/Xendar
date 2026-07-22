@@ -27,7 +27,7 @@ export class ParserCursor {
    * yet consumed any token or has reached EOF.
    */
   private readonly _currentToken: CurrentToken = {
-    value: { type: TokenType.EOF },
+    value: { type: TokenType.EOF, span: { start: 0, end: 0 }  },
     index: -1
   };
 
@@ -61,7 +61,7 @@ export class ParserCursor {
     const newIndex = this._currentToken.index + chars;
 
     if (newIndex >= this._tokens.length) {
-      this._currentToken.value = { type: TokenType.EOF };
+      this._currentToken.value = { type: TokenType.EOF, span: { start: 0, end: 0 }  };
       this._currentToken.index = -1;
     } else {
       this._currentToken.index = newIndex;
@@ -113,6 +113,6 @@ export class ParserCursor {
    * Peeks a single token at the given absolute index.
    */
   private peekOneToken(index: number): Token {
-    return index < this._tokens.length ? this._tokens[index]! : { type: TokenType.EOF };
+    return index < this._tokens.length ? this._tokens[index]! : { type: TokenType.EOF, span: { start: 0, end: 0 }  };
   }
 }

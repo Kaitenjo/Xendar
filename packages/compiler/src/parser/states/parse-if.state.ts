@@ -4,7 +4,7 @@ import { ElseIfToken } from '../../lexer/types/tokens/else-if-token.type';
 import { ElseToken } from '../../lexer/types/tokens/else-token.type';
 import { IfToken } from '../../lexer/types/tokens/if-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
+import { ASTNodeKind } from '../types/ast.type';
 import { ASTNodeType } from '../types/node.enum';
 import { ElseIfNode } from '../types/nodes/else-if-node.type';
 import { ElseNode } from '../types/nodes/else-node.type';
@@ -21,7 +21,7 @@ import { parseBlockChildren } from './parse-block-children.state';
  * @param token - The IF token (consumed for position advancement).
  * @returns The parsed `IfNode`.
  */
-export function parseIfControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: IfToken): IfNode {
+export function parseIfControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: IfToken): IfNode {
   return parseIfOrElseIf(cursor, parseNode, token);
 }
 
@@ -34,9 +34,9 @@ export function parseIfControlFlow(cursor: ParserCursor, parseNode: NoArgsFuncti
  * @param token - The `@else if` or `@else` token to process.
  * @returns An `ElseIfNode` or `ElseNode` representing the parsed branch.
  */
-function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: ElseIfToken | ElseToken): ElseIfNode | ElseNode;
-function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: ElseToken): ElseNode;
-function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: ElseIfToken | ElseToken): ElseIfNode | ElseNode {
+function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: ElseIfToken | ElseToken): ElseIfNode | ElseNode;
+function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: ElseToken): ElseNode;
+function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: ElseIfToken | ElseToken): ElseIfNode | ElseNode {
   switch (token.type) {
     case TokenType.ELSE_IF:
       return parseIfOrElseIf(cursor, parseNode, token);
@@ -64,9 +64,9 @@ function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<
  * @param token - The `@if` or `@else if` token being processed.
  * @returns An `IfNode` or `ElseIfNode` with its condition, consequent, and optional alternate.
  */
-function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: IfToken): IfNode;
-function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: ElseIfToken): ElseIfNode;
-function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: IfToken | ElseIfToken): IfNode | ElseIfNode {
+function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: IfToken): IfNode;
+function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: ElseIfToken): ElseIfNode;
+function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: IfToken | ElseIfToken): IfNode | ElseIfNode {
   cursor.advance();
 
   const conditionToken = cursor.peek();

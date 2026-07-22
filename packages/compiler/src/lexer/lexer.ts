@@ -22,9 +22,8 @@ import { lexTagOpenName } from './states/lex-tag-open-name.state';
 import { lexText } from './states/lex-text.state';
 import { LexerCursor } from './types/lexer-cursor.model';
 import { LexerState } from './types/lexer-state.enum';
-import { Token } from './types/token.type';
+import { MaybeTokenWithSpan, Token } from './types/token.type';
 import { LexerTransitionFunction } from './types/transition-function/transition-function.type';
-import { LexerTransitionFunctionReturnType } from './types/transition-function/transition-function-return-type.type';
 
 /**
  * Utility class that emulates a cursor navigating through a template string.
@@ -144,10 +143,10 @@ export class Lexer {
    * States can provide a more accurate `token.span` (e.g. Event Parameter and Import States)
    * otherwise the lexer falls back to the full state-consumption range.
    */
-  private withTokenSpans(tokens: Required<LexerTransitionFunctionReturnType>['tokens'], fallbackSpan: Span): Token[] {
+  private withTokenSpans(tokens: MaybeTokenWithSpan[], fallbackSpan: Span): Token[] {
     return tokens.map(token => ({
       ...token,
       span: token.span ?? fallbackSpan
-    })) as Token[];
+    }));
   }
 }

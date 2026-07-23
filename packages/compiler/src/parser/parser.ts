@@ -8,7 +8,7 @@ import { parseImport } from './states/parse-import.state.js';
 import { parseInterpolation } from './states/parse-interpolation.state.js';
 import { parseSwitchControlFlow } from './states/parse-switch.state.js';
 import { parseText } from './states/parse-text.state.js';
-import { ASTNode, ASTNodeKind } from './types/ast.type.js';
+import { ASTNode, ASTNode } from './types/ast.type.js';
 import { ParserStates } from './types/parser-states.type.js';
 
 /**
@@ -58,8 +58,8 @@ export class Parser {
    *
    * @returns Array of top-level AST nodes.
    */
-  public parse(): ASTNodeKind[] {
-    const nodes = new Array<ASTNodeKind>;
+  public parse(): ASTNode[] {
+    const nodes = new Array<ASTNode>;
 
     while (this._cursor.peek().type !== TokenType.EOF) {
       const parseNode = this.parseNode();
@@ -77,27 +77,27 @@ export class Parser {
    * @returns The parsed AST node, or `undefined` for EOF.
    * @throws When no transition function is registered for the current token type.
    */
-private parseNode(): ASTNode | undefined {
-  const token = this._cursor.peek();
-  if (token.type === TokenType.EOF) {
-    return undefined;
+  private parseNode(): ASTNode | undefined {
+    const token = this._cursor.peek();
+    if (token.type === TokenType.EOF) {
+      return undefined;
+    }
+
+    const startOffset = token.span.start;
+    const state = this._states[token.type];
+
+    if (!state) {
+      throw new Error(`[Parser] No transition function for token type ${TokenType[token.type]}`);
+    }
+
+    const node = state(this._cursor, this.parseNode.bind(this), token as never);
+
+    return {
+      ...node,
+      span: {
+        start: startOffset,
+        end: this._cursor.getCurrentToken().value.span.end,
+      },
+    };
   }
-
-  const startOffset = token.span.start;
-  const state = this._states[token.type];
-
-  if (!state) {
-    throw new Error(`[Parser] No transition function for token type ${TokenType[token.type]}`);
-  }
-
-  const node = state(this._cursor, this.parseNode.bind(this), token as never);
-
-  return {
-    ...node,
-    span: {
-      start: startOffset,
-      end: this._cursor.getCurrentToken().value.span.end,
-    },
-  } as ASTNode;
-}
 }

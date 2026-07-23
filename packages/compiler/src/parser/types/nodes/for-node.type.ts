@@ -1,11 +1,11 @@
-import { ASTNodeType } from '../node.enum';
-import { ASTNodeKind } from '../ast.type';
+import { ASTNode, ASTNodeWithSpan } from '../ast.type';
 import { ForExpression } from '../for-expression.type';
+import { ASTNodeType } from '../node.enum';
 
 /**
  * AST node representing an `@for` iteration directive.
  */
-export type ForNode = ForExpression & {
+export type ForNode = ASTNodeWithSpan<ForExpression & {
   /**
    * Discriminant identifying this node as a for loop.
    */
@@ -13,5 +13,5 @@ export type ForNode = ForExpression & {
   /**
    * Child nodes rendered for each iteration.
    */
-  children: ASTNodeKind[];
-}
+  children: ASTNode[];
+}>

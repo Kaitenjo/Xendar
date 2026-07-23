@@ -1,9 +1,10 @@
 import { TokenType } from '../token-type.enum';
+import { TokenWithSpan } from '../token.type';
 
 /**
  * Token emitted when the lexer consumes a closing tag name, e.g. `div` in `</div>`.
  */
-export type TagCloseNameToken = {
+export type TagCloseNameToken = TokenWithSpan<{
   /**
    * Discriminant identifying this token as a closing tag name.
    */
@@ -12,4 +13,4 @@ export type TagCloseNameToken = {
    * `parts[0]` is the tag name string.
    */
   parts: [string]
-}
+}>

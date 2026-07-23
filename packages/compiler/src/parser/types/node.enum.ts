@@ -6,6 +6,11 @@ export enum ASTNodeType {
    * An HTML element node with a tag name, attributes, events, and children.
    */
   Element,
+
+  Attribute,
+
+  Event,
+  
   /**
    * A plain text node.
    */

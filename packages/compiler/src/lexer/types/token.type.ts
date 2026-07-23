@@ -1,4 +1,5 @@
 import { Span } from '../../types/span.type';
+import { TokenType } from './token-type.enum';
 import { AttributeToken } from './tokens/attribute-token.type';
 import { AttributeValueToken } from './tokens/attribute-value-token.type';
 import { BlockCloseToken } from './tokens/block-close-token.type';
@@ -27,7 +28,7 @@ import { TextToken } from './tokens/text-token.type';
 /**
  * Union of all token types that the lexer can emit during tokenization.
  */
-export type TokenKind =
+export type Token =
   | TagOpenNameToken
   | TagSelfCloseToken
   | TagCloseToken
@@ -53,11 +54,34 @@ export type TokenKind =
   | ImportPathToken
   | EOFToken;
 
-export type Token = TokenKind & {
+export type TokenWithOptionalSpan = 
+  | MaybeTokenWithSpan<TagOpenNameToken>
+  | MaybeTokenWithSpan<TagSelfCloseToken>
+  | MaybeTokenWithSpan<TagCloseToken>
+  | MaybeTokenWithSpan<TagCloseNameToken>
+  | MaybeTokenWithSpan<AttributeToken>
+  | MaybeTokenWithSpan<AttributeValueToken>
+  | MaybeTokenWithSpan<EventToken>
+  | MaybeTokenWithSpan<EventParemeterToken>
+  | MaybeTokenWithSpan<TextToken>
+  | MaybeTokenWithSpan<InterpolationExpressionToken>
+  | MaybeTokenWithSpan<InterpolationLiteralToken>
+  | MaybeTokenWithSpan<IfToken>
+  | MaybeTokenWithSpan<ElseIfToken>
+  | MaybeTokenWithSpan<ElseToken>
+  | MaybeTokenWithSpan<ForToken>
+  | MaybeTokenWithSpan<SwitchToken>
+  | MaybeTokenWithSpan<CaseToken>
+  | MaybeTokenWithSpan<DefaultToken>
+  | MaybeTokenWithSpan<ConditionToken>
+  | MaybeTokenWithSpan<BlockOpenToken>
+  | MaybeTokenWithSpan<BlockCloseToken>
+  | MaybeTokenWithSpan<ImportToken>
+  | MaybeTokenWithSpan<ImportPathToken>;
+
+export type TokenWithSpan<T extends { type: TokenType }> = T & {
   span: Span
 }
 
-export type MaybeTokenWithSpan = TokenKind & {
-  span?: Span
-}
+export type MaybeTokenWithSpan<T extends { type: TokenType, span: Span }> = Omit<T, 'span'> & Partial<Pick<T, 'span'>>;
 

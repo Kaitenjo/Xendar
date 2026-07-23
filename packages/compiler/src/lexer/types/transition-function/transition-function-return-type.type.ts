@@ -1,6 +1,5 @@
 import { LexerState } from '../lexer-state.enum'
-import { MaybeTokenWithSpan, Token } from '../token.type'
-import { EOFToken } from '../tokens/eof-token.type'
+import { TokenWithOptionalSpan } from '../token.type'
 
 /**
  * Result returned by a lexer state transition function.
@@ -26,7 +25,7 @@ export type LexerTransitionFunctionReturnType = {
    * may only advance the cursor or change state without
    * emitting any tokens.
    */
-  tokens?: MaybeTokenWithSpan[]
+  tokens?: TokenWithOptionalSpan[]
   /**
    * Whether the lexer should pop the previous state from the state stack
    * after this transition.

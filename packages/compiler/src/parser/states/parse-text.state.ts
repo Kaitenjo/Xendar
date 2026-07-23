@@ -1,7 +1,7 @@
 import { NoArgsFunction } from '@xaendar/types';
 import { TextToken } from '../../lexer/types/tokens/text-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNodeKind } from '../types/ast.type';
+import { ASTNode } from '../types/ast.type';
 import { ASTNodeType } from '../types/node.enum';
 import { TextNode } from '../types/nodes/text-node.type';
 
@@ -13,7 +13,7 @@ import { TextNode } from '../types/nodes/text-node.type';
  * @param token - The TEXT token containing the raw text content.
  * @returns The parsed `TextNode`.
  */
-export function parseText(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: TextToken): TextNode {
+export function parseText(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, token: TextToken): TextNode {
   cursor.advance();
 
   return {

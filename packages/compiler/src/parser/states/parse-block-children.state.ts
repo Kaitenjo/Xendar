@@ -1,7 +1,7 @@
 import { NoArgsFunction } from '@xaendar/types';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNodeKind } from '../types/ast.type';
+import { ASTNode } from '../types/ast.type';
 
 /**
  * Parses child AST nodes inside a flow-control block until a BLOCK_CLOSE token is reached.
@@ -11,8 +11,8 @@ import { ASTNodeKind } from '../types/ast.type';
  * @param parseNode - Parser function for recursive child parsing.
  * @returns Array of parsed child `ASTNode`s.
  */
-export function parseBlockChildren(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>): ASTNodeKind[] {
-  const children = new Array<ASTNodeKind>;
+export function parseBlockChildren(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>): ASTNode[] {
+  const children = new Array<ASTNode>;
 
   while (cursor.peek().type !== TokenType.BLOCK_CLOSE) {
     const child = parseNode();

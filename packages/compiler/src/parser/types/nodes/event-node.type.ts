@@ -1,10 +1,13 @@
 import { Expression } from 'typescript';
 import { InterpolationNode } from './interpolation-node.type';
+import { ASTNodeType } from '../node.enum';
 
 /**
  * AST node representing a DOM event binding on an element.
  */
 export type EventNode = {
+
+  type: ASTNodeType.Event;
   /**
    * The DOM Event Name (e.g. `click`, `input`).
    */

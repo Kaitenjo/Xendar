@@ -7,9 +7,10 @@ import { InterpolationExpressionToken } from '../../lexer/types/tokens/interpola
 import { InterpolationLiteralToken } from '../../lexer/types/tokens/interpolation-literal-token.type';
 import { TagCloseNameToken } from '../../lexer/types/tokens/tag-close-name-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNodeKind } from '../types/ast.type';
+import { ASTNode, MaybeASTNodeWithSpan } from '../types/ast.type';
 import { AttributeNode } from '../types/nodes/attribute-node.type';
 import { parseInterpolation } from './parse-interpolation.state';
+import { ASTNodeType } from '../types/node.enum';
 
 /**
  * Parses an ATTRIBUTE token into an `AttributeNode`.
@@ -20,7 +21,7 @@ import { parseInterpolation } from './parse-interpolation.state';
  * @param token - The ATTRIBUTE token to parse.
  * @returns The parsed `AttributeNode`.
  */
-export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: AttributeToken): AttributeNode {
+export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: AttributeToken): AttributeNode {
   // consume Attribute token
   cursor.advance();
   const name = token.parts[0];
@@ -36,11 +37,12 @@ export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<A
   >();
 
   if (nextToken.type === TokenType.ATTRIBUTE || nextToken.type === TokenType.TAG_CLOSE_NAME || nextToken.type === TokenType.EVENT) {
-    return { name, value: 'true' };
+    return { type: ASTNodeType.Attribute, name, value: 'true' };
   }
 
   if (nextToken.type === TokenType.INTERPOLATION_EXPRESSION || nextToken.type === TokenType.INTERPOLATION_LITERAL) {
     return {
+      type: ASTNodeType.Attribute,
       name,
       value: parseInterpolation(cursor, parseNode, nextToken)
     };
@@ -53,6 +55,7 @@ export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<A
   cursor.advance();
 
   return {
+    type: ASTNodeType.Attribute,
     name,
     value: nextToken.parts[0]
   };

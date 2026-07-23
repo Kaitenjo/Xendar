@@ -2,7 +2,7 @@ import { NoArgsFunction } from '@xaendar/types';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { TagOpenNameToken } from '../../lexer/types/tokens/tag-open-name-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNodeKind } from '../types/ast.type';
+import { ASTNode, MaybeASTNodeWithSpan } from '../types/ast.type';
 import { ASTNodeType } from '../types/node.enum';
 import { AttributeNode } from '../types/nodes/attribute-node.type';
 import { ElementNode } from '../types/nodes/element-node.type';
@@ -19,11 +19,11 @@ import { parseEvent } from './parse-event.state';
  * @param token - The TAG_OPEN_NAME token containing the tag name.
  * @returns The parsed `ElementNode`.
  */
-export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, token: TagOpenNameToken): ElementNode {
+export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: TagOpenNameToken): ElementNode {
   cursor.advance();
   const tagName = token.parts[0];
 
-  const attributes = new Array<AttributeNode>();
+  const attributes = new Array<MaybeASTNodeWithSpan<AttributeNode>>();
   const events = new Array<EventNode>();
 
   let read = true;
@@ -61,7 +61,7 @@ export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<AST
   }
 
   // Parse children recursively until closing tag
-  const children = new Array<ASTNodeKind>;
+  const children = new Array<ASTNode>;
   while (!isTagClose(cursor, tagName)) {
     const child = parseNode();
     if (child) {

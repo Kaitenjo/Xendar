@@ -1,4 +1,4 @@
-import { ASTNodeKind } from "../../parser/types/ast.type"
+import { ASTNode } from "../../parser/types/ast.type"
 import { ImportNode } from "../../parser/types/nodes/import-node.type";
 import { InterpolationNode } from "../../parser/types/nodes/interpolation-node.type"
 import { TextNode } from "../../parser/types/nodes/text-node.type"
@@ -25,7 +25,7 @@ export type GeneratorTransitionFunctionReturnType = {
        * The AST node whose children should be generated inside this
        * function's body.
        */
-      node: Exclude<ASTNodeKind, TextNode | InterpolationNode | ImportNode>,
+      node: Exclude<ASTNode, TextNode | InterpolationNode | ImportNode>,
       /**
        * Identifier of the DOM node (in the generated code) that this
        * function's children are rendered into.

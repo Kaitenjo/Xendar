@@ -1,6 +1,7 @@
 import { PositiveInteger, TupleOfLength } from '@xaendar/types';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { Token } from '../../lexer/types/token.type';
+import { EOFToken } from '../../lexer/types/tokens/eof-token.type';
 import { CurrentToken } from '../types/current-token.type';
 
 /**
@@ -27,14 +28,14 @@ export class ParserCursor {
    * yet consumed any token or has reached EOF.
    */
   private readonly _currentToken: CurrentToken = {
-    value: { type: TokenType.EOF, span: { start: 0, end: 0 }  },
+    value: { type: TokenType.EOF },
     index: -1
   };
 
   /**
    * Returns a read-only snapshot of the current token.
    */
-  public getCurrentToken<TokenType extends Token>(): Readonly<CurrentToken<TokenType>> {
+  public getCurrentToken<TokenType extends Exclude<Token, EOFToken>>(): Readonly<CurrentToken<TokenType>> {
     return this._currentToken as Readonly<CurrentToken<TokenType>>;
   }
 
@@ -61,7 +62,7 @@ export class ParserCursor {
     const newIndex = this._currentToken.index + chars;
 
     if (newIndex >= this._tokens.length) {
-      this._currentToken.value = { type: TokenType.EOF, span: { start: 0, end: 0 }  };
+      this._currentToken.value = { type: TokenType.EOF  };
       this._currentToken.index = -1;
     } else {
       this._currentToken.index = newIndex;
@@ -113,6 +114,6 @@ export class ParserCursor {
    * Peeks a single token at the given absolute index.
    */
   private peekOneToken(index: number): Token {
-    return index < this._tokens.length ? this._tokens[index]! : { type: TokenType.EOF, span: { start: 0, end: 0 }  };
+    return index < this._tokens.length ? this._tokens[index]! : { type: TokenType.EOF };
   }
 }

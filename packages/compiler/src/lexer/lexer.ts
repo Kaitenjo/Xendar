@@ -22,7 +22,7 @@ import { lexTagOpenName } from './states/lex-tag-open-name.state';
 import { lexText } from './states/lex-text.state';
 import { LexerCursor } from './types/lexer-cursor.model';
 import { LexerState } from './types/lexer-state.enum';
-import { MaybeTokenWithSpan, Token } from './types/token.type';
+import { Token, TokenWithOptionalSpan } from './types/token.type';
 import { LexerTransitionFunction } from './types/transition-function/transition-function.type';
 
 /**
@@ -143,8 +143,8 @@ export class Lexer {
    * States can provide a more accurate `token.span` (e.g. Event Parameter and Import States)
    * otherwise the lexer falls back to the full state-consumption range.
    */
-  private withTokenSpans(tokens: MaybeTokenWithSpan[], fallbackSpan: Span): Token[] {
-    return tokens.map(token => ({
+  private withTokenSpans(tokens: TokenWithOptionalSpan[], fallbackSpan: Span): Token[] {
+    return tokens.map<Token>(token => ({
       ...token,
       span: token.span ?? fallbackSpan
     }));

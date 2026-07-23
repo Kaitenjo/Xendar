@@ -1,4 +1,4 @@
-import { ASTNodeKind } from '../../parser/types/ast.type';
+import { ASTNode } from '../../parser/types/ast.type';
 import { TypeCheckContext } from '../models/type-checker-context';
 
 /**
@@ -11,4 +11,4 @@ import { TypeCheckContext } from '../models/type-checker-context';
  * so there is nothing to defer: everything can be produced in a single,
  * synchronous, depth-first walk.
  */
-export type ProcessNode = (node: ASTNodeKind, context: TypeCheckContext) => string[];
+export type ProcessNode = (node: ASTNode, context: TypeCheckContext) => string[];

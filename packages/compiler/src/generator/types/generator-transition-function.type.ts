@@ -1,4 +1,4 @@
-import { ASTNodeKind } from '../../parser/types/ast.type';
+import { ASTNode } from '../../parser/types/ast.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from './generator-transition-function-return-type.type';
 
@@ -20,7 +20,7 @@ import { GeneratorTransitionFunctionReturnType } from './generator-transition-fu
  *   in the current scope.
  * @returns The generated output fragments for the provided node.
  */
-export type GeneratorTransitionFunction<T extends ASTNodeKind = ASTNodeKind> = (
+export type GeneratorTransitionFunction<T extends ASTNode = ASTNode> = (
   node: T,
   parentNode: string,
   index: string,

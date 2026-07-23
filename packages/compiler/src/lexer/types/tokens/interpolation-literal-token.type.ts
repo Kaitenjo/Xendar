@@ -1,9 +1,10 @@
 import { TokenType } from '../token-type.enum';
+import { TokenWithSpan } from '../token.type';
 
 /**
  * Token emitted when the lexer consumes a template-literal interpolation `` {`...`} ``.
  */
-export type InterpolationLiteralToken = {
+export type InterpolationLiteralToken = TokenWithSpan<{
   /**
    * Discriminant identifying this token as a literal interpolation.
    */
@@ -12,4 +13,4 @@ export type InterpolationLiteralToken = {
    * `parts[0]` is the raw template literal string (without surrounding backticks).
    */
   parts: [string];
-}
+}>

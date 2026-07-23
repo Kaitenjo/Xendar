@@ -1,3 +1,4 @@
+import { ASTNodeWithSpan } from '../ast.type';
 import { ASTNodeType } from '../node.enum';
 import { ImportSpecifier } from './import-specifier.type';
 
@@ -7,7 +8,7 @@ import { ImportSpecifier } from './import-specifier.type';
  * Imports symbols from external modules to make them available
  * in template expressions.
  */
-export type ImportNode = {
+export type ImportNode = ASTNodeWithSpan<{
   /**
    * Discriminant identifying this node as an import.
    */
@@ -23,4 +24,4 @@ export type ImportNode = {
    * Module path where the symbols are imported from.
    */
   path: string;
-};
+}>;

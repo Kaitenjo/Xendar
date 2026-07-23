@@ -2,7 +2,7 @@ import { NoArgsFunction } from '@xaendar/types';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { SwitchToken } from '../../lexer/types/tokens/switch-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNodeKind } from '../types/ast.type';
+import { ASTNode } from '../types/ast.type';
 import { ASTNodeType } from '../types/node.enum';
 import { CaseNode } from '../types/nodes/case-node.type';
 import { SwitchNode } from '../types/nodes/switch-node.type';
@@ -18,7 +18,7 @@ import { parseBlockChildren } from './parse-block-children.state';
  * @param _token - The SWITCH token (consumed for position advancement).
  * @returns The parsed `SwitchNode`.
  */
-export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNodeKind | undefined>, _token: SwitchToken): SwitchNode {
+export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, _token: SwitchToken): SwitchNode {
   // consume SWITCH
   cursor.advance();
 

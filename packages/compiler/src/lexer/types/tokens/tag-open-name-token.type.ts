@@ -1,9 +1,10 @@
 import { TokenType } from '../token-type.enum';
+import { TokenWithSpan } from '../token.type';
 
 /**
  * Token emitted when the lexer consumes an opening tag name, e.g. `div` in `<div`.
  */
-export type TagOpenNameToken = {
+export type TagOpenNameToken = TokenWithSpan<{
   /**
    * Discriminant identifying this token as an opening tag name.
    */
@@ -12,4 +13,4 @@ export type TagOpenNameToken = {
    * `parts[0]` is the tag name string.
    */
   parts: [string];
-}
+}>

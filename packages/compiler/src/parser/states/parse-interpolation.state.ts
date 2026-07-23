@@ -2,7 +2,7 @@ import { NoArgsFunction } from '@xaendar/types';
 import { InterpolationExpressionToken } from '../../lexer/types/tokens/interpolation-expression-token.type';
 import { InterpolationLiteralToken } from '../../lexer/types/tokens/interpolation-literal-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
+import { ASTNode, MaybeASTNodeWithSpan } from '../types/ast.type';
 import { ASTNodeType } from '../types/node.enum';
 import { InterpolationNode } from '../types/nodes/interpolation-node.type';
 import { validateExpression } from '../utils/expression-validator';
@@ -16,10 +16,15 @@ import { validateExpression } from '../utils/expression-validator';
  * @returns The parsed `InterpolationNode`.
  */
 export function parseInterpolation(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, token: InterpolationExpressionToken | InterpolationLiteralToken): InterpolationNode {
+  const startOffset = token.span.start;
   cursor.advance();
   
   return {
     type: ASTNodeType.Interpolation,
-    expression: validateExpression(token.parts[0]).node
+    expression: validateExpression(token.parts[0]).node,
+    span: {
+      start: startOffset,
+      end: cursor.getCurrentToken().value.span.end,
+    },
   };
 }

@@ -1,11 +1,12 @@
 import { Expression } from 'typescript';
 import { InterpolationNode } from './interpolation-node.type';
 import { ASTNodeType } from '../node.enum';
+import { ASTNodeWithSpan } from '../ast.type';
 
 /**
  * AST node representing a DOM event binding on an element.
  */
-export type EventNode = {
+export type EventNode = ASTNodeWithSpan<{
 
   type: ASTNodeType.Event;
   /**
@@ -20,4 +21,4 @@ export type EventNode = {
    * The Event Handler parameters
    */
   parameters: Expression[]
-}
+}>;

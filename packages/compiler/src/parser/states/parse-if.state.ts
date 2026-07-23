@@ -42,6 +42,7 @@ function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<
       return parseIfOrElseIf(cursor, parseNode, token);
 
     case TokenType.ELSE:
+      const startOffset = token.span.start;
       // consume ELSE and BLOCK_OPEN
       cursor.advance(2);
 
@@ -49,7 +50,11 @@ function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<
 
       return {
         type: ASTNodeType.Else,
-        children: elseChildren
+        children: elseChildren,
+        span: {
+          start: startOffset,
+          end: cursor.getCurrentToken().value.span.end,
+        },
       };
   }
 }
@@ -67,6 +72,7 @@ function parseElseIfRecursively(cursor: ParserCursor, parseNode: NoArgsFunction<
 function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: IfToken): IfNode;
 function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: ElseIfToken): ElseIfNode;
 function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: IfToken | ElseIfToken): IfNode | ElseIfNode {
+  const startOffset = token.span.start;
   cursor.advance();
 
   const conditionToken = cursor.peek();
@@ -81,12 +87,22 @@ function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode
   const validationResult = validateExpression(condition);
 
   const consequent = parseBlockChildren(cursor, parseNode);
+  let alternate: ElseIfNode | ElseNode | null = null;
+
+  const nextToken = cursor.peek<ElseIfToken | ElseToken>();
+  if (nextToken.type === TokenType.ELSE_IF || nextToken.type === TokenType.ELSE) {
+    alternate = parseElseIfRecursively(cursor, parseNode, nextToken);
+  }
 
   return {
     type: token.type === TokenType.IF ? ASTNodeType.If : ASTNodeType.ElseIf,
     condition,
     conditionNode: validationResult.node,
     children: consequent,
-    alternate: parseElseIfRecursively(cursor, parseNode, cursor.peek<ElseIfToken | ElseToken>())
+    alternate,
+    span: {
+      start: startOffset,
+      end: cursor.getCurrentToken().value.span.end,
+    },
   };
 }

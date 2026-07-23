@@ -27,19 +27,19 @@ export type ASTNode =
   | ImportNode;
 
 export type ASTNodeWithOptionalSpan =
-| MaybeASTNodeithSpan<ElementNode>
-| MaybeASTNodeithSpan<TextNode>
-| MaybeASTNodeithSpan<InterpolationNode>
-| MaybeASTNodeithSpan<IfNode>
-| MaybeASTNodeithSpan<ElseIfNode>
-| MaybeASTNodeithSpan<ElseNode>
-| MaybeASTNodeithSpan<ForNode>
-| MaybeASTNodeithSpan<SwitchNode>
-| MaybeASTNodeithSpan<CaseNode>
-| MaybeASTNodeithSpan<ImportNode>;
+| MaybeASTNodeWithSpan<ElementNode>
+| MaybeASTNodeWithSpan<TextNode>
+| MaybeASTNodeWithSpan<InterpolationNode>
+| MaybeASTNodeWithSpan<IfNode>
+| MaybeASTNodeWithSpan<ElseIfNode>
+| MaybeASTNodeWithSpan<ElseNode>
+| MaybeASTNodeWithSpan<ForNode>
+| MaybeASTNodeWithSpan<SwitchNode>
+| MaybeASTNodeWithSpan<CaseNode>
+| MaybeASTNodeWithSpan<ImportNode>;
 
 export type ASTNodeWithSpan<T extends { type: ASTNodeType }> = T & {
   span: Span
 } 
 
-export type MaybeASTNodeithSpan<T extends { type: ASTNodeType, span: Span }> = Omit<T, 'span'> & Partial<Pick<T, 'span'>>;
+export type MaybeASTNodeWithSpan<T extends { type: ASTNodeType, span: Span }> = Omit<T, 'span'> & Partial<Pick<T, 'span'>>;

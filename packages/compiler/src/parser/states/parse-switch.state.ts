@@ -2,7 +2,7 @@ import { NoArgsFunction } from '@xaendar/types';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { SwitchToken } from '../../lexer/types/tokens/switch-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
+import { ASTNode, MaybeASTNodeWithSpan } from '../types/ast.type';
 import { ASTNodeType } from '../types/node.enum';
 import { CaseNode } from '../types/nodes/case-node.type';
 import { SwitchNode } from '../types/nodes/switch-node.type';
@@ -18,7 +18,7 @@ import { parseBlockChildren } from './parse-block-children.state';
  * @param _token - The SWITCH token (consumed for position advancement).
  * @returns The parsed `SwitchNode`.
  */
-export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, _token: SwitchToken): SwitchNode {
+export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, _token: SwitchToken): MaybeASTNodeWithSpan<SwitchNode> {
   // consume SWITCH
   cursor.advance();
 
@@ -38,6 +38,7 @@ export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFu
 
     switch (token.type) {
       case TokenType.CASE:
+        const caseStartOffset = token.span.start;
         const condition = new Array<string>;
         
         /*
@@ -65,21 +66,34 @@ export function parseSwitchControlFlow(cursor: ParserCursor, parseNode: NoArgsFu
 
         // consume BLOCK_OPEN
         cursor.advance();
+
+        const caseChildren = parseBlockChildren(cursor, parseNode);
         
         cases.push({
           type: ASTNodeType.Case, 
           condition, 
-          children: parseBlockChildren(cursor, parseNode) 
+          children: caseChildren,
+          span: {
+            start: caseStartOffset,
+            end: cursor.getCurrentToken().value.span.end,
+          },
         });
         break;
 
       case TokenType.DEFAULT:
+        const defaultStartOffset = token.span.start;
         // consume DEFAULT and BLOCK_OPEN
         cursor.advance(2);
+
+        const defaultChildren = parseBlockChildren(cursor, parseNode);
         cases.push({
           type: ASTNodeType.Case, 
           condition: null, 
-          children: parseBlockChildren(cursor, parseNode) 
+          children: defaultChildren,
+          span: {
+            start: defaultStartOffset,
+            end: cursor.getCurrentToken().value.span.end,
+          },
         });
         break;
 

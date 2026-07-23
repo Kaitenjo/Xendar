@@ -19,11 +19,11 @@ import { parseEvent } from './parse-event.state';
  * @param token - The TAG_OPEN_NAME token containing the tag name.
  * @returns The parsed `ElementNode`.
  */
-export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: TagOpenNameToken): ElementNode {
+export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode | undefined>, token: TagOpenNameToken): MaybeASTNodeWithSpan<ElementNode> {
   cursor.advance();
   const tagName = token.parts[0];
 
-  const attributes = new Array<MaybeASTNodeWithSpan<AttributeNode>>();
+  const attributes = new Array<AttributeNode>();
   const events = new Array<EventNode>();
 
   let read = true;

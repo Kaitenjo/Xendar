@@ -5,6 +5,7 @@ import { EventParemeterToken } from '../../lexer/types/tokens/event-parameter-to
 import { EventToken } from '../../lexer/types/tokens/event-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
 import { ASTNode } from '../types/ast.type';
+import { ASTNodeType } from '../types/node.enum';
 import { EventNode } from '../types/nodes/event-node.type';
 import { validateExpression } from '../utils/expression-validator';
 
@@ -18,6 +19,7 @@ import { validateExpression } from '../utils/expression-validator';
  * @returns The parsed `EventNode`.
  */
 export function parseEvent(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, token: EventToken): EventNode {
+  const startOffset = token.span.start;
   cursor.advance();
   const raw = token.parts[0];
   const [name, value] = raw.split('=');
@@ -33,8 +35,13 @@ export function parseEvent(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTN
   }
 
   return {
+    type: ASTNodeType.Event,
     name,
     handler: value.replace(/^[""]|[""]$/g, ''),
-    parameters
+    parameters,
+    span: {
+      start: startOffset,
+      end: cursor.getCurrentToken().value.span.end,
+    },
   };
 }

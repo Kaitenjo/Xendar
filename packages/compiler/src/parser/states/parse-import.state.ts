@@ -3,10 +3,10 @@ import { TokenType } from '../../lexer/types/token-type.enum';
 import { ImportPathToken } from '../../lexer/types/tokens/import-path-token.type';
 import { ImportToken } from '../../lexer/types/tokens/import-token.type';
 import { ParserCursor } from '../models/parser-cursor.model';
-import { ASTNode } from '../types/ast.type';
+import { ASTNode, MaybeASTNodeWithSpan } from '../types/ast.type';
 import { ASTNodeType } from '../types/node.enum';
-import { ImportSpecifier } from '../types/nodes/import-specifier.type';
 import { ImportNode } from '../types/nodes/import-node.type';
+import { ImportSpecifier } from '../types/nodes/import-specifier.type';
 
 /**
  * Parses an `@import` statement.
@@ -18,7 +18,7 @@ import { ImportNode } from '../types/nodes/import-node.type';
  * - `default as D` → imported: 'default', local: 'D'
  * - `* as ns` → imported: '*', local: 'ns'
  */
-export function parseImport(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, _token: ImportPathToken): ImportNode {
+export function parseImport(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTNode | undefined>, _token: ImportPathToken): MaybeASTNodeWithSpan<ImportNode> {
   const specifiers = new Array<ImportSpecifier>();
 
   while (cursor.peek().type === TokenType.IMPORT) {

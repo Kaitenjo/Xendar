@@ -8,7 +8,7 @@ import { parseImport } from './states/parse-import.state.js';
 import { parseInterpolation } from './states/parse-interpolation.state.js';
 import { parseSwitchControlFlow } from './states/parse-switch.state.js';
 import { parseText } from './states/parse-text.state.js';
-import { ASTNode, ASTNode } from './types/ast.type.js';
+import { ASTNode } from './types/ast.type.js';
 import { ParserStates } from './types/parser-states.type.js';
 
 /**
@@ -91,12 +91,14 @@ export class Parser {
     }
 
     const node = state(this._cursor, this.parseNode.bind(this), token as never);
+    const currentToken = this._cursor.getCurrentToken().value;
+    const endOffset = 'span' in currentToken ? currentToken.span.end : token.span.end;
 
     return {
       ...node,
-      span: {
+      span: node.span ?? {
         start: startOffset,
-        end: this._cursor.getCurrentToken().value.span.end,
+        end: endOffset,
       },
     };
   }

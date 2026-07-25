@@ -44,7 +44,7 @@ export function lexInterpolationExpression(cursor: LexerCursor, context: LexerTr
           switch (previousState) {
             case LexerState.ATTRIBUTE:
               if (cursor.peek() !== DOUBLE_QUOTE) {
-                context.throwError(`Interpolation must end with double quotes '"', found '${String.fromCharCode(cursor.peek())}' at ${cursor.formattedPosition}`);
+                throw new Error(`Interpolation must end with double quotes '"', found '${String.fromCharCode(cursor.peek())}' at ${cursor.formattedPosition}`);
               }
 
               // Consume '"'
@@ -57,7 +57,7 @@ export function lexInterpolationExpression(cursor: LexerCursor, context: LexerTr
               break;
 
             default:
-              context.throwError(`Unexpected state '${previousState}' after interpolation expression at ${cursor.formattedPosition}`);
+              throw new Error(`Unexpected state '${previousState}' after interpolation expression at ${cursor.formattedPosition}`);
           };
 
           retVal = {

@@ -32,7 +32,7 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
   if (isCustomElementTag(node.tagName)) {
     const metadata = context.getImportBySelector(node.tagName);
     if (!metadata) {
-      throw new Error(`[Type Checker] ${node.tagName} selector is not associated to any WebComponent imported in the template`);
+      throw new Error(`${node.tagName} selector is not associated to any WebComponent imported in the template`, { cause: node.span });
     }
 
     lines.push(...typeCheckComponentBindings(node, metadata, context));
@@ -98,13 +98,13 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
   });
 
   if (requiredProperties.size) {
-    throw new Error(`[Type Checker] ${node.tagName} is missing the following required properties: ${Array.from(requiredProperties.values()).join(`\n`)}`)
+    throw new Error(`${node.tagName} is missing the following required properties: ${Array.from(requiredProperties.values()).join(`\n`)}`, { cause: node.span });
   }
 
   node.events.forEach(({ name, handler, parameters }) => {
     const event = findEvent(metadata, name);
     if (!event) {
-      throw new Error(`[Type Checker] Unknown event "${name}" on <${node.tagName}> (${metadata.className} has no @Event with this name).`);
+      throw new Error(`Unknown event "${name}" on <${node.tagName}> (${metadata.className} has no @Event with this name).`, { cause: node.span });
     }
 
     const eventContext = new CompilerContext([], context);

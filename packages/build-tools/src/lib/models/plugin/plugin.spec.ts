@@ -215,9 +215,12 @@ describe('xaendarPlugin()', () => {
         .mockReturnValueOnce(true)
         .mockReturnValueOnce(false);
 
-      const code =
-        `@WebComponent({ selector: ['my-comp', 'bad'] })\n` +
-        `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
+      const code = `@WebComponent({ selector: ['my-comp', 'bad'] })
+class MyComponent extends HTMLElement {
+  static {
+    __init();
+  }
+}`;
 
       await expect(callTransform(code, COMPONENT_ID)).resolves.toBeNull();
     });
@@ -227,9 +230,12 @@ describe('xaendarPlugin()', () => {
         .mockReturnValueOnce(true)
         .mockReturnValueOnce(false);
 
-      const code =
-        `@WebComponent({ selector: ["my-comp", "bad"] })\n` +
-        `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
+      const code = `@WebComponent({ selector: ["my-comp", "bad"] })
+class MyComponent extends HTMLElement {
+  static {
+    __init();
+  }
+}`;
 
       await expect(callTransform(code, COMPONENT_ID)).resolves.toBeNull();
     });
@@ -239,9 +245,12 @@ describe('xaendarPlugin()', () => {
       mockReadFile.mockReturnValue(TEMPLATE_SOURCE);
       vi.mocked(compile).mockReturnValue(new Promise(resolve => resolve(COMPILE_RESULT)));
 
-      const code =
-        `@WebComponent({ selector: "my-comp", templateUrl: "./my-comp.xd.component.html" })\n` +
-        `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
+      const code = `@WebComponent({ selector: "my-comp", templateUrl: "./my-comp.xd.component.html" })
+class MyComponent extends HTMLElement {
+  static {
+    __init();
+  }
+}`;
 
       await expect(callTransform(code, COMPONENT_ID)).resolves.toMatchObject({
         code: expect.any(String),
@@ -251,15 +260,16 @@ describe('xaendarPlugin()', () => {
 
   describe('template resolution', () => {
     it('warns and returns null when templateUrl is missing from the decorator', async () => {
-      const code =
-        `@WebComponent({ selector: 'my-comp' })\n` +
-        `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
+      const code = `@WebComponent({ selector: 'my-comp' })
+class MyComponent extends HTMLElement {
+  static {
+    __init();
+  }
+}`;
 
       const result = await callTransform(code, COMPONENT_ID);
 
-      expect(context.warn).toHaveBeenCalledWith(
-        expect.stringContaining('could not find template'),
-      );
+      expect(context.warn).toHaveBeenCalledWith(expect.stringContaining('Could not find template'));
       expect(result).toBeNull();
     });
 
@@ -268,9 +278,7 @@ describe('xaendarPlugin()', () => {
 
       const result = await callTransform(BASE_CODE, COMPONENT_ID);
 
-      expect(context.warn).toHaveBeenCalledWith(
-        expect.stringContaining('could not find template'),
-      );
+      expect(context.warn).toHaveBeenCalledWith(expect.stringContaining('Could not find template'));
       expect(result).toBeNull();
     });
 
@@ -280,9 +288,7 @@ describe('xaendarPlugin()', () => {
 
       const result = await callTransform(BASE_CODE, COMPONENT_ID);
 
-      expect(context.warn).toHaveBeenCalledWith(
-        expect.stringContaining('could not read template'),
-      );
+      expect(context.warn).toHaveBeenCalledWith(expect.stringContaining('Could not read template'));
       expect(result).toBeNull();
     });
 
@@ -293,9 +299,7 @@ describe('xaendarPlugin()', () => {
 
       await callTransform(BASE_CODE, COMPONENT_ID);
 
-      expect(context.addWatchFile).toHaveBeenCalledWith(
-        expect.stringContaining('my-comp.xd.component.html'),
-      );
+      expect(context.addWatchFile).toHaveBeenCalledWith(expect.stringContaining('my-comp.xd.component.html'));
     });
   });
 
@@ -336,9 +340,8 @@ describe('xaendarPlugin()', () => {
     });
 
     it('returns null when the static initializer block is missing', async () => {
-      const codeWithoutBlock =
-        `@WebComponent({ selector: 'my-comp', templateUrl: './my-comp.xd.component.html' })\n` +
-        `class MyComponent extends HTMLElement {}`;
+      const codeWithoutBlock = `@WebComponent({ selector: 'my-comp', templateUrl: './my-comp.xd.component.html' })
+class MyComponent extends HTMLElement {}`;
 
       await expect(callTransform(codeWithoutBlock, COMPONENT_ID)).resolves.toBeNull();
     });
@@ -420,9 +423,7 @@ describe('xaendarPlugin()', () => {
 
       await callTransform(code, COMPONENT_ID);
 
-      expect(context.addWatchFile).toHaveBeenCalledWith(
-        expect.stringContaining('.css'),
-      );
+      expect(context.addWatchFile).toHaveBeenCalledWith(expect.stringContaining('.css'));
     });
 
     it('escapes backticks in the injected CSS', async () => {
@@ -453,9 +454,15 @@ describe('xaendarPlugin()', () => {
 
     it('rewrites "export @Decorator class" to "@Decorator\\nexport class"', async () => {
       // Simulates esbuild output where `export` is emitted before the decorator
-      const buggyCode =
-        `export @WebComponent({\n  selector: 'my-comp',\n  templateUrl: './my-comp.xd.component.html'\n})\n` +
-        `class MyComponent extends HTMLElement {\n  static {\n    __init();\n  }\n}`;
+      const buggyCode = `export @WebComponent({
+  selector: 'my-comp',
+  templateUrl: './my-comp.xd.component.html'
+})
+class MyComponent extends HTMLElement {
+  static {
+    __init();
+  }
+}`;
 
       const result = await callTransform(buggyCode, COMPONENT_ID) as { code: string };
 
@@ -480,10 +487,7 @@ describe('xaendarPlugin()', () => {
     it('writes a virtual shim next to the component file, including the import and the compiled body', async () => {
       await callTransform(BASE_CODE, COMPONENT_ID);
 
-      expect(mockUpsertVirtualFile).toHaveBeenCalledWith(
-        `${COMPONENT_ID}.__typecheck__.ts`,
-        expect.stringContaining(TYPECHECK_BODY),
-      );
+      expect(mockUpsertVirtualFile).toHaveBeenCalledWith(`${COMPONENT_ID}.__typecheck__.ts`, expect.stringContaining(TYPECHECK_BODY));
 
       const [, shimSource] = mockUpsertVirtualFile.mock.calls[0]!;
       expect(shimSource).toContain(`from './my-comp.xd.component'`);
@@ -493,11 +497,7 @@ describe('xaendarPlugin()', () => {
     it('loads compilerOptions from tsconfig.json via findConfigFile/readConfigFile/parseJsonConfigFileContent', async () => {
       await callTransform(BASE_CODE, COMPONENT_ID);
 
-      expect(mockFindConfigFile).toHaveBeenCalledWith(
-        COMPONENT_DIR,
-        expect.any(Function),
-        'tsconfig.json',
-      );
+      expect(mockFindConfigFile).toHaveBeenCalledWith(COMPONENT_DIR, expect.any(Function), 'tsconfig.json');
       expect(mockGetLanguageService).toHaveBeenCalledWith(COMPILER_OPTIONS_STUB);
     });
 

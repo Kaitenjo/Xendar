@@ -10,10 +10,10 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * Emits a TAG_OPEN_NAME token with the tag name and transitions to TAG_BODY.
  *
  * @param cursor - The lexer cursor positioned at the `<` character.
- * @param context - Unused lexer context.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the TAG_OPEN_NAME token and the TAG_BODY state.
  */
-export function lexTagOpenName(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexTagOpenName(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let tagName = '';
   let retVal!: LexerTransitionFunctionReturnType
@@ -39,7 +39,7 @@ export function lexTagOpenName(cursor: LexerCursor, context: LexerTransitionFunc
       case SLASH:
       case GREATER_THEN:
         if (!tagName) {
-          context.throwError(`Tag name cannot be empty at ${cursor.formattedPosition}`);
+          throw new Error(`Tag name cannot be empty at ${cursor.formattedPosition}`);
         }
         retVal = {
           state: LexerState.TAG_BODY,

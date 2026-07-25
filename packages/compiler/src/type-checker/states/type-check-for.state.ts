@@ -1,5 +1,4 @@
 import { indent } from '@xaendar/common';
-import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';

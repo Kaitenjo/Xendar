@@ -7,11 +7,11 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
 
 /**
  * Consumes an event parameter and reads until a ',' or ')'.
- * Emits an EVENT_ATTRIBUTE token containing the raw paremeter string.
+ * Emits an EVENT_ATTRIBUTE token containing the raw parameter string.
  *
  * @param cursor - The lexer cursor positioned on the `@` character.
  * @param _context - Unused lexer context.
- * @returns Transition result with the EVENT_PAREMETER token and the EVENT state.
+ * @returns Transition result with the EVENT_PARAMETER token and the EVENT state.
  */
 export function lexEventParameter(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
@@ -46,7 +46,7 @@ export function lexEventParameter(cursor: LexerCursor, _context: LexerTransition
         if (!charDelimiter) {
           const parameterEnd = cursor.currentChar.index + 1;
           retVal.tokens!.push({
-            type: TokenType.EVENT_PAREMETER,
+            type: TokenType.EVENT_PARAMETER,
             parts: [eventParameter],
             span: {
               start: parameterStart,
@@ -63,10 +63,19 @@ export function lexEventParameter(cursor: LexerCursor, _context: LexerTransition
         break;
 
       case RPAREN:
+        cursor.advance();
+        
+        if (cursor.peek() !== DOUBLE_QUOTE) {
+          throw new Error('Event must be included in Double Quotes')
+        }
+
+        // Consume '"'
+        cursor.advance();
+
         if (!charDelimiter) {
           const parameterEnd = cursor.currentChar.index + 1;
           retVal.tokens!.push({
-            type: TokenType.EVENT_PAREMETER,
+            type: TokenType.EVENT_PARAMETER,
             parts: [eventParameter],
             span: {
               start: parameterStart,
@@ -77,7 +86,7 @@ export function lexEventParameter(cursor: LexerCursor, _context: LexerTransition
           break;
         }
 
-        eventParameter = addCharacter(cursor, eventParameter);
+        eventParameter = `${eventParameter}${cursor.currentChar.value}`;
         break;
 
       default:

@@ -11,11 +11,11 @@ import { lexFlowControlCondition } from "../utils/lex-flow-control-condition.uti
  * raw expression string and transitions to FLOW_CONTROL_BLOCK.
  *
  * @param cursor - The lexer cursor positioned at the opening `(`.
- * @param _context - Unused lexer context.
+ * @param context - Unused lexer context.
  * @returns Transition result with the CONDITION token and the FLOW_CONTROL_BLOCK state.
  */
-export function lexCaseFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
-  const condition = lexFlowControlCondition(cursor, _context);
+export function lexCaseFlowControlCondition(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+  const condition = lexFlowControlCondition(cursor, context);
   cursor.skipSpaces();
 
   return {

@@ -2,14 +2,22 @@ import { compile } from "@xaendar/compiler";
 import { writeFileSync } from "fs";
 
 const template = `
+@import { SidebarComponent } from '../sidebar/sidebar.xd.component.ts'
+@import { TopbarComponent } from '../topbar/topbar.xd.component.ts'
 
-    @for (item of navItems(); track item.route) {
-      <a class="{ collapsed() ? 'sidebar__link sidebar__link--collapsed' : 'sidebar__link' }" title="{item.label}" />
-    }
-  `
+<div class="shell">
+  <app-sidebar collapsed="{sidebarCollapsed()}" @collapsedChange="onCollapseChange($event)" />
+
+  <div class="shell__main">
+    <app-topbar @menuToggle="onSidebarToggle()" />
+
+    <main class="shell__content" />
+  </div>
+</div>
+`
 
 const filePath = 'dist/compiled.js'
-const output = compile(template, 'TestComponent').then(output => {
+compile(template, 'TestComponent').then(output => {
   writeFileSync(filePath, output.javascript);
   writeFileSync('dist/compiled.ts', output.typescript);
 });

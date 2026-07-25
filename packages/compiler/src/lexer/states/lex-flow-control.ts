@@ -10,10 +10,10 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * Advances the cursor past the keyword and transitions to the appropriate next state.
  *
  * @param cursor - The lexer cursor positioned on the `@` character.
- * @param context - Unused lexer context.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the matching flow-control token and next state.
  */
-export function lexFlowControl(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let retVal!: LexerTransitionFunctionReturnType;
 
   // Consume '@' character
@@ -86,7 +86,7 @@ export function lexFlowControl(cursor: LexerCursor, context: LexerTransitionFunc
       state: LexerState.IMPORT
     };
   } else {
-    context.throwError(`Unknown flow-control keyword at ${cursor.formattedPosition}`);
+    throw new Error(`Unknown flow-control keyword at ${cursor.formattedPosition}`);
   }
 
   return retVal

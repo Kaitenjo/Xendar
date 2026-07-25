@@ -64,7 +64,7 @@ export function parseAttribute(cursor: ParserCursor, parseNode: NoArgsFunction<A
   }
 
   if (nextToken.type !== TokenType.ATTRIBUTE_VALUE) {
-    throw new Error(`[Parser] Attribute value missing for ${name} in: ${name}`);
+    throw new Error(`Attribute value missing for ${name} in: ${name}`);
   }
 
   cursor.advance();

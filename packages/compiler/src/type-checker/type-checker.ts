@@ -1,7 +1,8 @@
-import { indent } from '@xaendar/common';
+import { indent, slice } from '@xaendar/common';
 import { ASTNode } from '../parser/types/ast.type.js';
 import { ASTNodeType } from '../parser/types/node.enum.js';
 import { ImportNode } from '../parser/types/nodes/import-node.type.js';
+import { Span } from '../types/span.type.js';
 import { TypeCheckContext } from './models/type-checker-context.js';
 import { typeCheckElement } from './states/type-check-element.state.js';
 import { typeCheckFor } from './states/type-check-for.state.js';
@@ -47,7 +48,8 @@ export class TypeChecker {
     [ASTNodeType.Import]: typeCheckImport,
   };
 
-  constructor(private _ast: ASTNode[]) { }
+  constructor(private _input: string, private _ast: ASTNode[]) { 
+  }
 
   /**
    * Pre-populates the shared context with component and directive metadata
@@ -89,14 +91,20 @@ export class TypeChecker {
    * @param baseDir - Absolute path used to resolve relative import paths
    */
   public async generate(baseDir?: string): Promise<string> {
-    await this.populateImportMetadata(baseDir);
-    const body = this._ast.flatMap(node => this._processNode(node, this._context));
-
-    return [
-      'function typeCheck() {',
-      ...indent(body),
-      '}',
-    ].join('\n');
+    try {
+      await this.populateImportMetadata(baseDir);
+      const body = this._ast.flatMap(node => this._processNode(node, this._context));
+  
+      return [
+        'function typeCheck() {',
+        ...indent(body),
+        '}',
+      ].join('\n');
+    } catch (err) {
+      const error = err as Error;
+      const { start, end } = error.cause as Span;
+      throw new Error(`[Type Checker] ${error.message}\n----> ${slice(this._input, start, end)}`);
+    }
   }
 
   /**
@@ -108,7 +116,7 @@ export class TypeChecker {
     const state = this._states[node.type];
 
     if (!state) {
-      throw new Error(`[Type Checker] No transition function for token type ${ASTNodeType[node.type]}`);
+      throw new Error(`No transition function for token type ${ASTNodeType[node.type]}`, { cause: node.span })
     }
 
     return state(node as never, this._processNode, context);

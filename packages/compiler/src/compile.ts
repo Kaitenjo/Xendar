@@ -18,9 +18,9 @@ import { TypeChecker } from './type-checker/type-checker';
  */
 export async function compile(input: string, baseDir: string, cssVariableName?: string): Promise<{ javascript: string; typescript: string; }> {
   const tokens = new Lexer(input).tokenize();
-  const nodes = new Parser(tokens).parse();
+  const nodes = new Parser(input, tokens).parse();
   return {
-    javascript: new Generator(nodes).generate(cssVariableName),
-    typescript: await new TypeChecker(nodes).generate(baseDir)
+    javascript: new Generator(input, nodes).generate(cssVariableName),
+    typescript: await new TypeChecker(input, nodes).generate(baseDir)
   } 
 }

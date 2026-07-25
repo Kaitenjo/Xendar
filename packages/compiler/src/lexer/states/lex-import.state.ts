@@ -5,7 +5,7 @@ import { TokenType } from '../types/token-type.enum';
 import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type';
 import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type';
 
-export function lexImport(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let importValue = '';
   let importStart = cursor.currentChar.index + 1;
@@ -24,7 +24,7 @@ export function lexImport(cursor: LexerCursor, context: LexerTransitionFunctionC
 
   cursor.advance();
   if (cursor.currentChar.code !== LEFT_BRACE) {
-    context.throwError(`Expected { after @import at ${cursor.formattedPosition}`);
+    throw new Error(`Expected { after @import at ${cursor.formattedPosition}`);
   }
 
   while (read) {

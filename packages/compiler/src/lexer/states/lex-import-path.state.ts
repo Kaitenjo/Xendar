@@ -5,7 +5,7 @@ import { TokenType } from '../types/token-type.enum';
 import { LexerTransitionFunctionContext } from '../types/transition-function/transition-function-context.type';
 import { LexerTransitionFunctionReturnType } from '../types/transition-function/transition-function-return-type.type';
 
-export function lexImportPath(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexImportPath(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let path = '';
   let retVal!: LexerTransitionFunctionReturnType
@@ -20,7 +20,7 @@ export function lexImportPath(cursor: LexerCursor, context: LexerTransitionFunct
   cursor.skipSpaces();
 
   if (!cursor.peekMatch('from')) {
-    context.throwError(`Expected 'from' keyword after import list at ${cursor.formattedPosition}`);
+    throw new Error(`Expected 'from' keyword after import list at ${cursor.formattedPosition}`);
   }
 
   cursor.advance(4);
@@ -46,7 +46,7 @@ export function lexImportPath(cursor: LexerCursor, context: LexerTransitionFunct
       break;
     
     default:
-      context.throwError(`Import statement must start with ' or ".\nFound character ${cursor.currentChar.value} at ${cursor.formattedPosition}`)
+      throw new Error(`Import statement must start with ' or ".\nFound character ${cursor.currentChar.value} at ${cursor.formattedPosition}`)
   }
 
   const delimiter = singleQuote ? SINGLE_QUOTE : DOUBLE_QUOTE;

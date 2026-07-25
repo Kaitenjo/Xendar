@@ -1,4 +1,4 @@
-import { Stack } from '@xaendar/common';
+import { slice, Stack } from '@xaendar/common';
 import { Dictionary } from '@xaendar/types';
 import { EOF } from '../costants/chars.constants';
 import { Span } from '../types/span.type';
@@ -6,6 +6,7 @@ import { lexAttributeValue } from './states/lex-attribute-value.state';
 import { lexAttribute } from './states/lex-attribute.state';
 import { lexCaseFlowControlCondition } from './states/lex-case-flow-control-condition.state';
 import { lexDefaultFlowControlCondition } from './states/lex-default-flow-control-condition.state';
+import { lexEventHandler } from './states/lex-event-handler.state';
 import { lexEventParameter } from './states/lex-event-parameter.state';
 import { lexEvent } from './states/lex-event.state';
 import { lexFlowControl } from './states/lex-flow-control';
@@ -61,6 +62,7 @@ export class Lexer {
     [LexerState.ATTRIBUTE]: lexAttribute,
     [LexerState.ATTRIBUTE_VALUE]: lexAttributeValue,
     [LexerState.EVENT]: lexEvent,
+    [LexerState.EVENT_HANDLER]: lexEventHandler,
     [LexerState.EVENT_PARAMETER]: lexEventParameter,
     [LexerState.FLOW_CONTROL]: lexFlowControl,
     [LexerState.FLOW_CONTROL_CONDITION]: lexDefaultFlowControlCondition,
@@ -76,10 +78,10 @@ export class Lexer {
   /**
    * Creates a new Lexer instance for the given template content.
    *
-   * @param input - The full template text to tokenise.
+   * @param _input - The full template text to tokenise.
    */
-  constructor(public input: string) {
-    this._cursor = new LexerCursor(this.input);
+  constructor(private _input: string) {
+    this._cursor = new LexerCursor(this._input);
   }
 
   /**
@@ -91,15 +93,15 @@ export class Lexer {
   public tokenize(): Token[] {
     let eof = false;
     const cursor = this._cursor;
+    let stateStartIndex = -1;
 
     while (!eof) {
       try {
-        const stateStartIndex = cursor.currentChar.index + 1;
+        stateStartIndex = cursor.currentChar.index + 1;
         const transitionFunction = this._states[this._state];
         const { state, tokens, popState, pushState } = transitionFunction!(cursor, {
           history: this._stack.values,
           tokens: [...this._tokens],
-          throwError: this.throwError
         });
 
         if (tokens?.length) {
@@ -121,8 +123,7 @@ export class Lexer {
         if (error.cause === EOF) {
           eof = true;
         } else {
-          console.log(`Something went wrong while computing state ${this._state} at ${this._cursor.formattedPosition}`);
-          throw err;
+          throw new Error(`[Lexer] ${error.message}\n----> ${slice(this._input, stateStartIndex, cursor.currentChar.index + 1)}\nat ${cursor.formattedPosition}`);
         }
       }
     }

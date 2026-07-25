@@ -1,5 +1,7 @@
+import { slice } from '@xaendar/common';
 import { TokenType } from '../lexer/types/token-type.enum.js';
 import { Token } from '../lexer/types/token.type.js';
+import { EOFToken } from '../lexer/types/tokens/eof-token.type.js';
 import { ParserCursor } from './models/parser-cursor.model.js';
 import { parseElement } from './states/parse-element.state.js';
 import { parseForControlFlow } from './states/parse-for.state.js';
@@ -49,7 +51,10 @@ export class Parser {
    *
    * @param tokens - Array of tokens produced by the Lexer.
    */
-  constructor(tokens: Token[]) {
+  constructor(
+    private _input: string,
+    tokens: Token[]
+  ) {
     this._cursor = new ParserCursor(tokens);
   }
 
@@ -59,16 +64,22 @@ export class Parser {
    * @returns Array of top-level AST nodes.
    */
   public parse(): ASTNode[] {
-    const nodes = new Array<ASTNode>;
-
-    while (this._cursor.peek().type !== TokenType.EOF) {
-      const parseNode = this.parseNode();
-      if (parseNode) {
-        nodes.push(parseNode);
+    try {
+      const nodes = new Array<ASTNode>;
+  
+      while (this._cursor.peek().type !== TokenType.EOF) {
+        const parseNode = this.parseNode();
+        if (parseNode) {
+          nodes.push(parseNode);
+        }
       }
+  
+      return nodes;
+    } catch (err) {
+      const error = err as Error;
+      const currentToken = this._cursor.peek<Exclude<Token, EOFToken>>();
+      throw new Error(`[Parser] ${error.message}\n----> ${slice(this._input, currentToken.span.start, currentToken.span.end)}`)
     }
-
-    return nodes;
   }
 
   /**
@@ -87,7 +98,7 @@ export class Parser {
     const state = this._states[token.type];
 
     if (!state) {
-      throw new Error(`[Parser] No transition function for token type ${TokenType[token.type]}`);
+      throw new Error(`No transition function for token type ${TokenType[token.type]}`);
     }
 
     const node = state(this._cursor, this.parseNode.bind(this), token as never);

@@ -16,14 +16,14 @@ import { LexerTransitionFunctionReturnType } from "../types/transition-function/
  * Used by: `@if`, `@for`, `@switch`, `@case`, `@else`, `@default`.
  *
  * @param cursor - The lexer cursor positioned before the opening `{`.
- * @param context - Unused lexer context.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the BLOCK_OPEN token and the TEXT state.
  */
-export function lexFlowControlBlock(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexFlowControlBlock(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   cursor.skipSpaces();
 
   if (cursor.peek() !== LEFT_BRACE) {
-    context.throwError(`Expected '{' but got '${String.fromCharCode(cursor.peek())}' at ${cursor.formattedPosition}`);
+    throw new Error(`Expected '{' but got '${String.fromCharCode(cursor.peek())}' at ${cursor.formattedPosition}`);
   }
 
   // consume '{'

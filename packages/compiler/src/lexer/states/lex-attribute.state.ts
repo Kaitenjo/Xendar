@@ -11,10 +11,10 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
  * If the attribute value is an interpolation, pushes the INTERPOLATION state.
  *
  * @param cursor - The lexer cursor positioned at the start of the attribute.
- * @param context - Unused lexer context.
+ * @param _context - Unused lexer context.
  * @returns Transition result with the ATTRIBUTE token and next state.
  */
-export function lexAttribute(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+export function lexAttribute(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
   let attribute = '';
   let retVal!: LexerTransitionFunctionReturnType;
@@ -62,7 +62,7 @@ export function lexAttribute(cursor: LexerCursor, context: LexerTransitionFuncti
         
         // If attribute has a value, it must start with double quotes
         if (cursor.peek() !== DOUBLE_QUOTE) {
-          context.throwError(`Attribute value must start with double quotes '"' at ${cursor.formattedPosition}`);
+          throw new Error(`Attribute value must start with double quotes '"' at ${cursor.formattedPosition}`);
         }
 
         // Consume '"'

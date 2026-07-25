@@ -18,7 +18,7 @@ export function lexFlowControlCondition(cursor: LexerCursor, context: LexerTrans
   cursor.skipSpaces();
 
   if (cursor.peek() !== LPAREN) {
-    context.throwError(`Expected '(' but got '${String.fromCharCode(cursor.peek())}' at row ${cursor.position.row}, col ${cursor.position.column}`)
+    throw new Error(`Expected '(' but got '${String.fromCharCode(cursor.peek())}' at row ${cursor.position.row}, col ${cursor.position.column}`)
   }
 
   // consume '('

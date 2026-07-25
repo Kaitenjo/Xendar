@@ -41,7 +41,7 @@ export function xaendarPlugin(): Plugin {
   let logger: Logger | undefined;
 
   const reportNonFatalError = (message: string): void => {
-    const redMessage = `\x1b[31m${message}\x1b[0m`;
+    const redMessage = `\x1b[31m\rXaendar: ${message}\x1b[0m`;
     (logger ?? console).error(redMessage)
   };
 
@@ -62,7 +62,7 @@ export function xaendarPlugin(): Plugin {
       const className = extractClassName(code)
       const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
       if (!templatePath || !host.fileExists(templatePath)) {
-        this.warn(`Xaendar: could not find template at ${templatePath}`);
+        this.warn(`Could not find template at ${templatePath}`);
         return null;
       }
 
@@ -70,7 +70,7 @@ export function xaendarPlugin(): Plugin {
       registerTemplateMapping(templatePath, id);
       const templateSource = host.readFile(templatePath);
       if (templateSource === undefined) {
-        this.warn(`Xaendar: could not read template at ${templatePath}`);
+        this.warn(`Could not read template at ${templatePath}`);
         return null;
       }
 
@@ -90,7 +90,7 @@ export function xaendarPlugin(): Plugin {
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
-        reportNonFatalError(`Xaendar: failed to compile template ${templatePath}: ${String(err)}`);
+        reportNonFatalError(`Failed to compile template\n${templatePath}:\n${String(err)}`);
         return null;
       }
 
@@ -113,7 +113,7 @@ export function xaendarPlugin(): Plugin {
       const diagnostics = languageService.getSemanticDiagnostics(shimPath);
 
       for (const diagnostic of diagnostics) {
-        reportNonFatalError(describeDiagnostic(diagnostic));
+        reportNonFatalError(describeDiagnostic(templatePath, diagnostic));
       }
 
       return {
@@ -161,7 +161,7 @@ function assertValidCustomElementName(code: string, id: string): void {
   const match = code.match(selectorRegex);
 
   if (!match) {
-    throw new Error(`Xaendar: no selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`);
+    throw new Error(`\rXaendar: no selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`);
   }
 
   const raw = match[1]!;
@@ -171,7 +171,7 @@ function assertValidCustomElementName(code: string, id: string): void {
 
   for (const selector of selectors) {
     if (!isValidCustomElementName(selector)) {
-      throw new Error(`Xaendar: invalid custom element name "${selector}" in component ${id}`);
+      throw new Error(`\rXaendar: invalid custom element name "${selector}" in component ${id}`);
     }
   }
 }
@@ -234,7 +234,7 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
   const lastStaticBlock = /static\s*\{\s*\n(\s*)(\w+)\(\);\s*\n\s*\}/;
 
   if (!lastStaticBlock.test(result)) {
-    throw new Error('Xaendar: could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.');
+    throw new Error('Xaendar: Could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.');
   }
 
   const requiredImports = ['effect', '_if', '_switch', '_for', 'Context', '_iterationVariables', '_renderElement', '_renderText', '_renderLiteralText', 'createElement', 'createSVGElement', 'createMATHMLElement'];
@@ -372,11 +372,11 @@ function buildTypecheckShim(className: string, componentFilePath: string, body: 
  * the original DSL template — remapping to template positions is not yet
  * implemented (see the module-level doc comment on `xaendarPlugin`).
  */
-function describeDiagnostic(diagnostic: Diagnostic): string {
+function describeDiagnostic(templatePath: string, diagnostic: Diagnostic): string {
   const message = flattenMessage(diagnostic);
   if (diagnostic.file && diagnostic.start !== undefined) {
     const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-    return `${diagnostic.file.fileName}:${line + 1}:${character + 1} - ${message}`;
+    return `${templatePath}:${line + 1}:${character + 1} - ${message}`;
   }
   return message;
 }

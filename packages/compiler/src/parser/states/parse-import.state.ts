@@ -75,5 +75,5 @@ function parseSpecifier(raw: string): ImportSpecifier {
     };
   }
 
-  throw new Error(`[Parser] Invalid import specifier "${raw}".`);
+  throw new Error(`Invalid import specifier "${raw}".`);
 }

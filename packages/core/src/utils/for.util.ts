@@ -48,7 +48,7 @@ export function _for(parentNode: HTMLElement, parentContext: Context, condition:
       let nextReference: Node = anchor;
 
       for (let i = items.length - 1; i >= 0; i--) {
-        const key = newKeys[i]!;
+        const key = newKeys[i];
         const existing = entries.get(key);
 
         let entry: ForEntry;
@@ -57,7 +57,9 @@ export function _for(parentNode: HTMLElement, parentContext: Context, condition:
           const nodes = existing.context.getNodes();
           const lastNode = nodes[nodes.length - 1];
           if (lastNode?.nextSibling !== nextReference) {
-            nodes.forEach(node => parentNode.insertBefore(node, nextReference));
+            for (let i = 0; i < nodes.length; i++) {
+              parentNode.insertBefore(nodes[i], nextReference);
+            }
           }
           existing.update?.(i, items);
           entry = existing;
@@ -120,6 +122,14 @@ export function _iterationVariables(context: Context, items: unknown[], index: n
     }
   };
 
-  Object.entries(retVal.vars).forEach(([key, value]) => context.addIdentifier(key, value));
+  const entries = Object.entries(retVal.vars);
+  for (let i = 0; i < entries.length; i++) {
+    /*
+      entries[i][0] = key
+      entries[i][1] = value
+    */
+    context.addIdentifier(entries[i][0], entries[i][1])
+  }
+
   return retVal
 }

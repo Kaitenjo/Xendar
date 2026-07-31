@@ -56,7 +56,11 @@ function defineObservedAttributes<T extends BaseWebComponent>(klass: Constructor
  * @param selectors - One or more custom element tag names to associate with the class.
  */
 function setSelectors<T extends BaseWebComponent>(klass: Constructor<T>, selectors: string | string[]): void {
-  Array.isArray(selectors)
-    ? selectors.forEach(selector => customElements.define(selector, klass))
-    : customElements.define(selectors, klass);
+  if (typeof selectors === 'string') {
+    customElements.define(selectors, klass);
+  } else {
+    for (let i = 0; i < selectors.length; i++) {
+      customElements.define(selectors[i], klass)
+    }
+  } 
 }

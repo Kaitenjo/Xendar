@@ -22,7 +22,9 @@ export function generateSwitch(node: SwitchNode, parentNode: string, index: stri
 
   retVal.code.push(`_switch(${parentNode}, context, () => ${resolveExpression(node.expression, compilerContext)}, [`);
 
-  node.children.forEach((caseNode, i) => {
+  const children = node.children;
+  for (let i = 0; i < children.length; i++) {
+    const caseNode = children[i];
     const caseContext = new CompilerContext([], compilerContext);
     const caseKey = caseNode.condition ? getBlockIdentifier('case', parentNode, `${index}_${i}`) : getBlockIdentifier('default', parentNode, index);
 
@@ -39,7 +41,7 @@ export function generateSwitch(node: SwitchNode, parentNode: string, index: stri
         '},'
       ])
     );
-  });
+  };
 
   retVal.code.push('])');
   return retVal;

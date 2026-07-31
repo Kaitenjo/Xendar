@@ -53,7 +53,7 @@ function parseSpecifier(raw: string): ImportSpecifier {
   if (namespaceMatch) {
     return {
       imported: '*',
-      local: namespaceMatch[1]!,
+      local: namespaceMatch[1],
     };
   }
 
@@ -62,7 +62,7 @@ function parseSpecifier(raw: string): ImportSpecifier {
   if (defaultMatch) {
     return {
       imported: 'default',
-      local: defaultMatch[1]!,
+      local: defaultMatch[1],
     };
   }
 
@@ -70,8 +70,8 @@ function parseSpecifier(raw: string): ImportSpecifier {
   const namedMatch = trimmed.match(/^([A-Za-z_$][\w$]*)(?:\s+as\s+([A-Za-z_$][\w$]*))?$/);
   if (namedMatch) {
     return {
-      imported: namedMatch[1]!,
-      local: (namedMatch[2] ?? namedMatch[1])!,
+      imported: namedMatch[1],
+      local: namedMatch[2] ?? namedMatch[1],
     };
   }
 

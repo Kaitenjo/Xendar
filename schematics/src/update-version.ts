@@ -105,7 +105,8 @@ function updateVersion(bump: 'major' | 'minor' | 'patch'): void {
   const packages = readdirSync('../packages');
   console.log(`\nFound ${packages.length} sub-package(s) to update...\n`);
 
-  for (const projectName of packages) {
+  for (let i = 0; i < packages.length; i++) {
+    const projectName = packages[i];
     const packageJsonPath = `../packages/${projectName}/package.json`;
     const packageJson: PackageJson = JSON.parse(readFileSync(packageJsonPath, { encoding: 'utf-8' }));
 
@@ -117,7 +118,7 @@ function updateVersion(bump: 'major' | 'minor' | 'patch'): void {
         }
       }
     }
-    
+
     writeFileSync(packageJsonPath, JSON.stringify({ ...packageJson, version: nextVersion }, null, 2));
     console.log(`✅ ${projectName}: ${prevSub} → ${nextVersion}`);
   }

@@ -46,11 +46,11 @@ export function _if(parentNode: HTMLElement, parentContext: Context, blocks: Blo
 
   switch (blocks.length) {
     case 1:
-      fn = (state: State | undefined) => handleIf(parentNode, parentContext, blocks[0]!, state, anchor);
+      fn = (state: State | undefined) => handleIf(parentNode, parentContext, blocks[0], state, anchor);
       break;
 
     case 2:
-      fn = (state: State | undefined) => handleIfElse(parentNode, parentContext, blocks[0]!, blocks[1]!, state, anchor);
+      fn = (state: State | undefined) => handleIfElse(parentNode, parentContext, blocks[0], blocks[1], state, anchor);
       break;
 
     default:
@@ -138,7 +138,7 @@ function handleIfElseIf(
   anchor: Comment
 ): State | undefined {
   for (let i = 0; i < blocks.length; i++) {
-    const { condition, block } = blocks[i]!;
+    const { condition, block } = blocks[i];
     if (!condition || condition()) {
       return checkAndUpdateState(parentNode, parentContext, state, i, block, anchor);
     }

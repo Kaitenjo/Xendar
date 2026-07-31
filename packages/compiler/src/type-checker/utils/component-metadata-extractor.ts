@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
-import { createSourceFile, Decorator, Expression, forEachChild, getNameOfDeclaration, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isDecorator, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
+import { createSourceFile, Decorator, Expression, getNameOfDeclaration, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isDecorator, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
 import { ComponentEventMetadata, ComponentPropertyMetadata, TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
 
 /**
@@ -24,7 +24,9 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
 
     let componentMetadata: TypeCheckContextComponentImport | undefined;
 
-    forEachChild(sourceFile, node => {
+    const statements = sourceFile.statements;
+    for (let i = 0; i < statements.length; i++) {
+      const node = statements[i];
       if (componentMetadata) {
         return;
       }
@@ -51,8 +53,10 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
         // Extract properties and events
         const properties = new Array<ComponentPropertyMetadata>();
         const events = new Array<ComponentEventMetadata>();
+        const members = node.members;
 
-        node.members.forEach(member => {
+        for (let i = 0; i < members.length; i++) {
+          const member = members[i];
           if (!isPropertyDeclaration(member)) {
             return;
           }
@@ -90,7 +94,7 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
               }
             }
           }
-        });
+        }
 
         componentMetadata = {
           type: 'component',
@@ -100,7 +104,7 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
           events,
         };
       }
-    });
+    }
 
     return componentMetadata;
   } catch (error) {
@@ -314,5 +318,5 @@ function extractGenericArgument(typeNode: TypeNode | undefined, event = false): 
     return defaultValue;
   }
 
-  return typeArgs[0]!.getText();
+  return typeArgs[0].getText();
 }

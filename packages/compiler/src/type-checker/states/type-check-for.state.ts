@@ -23,7 +23,10 @@ export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: T
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
 
-  [indexName, firstName, lastName, evenName, oddName, node.itemAlias].forEach(identifier => forContext.addUnresolvableIdentifier(identifier));
+  const identifiers = [indexName, firstName, lastName, evenName, oddName, node.itemAlias];
+  for (let i = 0; i < identifiers.length; i++) {
+    forContext.addUnresolvableIdentifier(identifiers[i])
+  }
 
   const lines = new Array<string>();
   lines.push(`for (const ${node.itemAlias} of root.${node.iterableSource}) {`);

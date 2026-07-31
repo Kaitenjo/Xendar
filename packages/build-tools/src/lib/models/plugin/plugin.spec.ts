@@ -489,7 +489,7 @@ class MyComponent extends HTMLElement {
 
       expect(mockUpsertVirtualFile).toHaveBeenCalledWith(`${COMPONENT_ID}.__typecheck__.ts`, expect.stringContaining(TYPECHECK_BODY));
 
-      const [, shimSource] = mockUpsertVirtualFile.mock.calls[0]!;
+      const [, shimSource] = mockUpsertVirtualFile.mock.calls[0];
       expect(shimSource).toContain(`from './my-comp.xd.component'`);
       expect(shimSource).toMatch(/declare const root: \w+;/);
     });
@@ -557,7 +557,7 @@ class MyComponent extends HTMLElement {
 
       expect(onClose).toHaveBeenCalledWith('close', expect.any(Function));
 
-      const [, closeHandler] = onClose.mock.calls[0]!;
+      const [, closeHandler] = onClose.mock.calls[0];
       closeHandler();
 
       expect(mockDisposeLanguageService).toHaveBeenCalled();

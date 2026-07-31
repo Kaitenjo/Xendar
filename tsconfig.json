@@ -6,7 +6,7 @@
     "lib": ["ESNext", "dom"],
     "sourceMap": true,
     "declaration": true,
-    "noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": false,
     "exactOptionalPropertyTypes": false,
     "resolveJsonModule": true,
     "isolatedModules": true,

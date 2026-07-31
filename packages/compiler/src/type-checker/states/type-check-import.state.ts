@@ -15,8 +15,9 @@ export function typeCheckImport(node: ImportNode, _processNode: ProcessNode, _co
   const escapedSource = escapeTypeString(source);
   const lines = new Array<string>();
 
-  for (const specifier of node.specifiers) {
-    const { imported, local } = specifier;
+  
+  for (let i = 0; i < node.specifiers.length; i++) {
+    const { imported, local } = node.specifiers[i];
 
     switch (imported) {
       case '*':

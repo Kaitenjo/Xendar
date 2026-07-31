@@ -1,3 +1,4 @@
+import { slice } from '@xaendar/common';
 import { PositiveInteger, TupleOfLength } from '@xaendar/types';
 import { CR, EOF, LF, SPACE } from '../../costants/chars.constants';
 import { CurrentChar } from './current-char.type';
@@ -111,7 +112,7 @@ export class LexerCursor {
       }
 
       this._currentChar.index = newIndex;
-      this._currentChar.value = this.input[newIndex]!;
+      this._currentChar.value = this.input[newIndex];
       this._currentChar.code = this.input.charCodeAt(newIndex);
     }
   }
@@ -145,8 +146,8 @@ export class LexerCursor {
 
     // RegExp path — slice input and test
     const start = this._currentChar.index + 1;
-    const slice = this.input.slice(start, start + length!);
-    return pattern.test(slice);
+    const slicedInput = slice(this.input, start, start + length!);
+    return pattern.test(slicedInput);
   }
 
   /**

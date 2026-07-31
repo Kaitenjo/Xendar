@@ -1,3 +1,4 @@
+import { slice } from '@xaendar/common';
 import { Expression, forEachChild, Identifier, isIdentifier, isPropertyAccessExpression, isPropertyAssignment, Node } from 'typescript';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
@@ -313,12 +314,12 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
   let lastEnd = node.getStart();
 
   forEachChild(node, child => {
-    result = `${result}${sourceText.slice(lastEnd, child.getStart())}${emitNode(child, node, compilerContext, options)}`;
+    result = `${result}${slice(sourceText, lastEnd, child.getStart())}${emitNode(child, node, compilerContext, options)}`;
     lastEnd = child.getEnd();
   });
 
   // Append any trailing text after the last child (e.g. closing paren)
-  return `${result}${sourceText.slice(lastEnd, node.getEnd())}`;
+  return `${result}${slice(sourceText, lastEnd, node.getEnd())}`;
 }
 
 /**

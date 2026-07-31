@@ -66,7 +66,7 @@ export class ParserCursor {
       this._currentToken.index = -1;
     } else {
       this._currentToken.index = newIndex;
-      this._currentToken.value = this._tokens[newIndex]!;
+      this._currentToken.value = this._tokens[newIndex];
     }
   }
 
@@ -114,6 +114,6 @@ export class ParserCursor {
    * Peeks a single token at the given absolute index.
    */
   private peekOneToken(index: number): Token {
-    return index < this._tokens.length ? this._tokens[index]! : { type: TokenType.EOF };
+    return index < this._tokens.length ? this._tokens[index] : { type: TokenType.EOF };
   }
 }

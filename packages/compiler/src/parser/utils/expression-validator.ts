@@ -60,7 +60,7 @@ export function validateExpression(source: string): ExpressionValidationResult {
   const sourceFile = createSourceFile('expression.ts', `${prefix}${source}`, ScriptTarget.ESNext, true);
 
   const statement = sourceFile.statements[0] as VariableStatement;
-  const expression = statement.declarationList.declarations[0]!.initializer!;
+  const expression = statement.declarationList.declarations[0].initializer!;
 
   const diagnostics = new Array<ExpressionDiagnostic>;
   visitNode(expression, prefix.length, diagnostics);
@@ -94,7 +94,7 @@ function visitNode(node: Node, offset: number, diagnostics: ExpressionDiagnostic
   forEachChild(node, child => visitNode(child, offset, diagnostics));
 
   if (diagnostics.length) {
-    throw new Error(diagnostics[0]!.message);
+    throw new Error(diagnostics[0].message);
   }
 }
 

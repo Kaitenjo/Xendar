@@ -26,7 +26,10 @@ const projectsRoot = '../packages';
  * // ❌ Typescript Compilation failed for @xaendar/core:
  */
 async function compileAll(): Promise<void> {
-  for (const project of readdirSync(projectsRoot)) {
+  const projects = readdirSync(projectsRoot);
+  
+  for (let i = 0; i < projects.length; i++) {
+    const project = projects[i];
     const projectPath = resolve(projectsRoot, project);
     const tsconfigPath = resolve(projectPath, 'tsconfig.compile.json');
     if (!existsSync(tsconfigPath)) {

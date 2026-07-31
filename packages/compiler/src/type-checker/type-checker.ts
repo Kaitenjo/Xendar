@@ -48,8 +48,7 @@ export class TypeChecker {
     [ASTNodeType.Import]: typeCheckImport,
   };
 
-  constructor(private _input: string, private _ast: ASTNode[]) { 
-  }
+  constructor(private _input: string, private _ast: ASTNode[]) { }
 
   /**
    * Pre-populates the shared context with component and directive metadata

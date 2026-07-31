@@ -1,3 +1,4 @@
+import { slice } from '@xaendar/common';
 import { NoArgsFunction } from '@xaendar/types';
 import { createSourceFile, isExpressionStatement, isIdentifier, ScriptTarget } from 'typescript';
 import { TokenType } from '../../lexer/types/token-type.enum';
@@ -60,15 +61,15 @@ export function parseForExpression(source: string, baseOffset: number): ForExpre
   }
 
   // ---- Section 1: "item of items" ----
-  const iterSection = sections[0]!.trim();
+  const iterSection = sections[0].trim();
   const ofIndex = iterSection.indexOf(' of ');
 
   if (ofIndex === -1) {
     throw new Error(`@for expression must be in the form "item of iterable".`);
   }
 
-  const itemAlias = iterSection.slice(0, ofIndex).trim();
-  const iterableSource = iterSection.slice(ofIndex + 4).trim();
+  const itemAlias = slice(iterSection, 0, ofIndex).trim();
+  const iterableSource = slice(iterSection, ofIndex + 4).trim();
 
   if (!isValidIdentifier(itemAlias)) {
     throw new Error(`'${itemAlias}' is not a valid item alias.`);
@@ -78,13 +79,13 @@ export function parseForExpression(source: string, baseOffset: number): ForExpre
   const iterValidation = validateExpression(iterableSource);
 
   // ---- Section 2: "track item.id" ----
-  const trackSection = sections[1]!.trim();
+  const trackSection = sections[1].trim();
 
   if (!trackSection.startsWith('track ')) {
     throw new Error(`Second section of @for must start with "track".`);
   }
 
-  const trackSource = trackSection.slice(6).trim();
+  const trackSource = slice(trackSection, 6).trim();
   const trackValidation = validateExpression(trackSource);
 
   // ---- Section 3 (optional): "$index = i, $last = l" ----
@@ -119,10 +120,11 @@ export function parseForExpression(source: string, baseOffset: number): ForExpre
 function parseImplicitAliases(source: string, baseOffset: number, out: Map<ForImplicitVariables, string>): void {
   const entries = source.split(',');
   let cursor = 0;
-  
-  const IMPLICIT_VARIABLES = new Set(['$index', '$last', '$first', '$even', '$odd']);
 
-  for (const entry of entries) {
+  const IMPLICIT_VARIABLES = new Set(['$index', '$last', '$first', '$even', '$odd']);
+  
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
     const trimmed = entry.trim();
     const eqIndex = trimmed.indexOf('=');
 
@@ -131,11 +133,11 @@ function parseImplicitAliases(source: string, baseOffset: number, out: Map<ForIm
     }
 
     cursor += entry.length + 1;
-    const alias = trimmed.slice(0, eqIndex).trim();
-    const implicit = trimmed.slice(eqIndex + 1).trim();
+    const alias = slice(trimmed, 0, eqIndex).trim();
+    const implicit = slice(trimmed, eqIndex + 1).trim();
 
     const isImplicitVariable = (value: string): value is ForImplicitVariables => IMPLICIT_VARIABLES.has(value);
-    
+
     if (!isImplicitVariable(implicit)) {
       throw new Error(`'${implicit}' is not a known implicit variable. Known variables: ${[...IMPLICIT_VARIABLES].join(', ')}.`);
     }
@@ -174,7 +176,7 @@ function splitForSections(source: string): string[] {
   let inString: '"' | "'" | '`' | null | undefined;
 
   for (let i = 0; i < source.length; i++) {
-    const char = source[i]!;
+    const char = source[i];
 
     if (!current && char === ' ') {
       continue;

@@ -23,18 +23,24 @@ export function typeCheckSwitch(node: SwitchNode, processNode: ProcessNode, cont
   const expression = resolveExpression(node.expression, context, { resolver: 'root' });
   const lines = [`switch (${expression}) {`];
 
-  node.children.forEach(caseNode => {
-
-    caseNode.condition?.length
-      ? caseNode.condition.forEach(conditionValue => lines.push(`  case ${conditionValue}:`))
-      : lines.push('  default:');
+  const children = node.children;
+  for (let i = 0; i < children.length; i++) {
+    const caseNode = children[i];
+    const conditions = caseNode.condition;
+    if (conditions?.length) {
+      for (let j = 0; j < conditions.length; j++) {
+        lines.push(`  case ${conditions[j]}:`)
+      }
+    } else {
+      lines.push('  default:');
+    }
 
     lines.push(...indent(
       indent([
-      ...caseNode.children.flatMap(child => processNode(child, context)),
-      'break;',
-    ])));
-  });
+        ...caseNode.children.flatMap(child => processNode(child, context)),
+        'break;',
+      ])));
+  }
 
   lines.push('}');
 

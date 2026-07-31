@@ -40,7 +40,11 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
     lines.push(...typeCheckNativeBindings(node, context));
   }
 
-  node.children.forEach(child => lines.push(...processNode(child, context)));
+
+  const children = node.children;
+  for (let i = 0; i < children.length; i++) {
+    lines.push(...processNode(children[i], context))
+  }
 
   return lines;
 }
@@ -82,7 +86,9 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
   const lines = new Array<string>();
   const requiredProperties = new Set(metadata.properties.filter(property => property.required).map(property => property.alias ?? property.name));
 
-  node.attributes.forEach(({ name, value }) => {
+  const attributes = node.attributes;
+  for (let i = 0; i < attributes.length; i++) {
+    const { name, value } = attributes[i];
     const property = findProperty(metadata, name);
     if (property) {
       requiredProperties.delete(property.alias ?? property.name);
@@ -95,13 +101,15 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
         '}'
       );
     }
-  });
+  }
 
   if (requiredProperties.size) {
     throw new Error(`${node.tagName} is missing the following required properties: ${Array.from(requiredProperties.values()).join(`\n`)}`, { cause: node.span });
   }
 
-  node.events.forEach(({ name, handler, parameters }) => {
+  const events = node.events;
+  for (let i = 0; i < events.length; i++) {
+    const { name, handler, parameters } = events[i];
     const event = findEvent(metadata, name);
     if (!event) {
       throw new Error(`Unknown event "${name}" on <${node.tagName}> (${metadata.className} has no @Event with this name).`, { cause: node.span });
@@ -128,7 +136,7 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
       indent(`root.${handler}(${args});`),
       '}'
     );
-  });
+  };
 
   return lines;
 }
@@ -165,13 +173,17 @@ function findEvent(metadata: TypeCheckContextComponentImport, externalName: stri
 function typeCheckNativeBindings(node: ElementNode, context: TypeCheckContext): string[] {
   const lines = new Array<string>();
 
-  node.attributes.forEach(({ value }) => {
+  const attributes = node.attributes;
+  for (let i = 0; i < attributes.length; i++) {
+    const { value } = attributes[i];
     if (typeof value !== 'string') {
       lines.push(`${resolveExpression(value.expression, context, { resolver: 'root' })};`);
     }
-  });
+  };
 
-  node.events.forEach(({ handler, parameters }) => {
+  const events = node.events;
+  for (let i = 0; i < events.length; i++) {
+    const { handler, parameters } = events[i];
     const eventContext = new CompilerContext([], context);
     eventContext.addUnresolvableIdentifier('$event');
 
@@ -180,7 +192,7 @@ function typeCheckNativeBindings(node: ElementNode, context: TypeCheckContext): 
       .join(', ');
 
     lines.push(`root.${handler}(${args});`);
-  });
+  };
 
   return lines;
 }

@@ -1,4 +1,4 @@
-import { isValidCustomElementName } from '@xaendar/common';
+import { isValidCustomElementName, slice } from '@xaendar/common';
 import { compile } from '@xaendar/compiler';
 import { basename, dirname, extname, resolve } from 'node:path';
 import { CompilerOptions, Diagnostic, findConfigFile, parseJsonConfigFileContent, readConfigFile, sys } from 'typescript';
@@ -95,7 +95,7 @@ export function xaendarPlugin(): Plugin {
       }
 
       let transformed: string | undefined;
-      
+
       try {
         transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
       } catch (err) {
@@ -112,8 +112,8 @@ export function xaendarPlugin(): Plugin {
       const languageService = getLanguageService(compilerOptions);
       const diagnostics = languageService.getSemanticDiagnostics(shimPath);
 
-      for (const diagnostic of diagnostics) {
-        reportNonFatalError(describeDiagnostic(templatePath, diagnostic));
+      for (let i = 0; i < diagnostics.length; i++) {
+        reportNonFatalError(describeDiagnostic(templatePath, diagnostics[i]));
       }
 
       return {
@@ -164,12 +164,13 @@ function assertValidCustomElementName(code: string, id: string): void {
     throw new Error(`\rXaendar: no selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`);
   }
 
-  const raw = match[1]!;
+  const raw = match[1];
   const selectors = raw.startsWith('[')
     ? [...raw.matchAll(/'([^']*)'|"([^"]*)"/g)].map(match => (match[1] ?? match[2])!)
-    : [raw.slice(1, -1)];
+    : [slice(raw, 1, -1)];
 
-  for (const selector of selectors) {
+  for (let i = 0; i < selectors.length; i++) {
+    const selector = selectors[i];
     if (!isValidCustomElementName(selector)) {
       throw new Error(`\rXaendar: invalid custom element name "${selector}" in component ${id}`);
     }
@@ -243,11 +244,15 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
   const importRegex = /import\s*\{([^}]+)\}\s*from\s*['"][^'"]+['"]/g;
   let match: RegExpExecArray | null;
   while ((match = importRegex.exec(result)) !== null) {
-    match[1]
-      ?.split(',')
-      .map(s => s.trim().split(/\s+as\s+/)[0]?.trim()) // gestisce eventuali `foo as bar`
-      .filter((value): value is string => !!value)
-      .forEach(name => alreadyImported.add(name));
+    const parts = match[1]?.split(',');
+    if (parts) {
+      for (let i = 0; i < parts.length; i++) {
+        const name = parts[i].trim().split(/\s+as\s+/)[0]?.trim();
+        if (name) {
+          alreadyImported.add(name);
+        }
+      }
+    }
   }
 
   const missingImports = requiredImports.filter(name => !alreadyImported.has(name));

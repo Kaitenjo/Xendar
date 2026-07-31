@@ -1,6 +1,6 @@
 {
   "name": "@xaendar/compiler",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "type": "module",
   "author": "Kaitenjo",
   "license": "MIT",
@@ -9,8 +9,8 @@
     "target": "node"
   },
   "dependencies": {
-    "@xaendar/common": "0.9.2",
-    "@xaendar/types": "0.9.2",
+    "@xaendar/common": "0.9.3",
+    "@xaendar/types": "0.9.3",
     "typescript": "^6.0.3"
   }
 }

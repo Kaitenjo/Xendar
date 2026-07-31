@@ -33,6 +33,14 @@ export class Generator {
   ) { }
 
   public generate(cssVariableName?: string): string {
+    const processFunctions = (functionsToProcess: GeneratorTransitionFunctionReturnType['functionsToProcess']) => {
+      if (functionsToProcess) {
+        for (const [key, value] of functionsToProcess.entries()) {
+          this._nodeToProcess.set(key, value)
+        }
+      }
+    };
+
     try {
       this._nodeToProcess.clear();
       const compilerContext = new CompilerContext();
@@ -50,10 +58,10 @@ export class Generator {
       }
 
       for (let i = 0; i < this._ast.length; i++) {
-        const result = this._processNode(this._ast[i]!, ROOT_NODE, i.toString(), compilerContext, null);
+        const result = this._processNode(this._ast[i], ROOT_NODE, i.toString(), compilerContext, null);
         if (result) {
           const { code, functionsToProcess } = result;
-          functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
+          processFunctions(functionsToProcess);
           generatedCode.push(...indent(code));
         }
       }
@@ -81,7 +89,7 @@ export class Generator {
               const result = this._processNode(child, parentNode, i.toString(), context, anchor ?? null);
               if (result) {
                 const { code, functionsToProcess } = result;
-                functionsToProcess?.forEach((value, key) => this._nodeToProcess.set(key, value));
+                processFunctions(functionsToProcess);
                 return code;
               }
 

@@ -38,7 +38,8 @@ export class CompilerContext {
     identifiers: Array<string | [string, IdentifierKind]> = [],
     protected parent?: CompilerContext
   ) {
-    for (const identifier of identifiers) {
+    for (let i = 0; i < identifiers.length; i++) {
+      const identifier = identifiers[i];
       typeof identifier === 'string' ? this._identifiers.set(identifier, 'value') : this._identifiers.set(identifier[0], identifier[1]);
     }
   }

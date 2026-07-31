@@ -55,7 +55,7 @@ export class LexerCursor {
    */
   private readonly _position: CursorPosition = {
     row: 0,
-    column: 0
+    column: 1
   };
   /**
    * Returns a read-only snapshot of the current cursor position.
@@ -104,13 +104,18 @@ export class LexerCursor {
         Before updating the character, adjust logical position.
         Line breaks reset column and increment row.
       */
-      if ([LF, CR].includes(this._currentChar.code)) {
+      if (this._currentChar.code === LF || this._currentChar.code === CR) {
         this._position.row++;
-        this._position.column = 0;
+        this._position.column = 2;
       } else {
         this._position.column++;
       }
 
+      // Clear cache when advance
+      for (let i = this._currentChar.index + 1; i <= newIndex ; i++) {
+        this._peekCache.delete(i);
+      }
+      
       this._currentChar.index = newIndex;
       this._currentChar.value = this.input[newIndex];
       this._currentChar.code = this.input.charCodeAt(newIndex);

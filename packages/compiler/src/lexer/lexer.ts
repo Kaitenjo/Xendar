@@ -123,19 +123,13 @@ export class Lexer {
         if (error.cause === EOF) {
           eof = true;
         } else {
-          throw new Error(`[Lexer] ${error.message}\n----> ${slice(this._input, stateStartIndex, cursor.currentChar.index + 1)}\nat ${cursor.formattedPosition}`);
+          const message = `[Lexer] ${error.message}\n----> ${slice(this._input, stateStartIndex, cursor.currentChar.index + 1)}: ${cursor.formattedPosition}`;
+          throw new Error(message);
         }
       }
     }
 
     return this._tokens;
-  }
-
-  /**
-   * Throws a lexer error with a standardized prefix.
-   */
-  private throwError(message: string): never {
-    throw new Error(`[Lexer] ${message}`);
   }
 
   /**

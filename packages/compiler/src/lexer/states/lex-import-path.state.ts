@@ -51,7 +51,7 @@ export function lexImportPath(cursor: LexerCursor, _context: LexerTransitionFunc
 
   const delimiter = singleQuote ? SINGLE_QUOTE : DOUBLE_QUOTE;
 
-  while(read) {
+  while (read) {
     switch (cursor.peek()) {
       case delimiter:
         cursor.advance();

@@ -124,11 +124,8 @@ export function _iterationVariables(context: Context, items: unknown[], index: n
 
   const entries = Object.entries(retVal.vars);
   for (let i = 0; i < entries.length; i++) {
-    /*
-      entries[i][0] = key
-      entries[i][1] = value
-    */
-    context.addIdentifier(entries[i][0], entries[i][1])
+    const [key, value] = entries[i];
+    context.addIdentifier(key, value)
   }
 
   return retVal

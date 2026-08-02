@@ -1,6 +1,6 @@
 import { slice, Stack } from '@xaendar/common';
 import { Dictionary } from '@xaendar/types';
-import { EOF } from '../costants/chars.constants';
+import { CR, EOF, LF, SPACE } from '../costants/chars.constants';
 import { Span } from '../types/span.type';
 import { lexAttributeValue } from './states/lex-attribute-value.state';
 import { lexAttribute } from './states/lex-attribute.state';
@@ -123,7 +123,61 @@ export class Lexer {
         if (error.cause === EOF) {
           eof = true;
         } else {
-          const message = `[Lexer] ${error.message}\n----> ${slice(this._input, stateStartIndex, cursor.currentChar.index + 1)}: ${cursor.formattedPosition}`;
+          const neighbourhood = 15;
+          let startInterval = stateStartIndex;
+          let i = stateStartIndex;  
+          let stop = false;
+
+          /*
+            We assure that the first word of neighbourhood
+            to be printed fully and not cut
+
+            When we find a space we are sure the word is ended
+          */
+          while (!stop) {
+            const chardCode = this._input.charCodeAt(i); 
+            if (chardCode === LF || chardCode === CR || (startInterval - i > neighbourhood && chardCode === SPACE)) {
+              // + 1 to ignore the LF, CR or SPACE in the interval to be printed
+              startInterval = i + 1;
+              stop = true;
+            } else {
+              i--;
+            } 
+          }
+
+          const currentIndex = cursor.currentChar.index;
+          /*
+            To print successfully the character that throw the expection we need to add 1 to the stateEndIndex
+
+            If state throw when reading the first character currentIndex and stateStartIndex are equal
+            Just in this case we need to add an extra 1 (and we obtain + 2)
+          */
+          const stateEndIndex = currentIndex <= stateStartIndex ? currentIndex + 2 : currentIndex + 1;
+          let endInterval = stateEndIndex
+          i = endInterval;
+          stop = false;
+
+          /*
+            We assure that the last word of neighbourhood
+            to be printed fully and not cut
+
+            When we find a space or the row is finished we are sure the word is ended
+          */
+          while (!stop) {
+            const chardCode = this._input.charCodeAt(i); 
+            if (chardCode === LF || chardCode === CR || (i - endInterval > neighbourhood && chardCode === SPACE)) {
+              // - 1 to ignore the LF, CR or SPACE in the interval to be printed
+              endInterval = i - 1;
+              stop = true;
+            } else {
+              i++;
+            } 
+          }
+          
+          const previousNeighbourhood = slice(this._input, startInterval, stateStartIndex).replace(/^\s+/, '');
+          const underlinedError = `\x1b[4m${slice(this._input, stateStartIndex, stateEndIndex)}\x1b[0m`;
+          const nextNeighbourhood = slice(this._input, stateEndIndex + 1, endInterval).replace(/\s+$/, '');
+          const message = `${cursor.getPositionFromCharacterIndex(stateEndIndex + 1)} ${error.message}\n ---> ${previousNeighbourhood}${underlinedError}${nextNeighbourhood}`;
           throw new Error(message);
         }
       }

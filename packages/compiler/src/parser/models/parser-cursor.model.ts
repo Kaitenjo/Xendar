@@ -2,6 +2,7 @@ import { PositiveInteger, TupleOfLength } from '@xaendar/types';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { Token } from '../../lexer/types/token.type';
 import { EOFToken } from '../../lexer/types/tokens/eof-token.type';
+import { Cursor } from '../../models/cursor';
 import { CurrentToken } from '../types/current-token.type';
 
 /**
@@ -16,7 +17,7 @@ import { CurrentToken } from '../types/current-token.type';
  * This class does not perform parsing itself: it only
  * manages position and access to the token stream.
  */
-export class ParserCursor {
+export class ParserCursor extends Cursor {
 
   /**
    * Representation of the current token.
@@ -42,9 +43,12 @@ export class ParserCursor {
   /**
    * Creates a new ParserCursor for the given token array.
    *
+   * @param input - The full source text to operate on. 
    * @param _tokens - The array of tokens to navigate.
    */
-  constructor(private readonly _tokens: Token[]) { }
+  constructor(input: string, private readonly _tokens: Token[]) { 
+    super(input)
+  }
 
   /**
    * Advances the cursor by the specified number of tokens.

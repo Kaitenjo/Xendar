@@ -42,7 +42,7 @@ export function xaendarPlugin(): Plugin {
 
   const reportNonFatalError = (message: string): void => {
     const redMessage = `\x1b[31m\rXaendar: ${message}\x1b[0m`;
-    (logger ?? console).error(redMessage)
+    (logger ?? console).error(redMessage.replace(/^Error:\s*/, ''))
   };
 
   return {
@@ -90,7 +90,7 @@ export function xaendarPlugin(): Plugin {
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
-        reportNonFatalError(`Failed to compile template\n${templatePath}:\n${String(err)}`);
+        reportNonFatalError(`Failed to compile template ${templatePath}:\n${String(err)}`);
         return null;
       }
 
@@ -99,7 +99,7 @@ export function xaendarPlugin(): Plugin {
       try {
         transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
       } catch (err) {
-        reportNonFatalError(String(err));
+        reportNonFatalError(`Failed to compile decorators:\n${String(err)}`);
         return null;
       }
 
@@ -161,7 +161,7 @@ function assertValidCustomElementName(code: string, id: string): void {
   const match = code.match(selectorRegex);
 
   if (!match) {
-    throw new Error(`\rXaendar: no selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`);
+    throw new Error(`no selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`);
   }
 
   const raw = match[1];
@@ -172,7 +172,7 @@ function assertValidCustomElementName(code: string, id: string): void {
   for (let i = 0; i < selectors.length; i++) {
     const selector = selectors[i];
     if (!isValidCustomElementName(selector)) {
-      throw new Error(`\rXaendar: invalid custom element name "${selector}" in component ${id}`);
+      throw new Error(`invalid custom element name "${selector}" in component ${id}`);
     }
   }
 }

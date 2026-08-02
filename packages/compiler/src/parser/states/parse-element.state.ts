@@ -43,21 +43,26 @@ export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<AST
     }
   }
 
-  // Consume TAG_OPEN_END if present: <div>
-  if (cursor.peek().type === TokenType.TAG_OPEN_END) {
-    cursor.advance();
-  }
+  const peekedTokenType = cursor.peek().type;
+  switch (peekedTokenType) {
+    // Consume TAG_OPEN_END if present: <div>
+    case TokenType.TAG_OPEN_END: 
+      cursor.advance();
+      break;
 
-  // Handle self-closing tags: <div />
-  if (cursor.peek().type === TokenType.TAG_SELF_CLOSE) {
-    cursor.advance();
-    return {
-      type: ASTNodeType.Element,
-      tagName,
-      attributes,
-      events,
-      children: []
-    };
+    // Handle self-closing tags: <div />
+    case TokenType.TAG_SELF_CLOSE:
+      cursor.advance();
+      return {
+        type: ASTNodeType.Element,
+        tagName,
+        attributes,
+        events,
+        children: []
+      };
+    
+    default:
+      throw new Error(`Unexpected State ${peekedTokenType}`);
   }
 
   // Parse children recursively until closing tag
@@ -90,5 +95,15 @@ export function parseElement(cursor: ParserCursor, parseNode: NoArgsFunction<AST
  */
 function isTagClose(cursor: ParserCursor, tagName: string): boolean {
   const nextToken = cursor.peek();
-  return nextToken.type === TokenType.TAG_CLOSE_NAME && nextToken.parts[0] === tagName;
+  
+  switch (nextToken.type) {
+    case TokenType.EOF:
+      throw new Error(`Expected closing tag ${tagName}`);
+    
+    case TokenType.TAG_CLOSE_NAME:
+      return nextToken.parts[0] === tagName;
+    
+    default:
+      return false;
+  }
 }

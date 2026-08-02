@@ -30,7 +30,6 @@ export class Parser {
    * Internal cursor for navigating tokens
    */
   private readonly _cursor: ParserCursor;
-
   /**
    * Mapping of token types to their corresponding parser transition functions, 
    * which handle the logic for parsing each token type into AST nodes.
@@ -49,13 +48,14 @@ export class Parser {
   /**
    * Creates a new Parser instance.
    *
+   * @param input - The full source text to operate on.
    * @param tokens - Array of tokens produced by the Lexer.
    */
   constructor(
-    private _input: string,
+    private readonly _input: string,
     tokens: Token[]
   ) {
-    this._cursor = new ParserCursor(tokens);
+    this._cursor = new ParserCursor(this._input, tokens);
   }
 
   /**
@@ -64,22 +64,16 @@ export class Parser {
    * @returns Array of top-level AST nodes.
    */
   public parse(): ASTNode[] {
-    try {
-      const nodes = new Array<ASTNode>;
-  
-      while (this._cursor.peek().type !== TokenType.EOF) {
-        const parseNode = this.parseNode();
-        if (parseNode) {
-          nodes.push(parseNode);
-        }
+    const nodes = new Array<ASTNode>;
+
+    while (this._cursor.peek().type !== TokenType.EOF) {
+      const parseNode = this.parseNode();
+      if (parseNode) {
+        nodes.push(parseNode);
       }
-  
-      return nodes;
-    } catch (err) {
-      const error = err as Error;
-      const currentToken = this._cursor.peek<Exclude<Token, EOFToken>>();
-      throw new Error(`[Parser] ${error.message}\n----> ${slice(this._input, currentToken.span.start, currentToken.span.end)}`)
     }
+
+    return nodes;
   }
 
   /**
@@ -95,22 +89,30 @@ export class Parser {
     }
 
     const startOffset = token.span.start;
-    const state = this._states[token.type];
+    
+    try {
+      const state = this._states[token.type];
 
-    if (!state) {
-      throw new Error(`No transition function for token type ${TokenType[token.type]}`);
+      if (!state) {
+        throw new Error(`No transition function for token type ${TokenType[token.type]}`);
+      }
+
+      const node = state(this._cursor, this.parseNode.bind(this), token as never);
+      const currentToken = this._cursor.getCurrentToken().value;
+      const endOffset = 'span' in currentToken ? currentToken.span.end : token.span.end;
+
+      return {
+        ...node,
+        span: node.span ?? {
+          start: startOffset,
+          end: endOffset,
+        },
+      };
+    } catch (err) {
+      const error = err as Error;
+      const currentToken = this._cursor.peek();
+      const stateEndIndex = currentToken.type !== TokenType.EOF ? currentToken.span.end : undefined;
+      throw new Error(`${this._cursor.getPositionFromCharacterIndex(startOffset + 1)} ${error.message}\n ---> ${slice(this._input, startOffset, stateEndIndex)}`)
     }
-
-    const node = state(this._cursor, this.parseNode.bind(this), token as never);
-    const currentToken = this._cursor.getCurrentToken().value;
-    const endOffset = 'span' in currentToken ? currentToken.span.end : token.span.end;
-
-    return {
-      ...node,
-      span: node.span ?? {
-        start: startOffset,
-        end: endOffset,
-      },
-    };
   }
 }

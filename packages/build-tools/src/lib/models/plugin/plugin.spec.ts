@@ -61,6 +61,7 @@ vi.mock('@xaendar/compiler', () => ({
 
 vi.mock('@xaendar/common', () => ({
   isValidCustomElementName: vi.fn(),
+  slice: (value: string, start: number, end?: number) => value.slice(start, end)
 }));
 
 

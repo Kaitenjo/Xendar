@@ -11,7 +11,7 @@
   "dependencies": {
     "@xaendar/common": "0.9.3",
     "@xaendar/compiler": "0.9.3",
-    "vite": "^8.1.5",
+    "vite": "^8.2.0",
     "typescript": "^6.0.3"
   },
   "xaendar": {

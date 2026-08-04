@@ -66,7 +66,7 @@ export function validateExpression(source: string): ExpressionValidationResult {
   visitNode(expression, prefix.length, diagnostics);
 
   if (diagnostics.length) {
-    throw new Error(diagnostics.reduce((acc, d) => `${acc}${d.message}\n`, ''));
+    throw diagnostics.reduce((acc, d) => `${acc}${d.message}\n`, '');
   }
 
   return {
@@ -88,13 +88,13 @@ export function validateExpression(source: string): ExpressionValidationResult {
  */
 function visitNode(node: Node, offset: number, diagnostics: ExpressionDiagnostic[]): void {
   if (!isAllowedNode(node)) {
-    throw new Error(buildDisallowedMessage(node));
+    throw buildDisallowedMessage(node);
   }
 
   forEachChild(node, child => visitNode(child, offset, diagnostics));
 
   if (diagnostics.length) {
-    throw new Error(diagnostics[0].message);
+    throw diagnostics[0].message;
   }
 }
 

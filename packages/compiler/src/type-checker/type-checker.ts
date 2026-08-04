@@ -100,9 +100,18 @@ export class TypeChecker {
         '}',
       ].join('\n');
     } catch (err) {
-      const error = err as Error;
-      const { start, end } = error.cause as Span;
-      throw new Error(`[Type Checker] ${error.message}\n----> ${slice(this._input, start, end)}`);
+      let message: string | unknown;
+      let span: Span | undefined;
+
+      if (err instanceof Error) {
+        const cause = err.cause
+        span = !!cause && typeof cause === 'object' && 'start' in cause && 'end' in cause ? cause as Span : undefined;
+        message = err.message;
+      } else {
+        message = err;
+      }
+
+      throw `[Type Checker] ${message}${span ? `\n----> ${slice(this._input, span.start, span.end)}` : ''}`;
     }
   }
 

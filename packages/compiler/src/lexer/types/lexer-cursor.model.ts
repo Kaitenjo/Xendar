@@ -71,7 +71,7 @@ export class LexerCursor extends Cursor {
    */
   public advance(chars = 1): void {
     if (chars < 1) {
-      throw new Error(`${chars} is not a valid value. Please enter a number equal or greater than 1`);
+      throw `${chars} is not a valid value. Please enter a number equal or greater than 1`;
     }
 
     const newIndex = this._currentChar.index + chars;

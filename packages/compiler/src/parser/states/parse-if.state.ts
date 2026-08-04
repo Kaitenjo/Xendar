@@ -77,7 +77,7 @@ function parseIfOrElseIf(cursor: ParserCursor, parseNode: NoArgsFunction<ASTNode
 
   const conditionToken = cursor.peek();
   if (conditionToken.type !== TokenType.CONDITION) {
-    throw new Error(`Expected CONDITION after ${TokenType[token.type]}, got ${TokenType[conditionToken.type]}`);
+    throw `Expected CONDITION after ${TokenType[token.type]}, got ${TokenType[conditionToken.type]}`;
   }
 
   // consume CONDITION and BLOCK_OPEN

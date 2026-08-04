@@ -119,8 +119,8 @@ export class Lexer {
 
         this._state = state;
       } catch (err) {
-        const error = err as Error;
-        if (error.cause === EOF) {
+        const isError = err instanceof Error;
+        if (isError && err.cause === EOF) {
           eof = true;
         } else {
           const neighbourhood = 15;
@@ -177,8 +177,8 @@ export class Lexer {
           const previousNeighbourhood = slice(this._input, startInterval, stateStartIndex).replace(/^\s+/, '');
           const underlinedError = `\x1b[4m${slice(this._input, stateStartIndex, stateEndIndex)}\x1b[0m`;
           const nextNeighbourhood = slice(this._input, stateEndIndex + 1, endInterval).replace(/\s+$/, '');
-          const message = `${cursor.getPositionFromCharacterIndex(stateEndIndex + 1)} ${error.message}\n ---> ${previousNeighbourhood}${underlinedError}${nextNeighbourhood}`;
-          throw new Error(message);
+          const message = isError ? err.message : err;
+          throw`${cursor.getPositionFromCharacterIndex(stateEndIndex + 1)} ${message}\n ---> ${previousNeighbourhood}${underlinedError}${nextNeighbourhood}`;
         }
       }
     }

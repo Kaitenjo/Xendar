@@ -78,7 +78,7 @@ function readCliVersion(): string {
       If it doesn't, something went wrong during the last publish process  
     */
     if (!cliPackageJson.version) {
-      throw new Error('Unable to determine Xaendar CLI version.');
+      throw 'Unable to determine Xaendar CLI version.';
     }
     return cliPackageJson.version;
   } catch (error) {

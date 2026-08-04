@@ -25,7 +25,7 @@ export function parseEvent(cursor: ParserCursor, _parseNode: NoArgsFunction<ASTN
   const handlerToken = cursor.peek<EventHandlerToken>();
 
   if (handlerToken.type !== TokenType.EVENT_HANDLER) {
-    throw new Error(`Invalid event format for ${name}`);
+    throw `Invalid event format for ${name}`;
   }
 
   cursor.advance();

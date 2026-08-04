@@ -94,7 +94,7 @@ export class Parser {
       const state = this._states[token.type];
 
       if (!state) {
-        throw new Error(`No transition function for token type ${TokenType[token.type]}`);
+        throw `No transition function for token type ${TokenType[token.type]}`;
       }
 
       const node = state(this._cursor, this.parseNode.bind(this), token as never);
@@ -109,10 +109,10 @@ export class Parser {
         },
       };
     } catch (err) {
-      const error = err as Error;
+      const message = err instanceof Error ? err.message : err;
       const currentToken = this._cursor.peek();
       const stateEndIndex = currentToken.type !== TokenType.EOF ? currentToken.span.end : undefined;
-      throw new Error(`${this._cursor.getPositionFromCharacterIndex(startOffset + 1)} ${error.message}\n ---> ${slice(this._input, startOffset, stateEndIndex)}`)
+      throw `${this._cursor.getPositionFromCharacterIndex(startOffset + 1)} ${message}\n ---> ${slice(this._input, startOffset, stateEndIndex)}`;
     }
   }
 }

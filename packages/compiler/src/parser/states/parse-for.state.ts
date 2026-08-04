@@ -27,7 +27,7 @@ export function parseForControlFlow(cursor: ParserCursor, parseNode: NoArgsFunct
 
   const conditionToken = cursor.peek();
   if (conditionToken.type !== TokenType.CONDITION) {
-    throw new Error(`Expected CONDITION after FOR, got ${TokenType[conditionToken.type]}`);
+    throw `Expected CONDITION after FOR, got ${TokenType[conditionToken.type]}`;
   }
   const expression = parseForExpression(conditionToken.parts[0], 0);
 
@@ -57,7 +57,7 @@ export function parseForExpression(source: string, baseOffset: number): ForExpre
   const sections = splitForSections(source);
 
   if (sections.length < 2) {
-    throw new Error(`@for requires at least "item of iterable; track expr".`);
+    throw `@for requires at least "item of iterable; track expr".`;
   }
 
   // ---- Section 1: "item of items" ----
@@ -65,14 +65,14 @@ export function parseForExpression(source: string, baseOffset: number): ForExpre
   const ofIndex = iterSection.indexOf(' of ');
 
   if (ofIndex === -1) {
-    throw new Error(`@for expression must be in the form "item of iterable".`);
+    throw `@for expression must be in the form "item of iterable".`;
   }
 
   const itemAlias = slice(iterSection, 0, ofIndex).trim();
   const iterableSource = slice(iterSection, ofIndex + 4).trim();
 
   if (!isValidIdentifier(itemAlias)) {
-    throw new Error(`'${itemAlias}' is not a valid item alias.`);
+    throw `'${itemAlias}' is not a valid item alias.`;
   }
 
   // Validate the iterable as a JS expression.
@@ -82,7 +82,7 @@ export function parseForExpression(source: string, baseOffset: number): ForExpre
   const trackSection = sections[1].trim();
 
   if (!trackSection.startsWith('track ')) {
-    throw new Error(`Second section of @for must start with "track".`);
+    throw `Second section of @for must start with "track".`;
   }
 
   const trackSource = slice(trackSection, 6).trim();
@@ -129,7 +129,7 @@ function parseImplicitAliases(source: string, baseOffset: number, out: Map<ForIm
     const eqIndex = trimmed.indexOf('=');
 
     if (eqIndex === -1) {
-      throw new Error(`Invalid alias declaration '${trimmed}'. Expected '$implicit = alias'.`);
+      throw `Invalid alias declaration '${trimmed}'. Expected '$implicit = alias'.`;
     }
 
     cursor += entry.length + 1;
@@ -139,17 +139,17 @@ function parseImplicitAliases(source: string, baseOffset: number, out: Map<ForIm
     const isImplicitVariable = (value: string): value is ForImplicitVariables => IMPLICIT_VARIABLES.has(value);
 
     if (!isImplicitVariable(implicit)) {
-      throw new Error(`'${implicit}' is not a known implicit variable. Known variables: ${[...IMPLICIT_VARIABLES].join(', ')}.`);
+      throw `'${implicit}' is not a known implicit variable. Known variables: ${[...IMPLICIT_VARIABLES].join(', ')}.`;
     }
 
     cursor += entry.length + 1;
     if (!isValidIdentifier(alias)) {
-      throw new Error(`'${alias}' is not a valid alias identifier.`);
+      throw `'${alias}' is not a valid alias identifier.`;
     }
 
     cursor += entry.length + 1;
     if (out.has(implicit)) {
-      throw new Error(`'${implicit}' is already aliased in this @for expression.`);
+      throw `'${implicit}' is already aliased in this @for expression.`;
     } else {
       out.set(implicit, alias);
     }

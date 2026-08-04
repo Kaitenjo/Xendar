@@ -39,7 +39,7 @@ export function lexTagOpenName(cursor: LexerCursor, _context: LexerTransitionFun
       case SLASH:
       case GREATER_THEN:
         if (!tagName) {
-          throw new Error(`Tag name cannot be empty at ${cursor.formattedPosition}`);
+          throw `Tag name cannot be empty at ${cursor.formattedPosition}`;
         }
         retVal = {
           state: LexerState.TAG_BODY,

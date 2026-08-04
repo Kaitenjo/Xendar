@@ -20,7 +20,7 @@ export function lexImportPath(cursor: LexerCursor, _context: LexerTransitionFunc
   cursor.skipSpaces();
 
   if (!cursor.peekMatch('from')) {
-    throw new Error(`Expected 'from' keyword after import list at ${cursor.formattedPosition}`);
+    throw `Expected 'from' keyword after import list at ${cursor.formattedPosition}`;
   }
 
   cursor.advance(4);
@@ -46,7 +46,7 @@ export function lexImportPath(cursor: LexerCursor, _context: LexerTransitionFunc
       break;
     
     default:
-      throw new Error(`Import statement must start with ' or ".\nFound character ${cursor.currentChar.value} at ${cursor.formattedPosition}`)
+      throw `Import statement must start with ' or ".\nFound character ${cursor.currentChar.value} at ${cursor.formattedPosition}`;
   }
 
   const delimiter = singleQuote ? SINGLE_QUOTE : DOUBLE_QUOTE;

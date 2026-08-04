@@ -66,7 +66,7 @@ export function lexEventParameter(cursor: LexerCursor, _context: LexerTransition
         cursor.advance();
         
         if (cursor.peek() !== DOUBLE_QUOTE) {
-          throw new Error('Event must be included in Double Quotes')
+          throw 'Event must be included in Double Quotes';
         }
 
         // Consume '"'

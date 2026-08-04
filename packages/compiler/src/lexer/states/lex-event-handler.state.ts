@@ -21,11 +21,11 @@ export function lexEventHandler(cursor: LexerCursor, _context: LexerTransitionFu
   while (read) {
     switch (cursor.peek()) {
       case SPACE:
-        throw new Error('No spaces are allowed in event handler name');
+        throw 'No spaces are allowed in event handler name';
         
       case LPAREN:
         if (!handlerName) {
-          throw new Error(`Event handler cannot be empty at ${cursor.formattedPosition}`);
+          throw `Event handler cannot be empty at ${cursor.formattedPosition}`;
         }
 
         let state = LexerState.EVENT_PARAMETER; 

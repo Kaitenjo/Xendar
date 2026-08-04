@@ -25,18 +25,18 @@ export function lexEvent(cursor: LexerCursor, _context: LexerTransitionFunctionC
   while (read) {
     switch (cursor.peek()) {
       case SPACE:
-        throw new Error('No spaces are allowed in event name');
+        throw 'No spaces are allowed in event name';
 
       case EQUAL_THEN:
         if (!eventName) {
-          throw new Error('Event name cannot be empty');
+          throw 'Event name cannot be empty';
         }
 
         // Consume '='
         cursor.advance();
 
         if (cursor.peek() !== DOUBLE_QUOTE) {
-          throw new Error('Event handler must be included in Double Quotes')
+          throw 'Event handler must be included in Double Quotes';
         }
 
         // Consume '"'

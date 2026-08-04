@@ -40,7 +40,7 @@ export function xaendarPlugin(): Plugin {
   let compilerOptions: CompilerOptions | undefined;
   let logger: Logger | undefined;
 
-  const reportNonFatalError = (message: string): void => {
+  const logError = (message: string): void => {
     const redMessage = `\x1b[31m\rXaendar: ${message}\x1b[0m`;
     (logger ?? console).error(redMessage.replace(/^Error:\s*/, ''))
   };
@@ -55,7 +55,9 @@ export function xaendarPlugin(): Plugin {
       try {
         assertValidCustomElementName(code, id);
       } catch (err) {
-        reportNonFatalError(String(err));
+        if (typeof err === 'string') {
+          logError(err);
+        }
         return null;
       }
 
@@ -90,7 +92,9 @@ export function xaendarPlugin(): Plugin {
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
-        reportNonFatalError(`Failed to compile template ${templatePath}:\n${String(err)}`);
+        if (typeof err === 'string') {
+          logError(`Failed to compile template\n${templatePath}:\n${err}`);
+        }
         return null;
       }
 
@@ -99,7 +103,9 @@ export function xaendarPlugin(): Plugin {
       try {
         transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
       } catch (err) {
-        reportNonFatalError(`Failed to compile decorators:\n${String(err)}`);
+        if (typeof err === 'string') {
+          logError(err);
+        }
         return null;
       }
 
@@ -113,7 +119,7 @@ export function xaendarPlugin(): Plugin {
       const diagnostics = languageService.getSemanticDiagnostics(shimPath);
 
       for (let i = 0; i < diagnostics.length; i++) {
-        reportNonFatalError(describeDiagnostic(templatePath, diagnostics[i]));
+        logError(describeDiagnostic(templatePath, diagnostics[i]));
       }
 
       return {
@@ -153,7 +159,7 @@ export function xaendarPlugin(): Plugin {
  *
  * @param code - The raw TypeScript source of the component file.
  * @param id - The resolved file path, used only for error messages.
- * @throws {Error} When no selector is found, or when any selector is not a
+ * @throws When no selector is found, or when any selector is not a
  *   valid custom-element name.
  */
 function assertValidCustomElementName(code: string, id: string): void {
@@ -161,7 +167,7 @@ function assertValidCustomElementName(code: string, id: string): void {
   const match = code.match(selectorRegex);
 
   if (!match) {
-    throw new Error(`no selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`);
+    throw `No selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`;
   }
 
   const raw = match[1];
@@ -172,7 +178,7 @@ function assertValidCustomElementName(code: string, id: string): void {
   for (let i = 0; i < selectors.length; i++) {
     const selector = selectors[i];
     if (!isValidCustomElementName(selector)) {
-      throw new Error(`invalid custom element name "${selector}" in component ${id}`);
+      throw `Invalid custom element name "${selector}" in component ${id}`;
     }
   }
 }
@@ -220,7 +226,7 @@ function extractDecoratorPaths(jsSource: string, componentDir: string): { templa
  *   shared `CSSStyleSheet` if not empty.
  * @returns The transformed TypeScript source with the placeholder replaced
  *   by the compiled methods.
- * @throws {Error} When the placeholder is not found in the source — this
+ * @throws When the placeholder is not found in the source — this
  *   means the component file was not scaffolded correctly by the CLI.
  */
 function injectRenderMethods(jsSource: string, compiledMethods: string, varName?: string, cssContent?: string): string {
@@ -235,7 +241,7 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
   const lastStaticBlock = /static\s*\{\s*\n(\s*)(\w+)\(\);\s*\n\s*\}/;
 
   if (!lastStaticBlock.test(result)) {
-    throw new Error('Xaendar: Could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.');
+    throw 'Could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.';
   }
 
   const requiredImports = ['effect', '_if', '_switch', '_for', 'Context', '_iterationVariables', '_renderElement', '_renderText', '_renderLiteralText', 'createElement', 'createSVGElement', 'createMATHMLElement'];

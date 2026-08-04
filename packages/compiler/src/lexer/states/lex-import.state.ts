@@ -24,7 +24,7 @@ export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunction
 
   cursor.advance();
   if (cursor.currentChar.code !== LEFT_BRACE) {
-    throw new Error(`Expected { after @import at ${cursor.formattedPosition}`);
+    throw `Expected { after @import at ${cursor.formattedPosition}`;
   }
 
   while (read) {

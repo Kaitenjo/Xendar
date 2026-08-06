@@ -24,7 +24,7 @@ export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunction
 
   cursor.advance();
   if (cursor.currentChar.code !== LEFT_BRACE) {
-    throw `Expected { after @import at ${cursor.formattedPosition}`;
+    throw `Expected { after @import`;
   }
 
   while (read) {
@@ -37,7 +37,7 @@ export function lexImport(cursor: LexerCursor, _context: LexerTransitionFunction
           the 'as' keyword to alias it
         */
         if (importValue && cursor.peek() !== COMMA && cursor.peek() !== RIGHT_BRACE) {
-          importValue = `${importValue} `;
+          importValue = `${importValue}`;
         }
         break;
 

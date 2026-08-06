@@ -12,7 +12,7 @@ export class TypeCheckContext extends CompilerContext {
    * Array of component and directive imports to be tracked during type checking.
    * Stores metadata extracted from @WebComponent and @Directive decorators.
    */
-  private _imports = new Array<TypeCheckContextImport>;
+  private readonly _imports = new Array<TypeCheckContextImport>;
 
   /**
    * Adds a new component or directive import to the type checker context.

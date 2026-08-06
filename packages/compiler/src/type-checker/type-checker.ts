@@ -89,7 +89,7 @@ export class TypeChecker {
    * 
    * @param baseDir - Absolute path used to resolve relative import paths
    */
-  public async generate(baseDir?: string): Promise<string> {
+  public async generate(baseDir: string): Promise<string> {
     try {
       await this.populateImportMetadata(baseDir);
       const body = this._ast.flatMap(node => this._processNode(node, this._context));
@@ -111,7 +111,7 @@ export class TypeChecker {
         message = err;
       }
 
-      throw `[Type Checker] ${message}${span ? `\n----> ${slice(this._input, span.start, span.end)}` : ''}`;
+      throw `${message}${span ? `\n----> ${slice(this._input, span.start, span.end)}` : ''}`;
     }
   }
 

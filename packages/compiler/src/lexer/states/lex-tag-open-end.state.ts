@@ -40,7 +40,7 @@ export function lexTagOpenEnd(cursor: LexerCursor, _context: LexerTransitionFunc
         }]
       };
     } else {
-      throw `Unexpected character '${String.fromCharCode(nextChar)}' after '/': expected '>' to close self-closing tag at ${cursor.formattedPosition}`;
+      throw `Unexpected character '${String.fromCharCode(nextChar)}' after '/': expected '>' to close self-closing tag`;
     }
   }
 

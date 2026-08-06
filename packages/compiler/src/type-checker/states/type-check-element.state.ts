@@ -59,28 +59,6 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
  * block-scoped `$event` typed from `event.detailType`, wrapped in its own
  * `{ }` block so multiple event bindings on sibling elements never clash
  * on the `$event` name.
- *
- * ⚠️ Assumptions I couldn't verify against your actual types — please
- * confirm/adjust:
- * - `node.events` entries carry a `name` field (the template-facing event
- *   name used to look up `@Event` metadata), the same way attributes carry
- *   `name`. The snippets I've seen only destructured `handler`/`parameters`
- *   for events, never `name` — if the field is called something else,
- *   swap it in `findEvent`'s call site below.
- * - Literal string attribute values (`value` is a plain `string`, no
- *   `{ expression }`) are only checked for NAME existence, not type — I
- *   don't validate e.g. `collapsed="true"` against a `boolean` property,
- *   since I don't know whether your DSL treats un-bound string attributes
- *   as always-string or allows some literal coercion syntax. Flagging
- *   rather than guessing.
- * - `property.type`/`event.detailType` are text that must resolve as a
- *   standalone type expression in the shim's scope (e.g. `'NavItem[]'`
- *   requires `NavItem` to be importable there too, not just the component
- *   class). If your shim only imports the component class today, custom
- *   exported types referenced by `type`/`detailType` will fail to resolve
- *   as "cannot find name" — unrelated to the actual binding being right or
- *   wrong. Worth double-checking against a component that has a non-
- *   primitive `@Property` type, like `NavItem[]` in your own example.
  */
 function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContextComponentImport, context: TypeCheckContext): string[] {
   const lines = new Array<string>();

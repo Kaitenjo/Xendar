@@ -25,7 +25,7 @@ export function lexEventHandler(cursor: LexerCursor, _context: LexerTransitionFu
         
       case LPAREN:
         if (!handlerName) {
-          throw `Event handler cannot be empty at ${cursor.formattedPosition}`;
+          throw `Event handler cannot be empty`;
         }
 
         let state = LexerState.EVENT_PARAMETER; 

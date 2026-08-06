@@ -14,11 +14,11 @@ import { LexerTransitionFunctionContext } from "../types/transition-function/tra
  * @returns The raw expression string extracted from inside the parentheses.
  * @throws When the next non-space character is not `(`.
  */
-export function lexFlowControlCondition(cursor: LexerCursor, context: LexerTransitionFunctionContext): string {
+export function lexFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): string {
   cursor.skipSpaces();
 
   if (cursor.peek() !== LPAREN) {
-    throw `Expected '(' but got '${String.fromCharCode(cursor.peek())}' at row ${cursor.position.row}, col ${cursor.position.column}`;
+    throw `Expected '(' but got '${String.fromCharCode(cursor.peek())}'`;
   }
 
   // consume '('

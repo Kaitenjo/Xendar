@@ -36,8 +36,13 @@ import { extractComponentMetadata } from './utils/component-metadata-extractor.j
  * one single `typeCheck()` function.
  */
 export class TypeChecker {
+  /** 
+   * Shared mutable state threaded through all state functions during a single `generate()` call. 
+   */
   private readonly _context = new TypeCheckContext();
-
+  /** 
+   * Maps each `ASTNodeType` to the state function responsible for emitting its type-check lines. 
+   */
   private readonly _states: TypeCheckerStates = {
     [ASTNodeType.Text]: typeCheckTextAndInterpolation,
     [ASTNodeType.Interpolation]: typeCheckTextAndInterpolation,
@@ -48,6 +53,10 @@ export class TypeChecker {
     [ASTNodeType.Import]: typeCheckImport,
   };
 
+  /**
+   * @param _input - Raw template source string, used only to slice diagnostic spans into error messages.
+   * @param _ast   - Parsed AST produced by the `Parser` for this template.
+   */
   constructor(private _input: string, private _ast: ASTNode[]) { }
 
   /**

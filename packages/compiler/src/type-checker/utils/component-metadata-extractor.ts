@@ -28,26 +28,26 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
     for (let i = 0; i < statements.length; i++) {
       const node = statements[i];
       if (componentMetadata) {
-        return;
+        continue;
       }
 
       if (isClassDeclaration(node)) {
         const className = node.name?.text;
         if (className !== symbolName) {
-          return;
+          continue;
         }
 
         // Check for @WebComponent decorator in modifiers
         const modifiers = node.modifiers ?? [];
         const webComponentDecorator = Array.from(modifiers).find(member => isWebComponentDecorator(member));
         if (!webComponentDecorator) {
-          return;
+          continue;
         };
 
         // Extract selectors from decorator
         const selectors = extractSelectorsFromDecorator(webComponentDecorator);
         if (!selectors?.length) {
-          return;
+          continue;
         }
 
         // Extract properties and events
@@ -58,7 +58,7 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
         for (let i = 0; i < members.length; i++) {
           const member = members[i];
           if (!isPropertyDeclaration(member)) {
-            return;
+            continue;
           }
 
           // Look for decorators in modifiers (TypeScript stores them there)
@@ -80,7 +80,7 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
                 properties.push(metadata);
               }
             }
-            return;
+            continue;
           }
 
           const eventDecorator = Array.from(memberModifiers).find(member => isEventDecorator(member));

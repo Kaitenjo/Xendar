@@ -68,6 +68,9 @@ export class TypeChecker {
           .filter(({ imported }) => imported !== '*')
           .map(async ({ imported, local }) => {
             const symbolName = imported === 'default' ? local : imported;
+            // TODO Non è conveniente estrarre i metadati tutte le volte. Piu template potrebbero aver bisogno
+            // degli stessi metadata, sarebbe meglio una cache globale a livello di compilatore per evitare il ricalcolo
+            // ad ogni template
             const metadata = await extractComponentMetadata(node.path, symbolName, baseDir);
             if (metadata) {
               this._context.addImport(metadata);

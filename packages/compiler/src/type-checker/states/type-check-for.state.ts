@@ -4,6 +4,8 @@ import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-vari
 import { ForNode } from '../../parser/types/nodes/for-node.type';
 import { TypeCheckContext } from '../models/type-checker-context';
 import { ProcessNode } from '../types/type-checker-process-node.type';
+import { Line } from '../types/generated-line.type';
+import { indentLines, line, mapped, plain } from '../utils/line-builder.utils';
 
 /**
  * Type-checks an `@for` block using a real `for...of` loop.
@@ -15,7 +17,7 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * exactly like it would for a loop written by hand — with no synthetic
  * function boundary needed.
  */
-export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: TypeCheckContext): string[] {
+export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: TypeCheckContext): Line[] {
   const forContext = new TypeCheckContext([], context);
   const indexName = resolveImplicit(node, '$index');
   const firstName = resolveImplicit(node, '$first');
@@ -28,21 +30,30 @@ export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: T
     forContext.addUnresolvableIdentifier(identifiers[i])
   }
 
-  const lines = new Array<string>();
-  lines.push(`for (const ${node.itemAlias} of root.${node.iterableSource}) {`);
-  lines.push(...indent([
-    // Implicit loop variables have no expression to derive a type from —
-    // their types are well-known constants, so they're declared directly.
-    `let ${indexName}!: number;`,
-    `let ${firstName}!: boolean;`,
-    `let ${lastName}!: boolean;`,
-    `let ${evenName}!: boolean;`,
-    `let ${oddName}!: boolean;`,
-    `${resolveExpression(node.trackExpression, context, { skipResolution: true })};`,
+  const lines = new Array<Line>();
+
+  // NOTA: presuppone che ForNode esponga uno span dedicato per la sola
+  // sorgente iterabile (`node.iterableSourceSpan`), distinto da `node.span`
+  // (l'intero blocco @for). Se al momento il parser non lo produce, questo
+  // è un buon segnale per aggiungerlo: senza, l'errore su "root.foo non
+  // esiste" punterebbe sempre all'intero blocco invece che al solo nome.
+  lines.push(line(
+    `for (const ${node.itemAlias} of root.`,
+    mapped(node.iterableSource, node.span),
+    `) {`
+  ));
+
+  lines.push(...indentLines([
+    plain(`let ${indexName}!: number;`),
+    plain(`let ${firstName}!: boolean;`),
+    plain(`let ${lastName}!: boolean;`),
+    plain(`let ${evenName}!: boolean;`),
+    plain(`let ${oddName}!: boolean;`),
+    line(mapped(`${resolveExpression(node.trackExpression, context, { skipResolution: true })};`, node.span)),
     ...node.children.flatMap(child => processNode(child, forContext)),
   ]));
-  lines.push('}');
 
+  lines.push(plain('}'));
   return lines;
 }
 

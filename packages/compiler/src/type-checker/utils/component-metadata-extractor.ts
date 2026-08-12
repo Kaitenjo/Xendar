@@ -1,8 +1,9 @@
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
-import { createSourceFile, Decorator, Expression, getNameOfDeclaration, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isDecorator, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
-import { ComponentEventMetadata, ComponentPropertyMetadata, TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
+import { createSourceFile, DeclarationName, Decorator, Expression, getNameOfDeclaration, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isDecorator, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
+import { ComponentEventMetadata, ComponentPropertyMetadata, ComponentPropertyMetadataWishSpan, TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
+import { slice } from '@xaendar/common';
 
 /**
  * Extracts component metadata from a source file by parsing decorators.
@@ -13,104 +14,115 @@ import { ComponentEventMetadata, ComponentPropertyMetadata, TypeCheckContextComp
  * @returns Component metadata if found, undefined otherwise
  */
 export async function extractComponentMetadata(modulePath: string, symbolName: string, baseDir = process.cwd()): Promise<TypeCheckContextComponentImport | undefined> {
-  try {
-    const filePath = resolveModulePath(modulePath, baseDir);
-    if (!filePath) {
-      return undefined;
+  const filePath = resolveModulePath(modulePath, baseDir);
+  if (!filePath) {
+    return undefined;
+  }
+
+  const source = await readFile(filePath, 'utf8');
+  const sourceFile = createSourceFile(filePath, source, ScriptTarget.Latest, true);
+
+  let componentMetadata: TypeCheckContextComponentImport | undefined;
+
+  const statements = sourceFile.statements;
+  for (let i = 0; i < statements.length; i++) {
+    const node = statements[i];
+    if (componentMetadata) {
+      continue;
     }
 
-    const source = await readFile(filePath, 'utf8');
-    const sourceFile = createSourceFile(filePath, source, ScriptTarget.Latest, true);
-
-    let componentMetadata: TypeCheckContextComponentImport | undefined;
-
-    const statements = sourceFile.statements;
-    for (let i = 0; i < statements.length; i++) {
-      const node = statements[i];
-      if (componentMetadata) {
+    if (isClassDeclaration(node)) {
+      const className = node.name?.text;
+      if (className !== symbolName) {
         continue;
       }
 
-      if (isClassDeclaration(node)) {
-        const className = node.name?.text;
-        if (className !== symbolName) {
-          continue;
-        }
-
-        // Check for @WebComponent decorator in modifiers
-        const modifiers = node.modifiers ?? [];
-        const webComponentDecorator = Array.from(modifiers).find(member => isWebComponentDecorator(member));
-        if (!webComponentDecorator) {
-          continue;
-        };
-
-        // Extract selectors from decorator
-        const selectors = extractSelectorsFromDecorator(webComponentDecorator);
-        if (!selectors?.length) {
-          continue;
-        }
-
-        // Extract properties and events
-        const properties = new Array<ComponentPropertyMetadata>();
-        const events = new Array<ComponentEventMetadata>();
-        const members = node.members;
-
-        for (let i = 0; i < members.length; i++) {
-          const member = members[i];
-          if (!isPropertyDeclaration(member)) {
-            continue;
-          }
-
-          // Look for decorators in modifiers (TypeScript stores them there)
-          const memberModifiers = member.modifiers ?? [];
-
-          let required = false;
-          const propDecorator = Array.from(memberModifiers).find((member): member is Decorator => {
-            const result = isPropertyDecorator(member);
-            required = !!result.required;
-            return result.decorator
-          });
-
-          if (propDecorator) {
-            const nameNode = getNameOfDeclaration(member);
-            const propName = nameNode && isIdentifier(nameNode) ? nameNode.text : undefined;
-            if (propName) {
-              const metadata = extractPropertyMetadata(propName, propDecorator, required);
-              if (metadata) {
-                properties.push(metadata);
-              }
-            }
-            continue;
-          }
-
-          const eventDecorator = Array.from(memberModifiers).find(member => isEventDecorator(member));
-          if (eventDecorator) {
-            const nameNode = getNameOfDeclaration(member);
-            const eventName = nameNode && isIdentifier(nameNode) ? nameNode.text : undefined;
-            if (eventName) {
-              const metadata = extractEventMetadata(eventName, eventDecorator);
-              if (metadata) {
-                events.push(metadata);
-              }
-            }
-          }
-        }
-
-        componentMetadata = {
-          type: 'component',
-          className,
-          selectors,
-          properties,
-          events,
-        };
+      // Check for @WebComponent decorator in modifiers
+      const modifiers = node.modifiers ?? [];
+      const webComponentDecorator = Array.from(modifiers).find(member => isWebComponentDecorator(member));
+      if (!webComponentDecorator) {
+        continue;
       }
-    }
 
-    return componentMetadata;
-  } catch (error) {
-    console.error(`Failed to extract component metadata from ${modulePath}:`, error);
-    return undefined;
+      // Extract selectors from decorator
+      const selectors = extractSelectorsFromDecorator(webComponentDecorator);
+      if (!selectors?.length) {
+        continue;
+      }
+
+      // Extract properties and events
+      const properties = new Map<string, ComponentPropertyMetadataWishSpan>();
+      const events = new Map<string, ComponentEventMetadata>();
+      const members = node.members;
+
+      for (let j = 0; j < members.length; j++) {
+        const member = members[j];
+        if (!isPropertyDeclaration(member)) {
+          continue;
+        }
+
+        // Look for decorators in modifiers (TypeScript stores them there)
+        const memberModifiers = member.modifiers ?? [];
+
+        let required = false;
+        const propDecorator = Array.from(memberModifiers).find((member): member is Decorator => {
+          const result = isPropertyDecorator(member);
+          required = !!result.required;
+          return result.decorator
+        });
+
+        if (propDecorator) {
+          const nameNode = getNameOfDeclaration(member);
+          if (nameNode && isIdentifier(nameNode)) {
+            const propName = nameNode.text;
+            const metadata = extractPropertyMetadata(nameNode, propName, propDecorator, required);
+            if (metadata) {
+              const actualPropName = metadata.alias ?? propName;
+              const conflictingProperty = properties.get(actualPropName);
+              if (!conflictingProperty) {
+                properties.set(actualPropName, metadata);
+              } else {
+                const { start, end } = conflictingProperty.span;
+                const { line, character } = sourceFile.getLineAndCharacterOfPosition(start);
+                throw `Failed to extract metadata from an imported component in the template - ${filePath}\n[Ln ${line + 1}, Col ${character + 1}] - A property identified by name ${actualPropName} was already defined\n ---> ${slice(source, start - character, end)}`;
+              }
+            }
+          }
+          continue;
+        }
+
+        const eventDecorator = Array.from(memberModifiers).find(member => isEventDecorator(member));
+        if (eventDecorator) {
+          const nameNode = getNameOfDeclaration(member);
+          const eventName = nameNode && isIdentifier(nameNode) ? nameNode.text : undefined;
+          if (eventName) {
+            const metadata = extractEventMetadata(eventDecorator);
+            if (metadata) {
+              events.set(eventName, metadata);
+            }
+          }
+        }
+      }
+
+      const mappedProperties = new Map<string, ComponentPropertyMetadata>();
+      properties.entries().forEach(([propName, metadata]) => mappedProperties.set(propName, { 
+        name: metadata.name,
+        required: metadata.required,
+        type: metadata.type,
+        alias: metadata.alias
+      }));
+      
+      componentMetadata = {
+        type: 'component',
+        className,
+        selectors,
+        properties: mappedProperties,
+        events,
+      };
+    }
   }
+
+  return componentMetadata;
 }
 
 /**
@@ -257,13 +269,22 @@ function extractStringOrStringArray(node: Expression): string[] {
 /**
  * Extracts property metadata from @Property or @Property.required decorator.
  */
-function extractPropertyMetadata(propName: string, modifier: Decorator, required: boolean): ComponentPropertyMetadata | undefined {
+function extractPropertyMetadata(nameNode: DeclarationName, name: string, modifier: Decorator, required: boolean): ComponentPropertyMetadataWishSpan | undefined {
   // modifier is a Decorator node, modifier.expression contains the decorator's expression
   const expr = modifier.expression;
-  const metadata: ComponentPropertyMetadata = {
-    name: propName,
+  const metadata: ComponentPropertyMetadataWishSpan = {
+    name,
     required,
-    type: isPropertyDeclaration(modifier.parent) ? extractGenericArgument(modifier.parent.type) : 'any'
+    type: isPropertyDeclaration(modifier.parent) ? extractGenericArgument(modifier.parent.type) : 'any',
+    span: {
+      /*
+        In case of duplicate @Property names (alias and propName or alias and alias)
+        We need to store the span where the propName is present, if an alias is declared
+        these values will be overwritten
+      */
+      start: nameNode.getStart(),
+      end: nameNode.getEnd()
+    }
   };
 
   // Extract Alias
@@ -272,7 +293,12 @@ function extractPropertyMetadata(propName: string, modifier: Decorator, required
     const decoratorParameters = args.length ? args.find(arg => isObjectLiteralExpression(arg))! : undefined
     const aliasNode = decoratorParameters?.properties?.find((prop): prop is PropertyAssignment => isPropertyAssignment(prop) && isIdentifier(prop.name) && prop.name.text === 'alias')
     if (aliasNode && isStringLiteral(aliasNode.initializer)) {
-      metadata.alias = aliasNode.initializer.text;
+      const initializer = aliasNode.initializer;
+      metadata.alias = initializer.text;
+      metadata.span = {
+        start: initializer.getStart(),
+        end: initializer.getEnd()
+      }
     }
   }
 
@@ -282,9 +308,8 @@ function extractPropertyMetadata(propName: string, modifier: Decorator, required
 /**
  * Extracts event metadata from @Event decorator.
  */
-function extractEventMetadata(eventName: string, modifier: Decorator): ComponentEventMetadata | undefined {
+function extractEventMetadata(modifier: Decorator): ComponentEventMetadata | undefined {
   const metadata: ComponentEventMetadata = {
-    name: eventName,
     type: 'void'
   };
 

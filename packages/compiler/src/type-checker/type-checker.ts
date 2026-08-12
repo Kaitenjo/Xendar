@@ -10,8 +10,12 @@ import { typeCheckIf } from './states/type-check-if.state.js';
 import { typeCheckImport } from './states/type-check-import.state.js';
 import { typeCheckSwitch } from './states/type-check-switch.state.js';
 import { typeCheckTextAndInterpolation } from './states/type-check-text-and-interpolation.state.js';
+import { TypeCheckResult } from './types/type-checker-result.type.js';
 import { TypeCheckerStates } from './types/type-checker-states.type.js';
 import { extractComponentMetadata } from './utils/component-metadata-extractor.js';
+import { Line, LineMapping } from './types/generated-line.type.js';
+import { plain, indentLines } from './utils/line-builder.utils.js';
+import { Cursor } from '../models/cursor.js';
 
 /**
  * Generates a single, flat TypeScript function body ("shim") from a
@@ -101,16 +105,21 @@ export class TypeChecker {
    * 
    * @param baseDir - Absolute path used to resolve relative import paths
    */
-  public async generate(baseDir: string): Promise<string> {
+  public async generate(baseDir: string): Promise<TypeCheckResult> {
     try {
       await this.populateImportMetadata(baseDir);
       const body = this._ast.flatMap(node => this._processNode(node, this._context));
-  
-      return [
-        'function typeCheck() {',
-        ...indent(body),
-        '}',
-      ].join('\n');
+
+      const lines: Line[] = [
+        plain('function typeCheck() {'),
+        ...indentLines(body),
+        plain('}'),
+      ];
+
+      return {
+        text: lines.map(line => line.text).join('\n'),
+        mappingTable: this.buildMappingTable(lines)
+      };
     } catch (err) {
       let message: string | unknown;
       let span: Span | undefined;
@@ -123,20 +132,31 @@ export class TypeChecker {
         message = err;
       }
 
-      throw `${message}${span ? `\n----> ${slice(this._input, span.start, span.end)}` : ''}`;
+      throw span 
+        ? `${new Cursor(this._input).getPositionFromCharacterIndex(span.start + 1)} - ${message}\n ---> ${slice(this._input, span.start, span.end)}}`
+        : message;
     }
   }
 
+  private buildMappingTable(lines: Line[]): TypeCheckResult['mappingTable'] {
+    const table = new Map<number, readonly LineMapping[]>();
+    lines.forEach((line, index) => {
+      if (line.mappings) {
+        table.set(index, line.mappings)
+      };
+    });
+    return table;
+  }
   /**
    * Dispatches a single AST node to its state function, passing itself
    * back down as `processNode` so state functions can recurse into their
    * own children inline.
    */
-  private _processNode = (node: ASTNode, context: TypeCheckContext): string[] => {
+  private _processNode = (node: ASTNode, context: TypeCheckContext): Line[] => {
     const state = this._states[node.type];
 
     if (!state) {
-      throw new Error(`No transition function for token type ${ASTNodeType[node.type]}`, { cause: node.span })
+      throw new Error(`No transition function for ASTNode of type ${ASTNodeType[node.type]}`, { cause: node.span })
     }
 
     return state(node as never, this._processNode, context);

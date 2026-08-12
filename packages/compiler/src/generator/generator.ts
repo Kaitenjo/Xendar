@@ -113,7 +113,7 @@ export class Generator {
     const state = this._states[node.type];
 
     if (!state) {
-      throw new Error(`No transition function for token type ${ASTNodeType[node.type]}`, { cause: node.span });
+      throw new Error(`No transition function for ASTNode of type ${ASTNodeType[node.type]}`, { cause: node.span });
     }
 
     return state(node as never, parentNode, index, compilerContext, anchor);

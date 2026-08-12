@@ -2,6 +2,7 @@ import { Generator } from './generator/generator';
 import { Lexer } from './lexer/lexer';
 import { Parser } from './parser/parser';
 import { TypeChecker } from './type-checker/type-checker';
+import { TypeCheckResult } from './type-checker/types/type-checker-result.type';
 
 /**
  * Compiles a template string into a Javascript render function body.
@@ -16,7 +17,7 @@ import { TypeChecker } from './type-checker/type-checker';
  *   into the generated `adoptedStyleSheets` assignment.
  * @returns A string containing the compiled Javascript render method body.
  */
-export async function compile(input: string, baseDir: string, cssVariableName?: string): Promise<{ javascript: string; typescript: string; }> {
+export async function compile(input: string, baseDir: string, cssVariableName?: string): Promise<{ javascript: string; typescript: TypeCheckResult; }> {
   const tokens = new Lexer(input).tokenize();
   const nodes = new Parser(input, tokens).parse();
   return {

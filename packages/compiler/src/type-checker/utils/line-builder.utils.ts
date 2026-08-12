@@ -1,12 +1,13 @@
-// utils/line-builder.utils.ts
 import { Span } from '../../types/span.type.js';
 import { Line, LineMapping } from '../types/generated-line.type.js';
 
-type Part = string | { text: string; original: Span };
+type Part = string | { text: string; span: Span };
 
-/** Marks a text fragment as originating from a span in the template source. */
-export function mapped(text: string, original: Span): { text: string; original: Span } {
-  return { text, original };
+/** 
+ * Marks a text fragment as originating from a span in the template source. 
+ */
+export function mapped(text: string, span: Span): Part {
+  return { text, span };
 }
 
 /**
@@ -17,22 +18,35 @@ export function mapped(text: string, original: Span): { text: string; original: 
  */
 export function line(...parts: Part[]): Line {
   let text = '';
-  const mappings: LineMapping[] = [];
+  const mappings = new Array<LineMapping>();
 
   for (const part of parts) {
     if (typeof part === 'string') {
-      text += part;
-      continue;
+      text = `${text}${part}`;
+    } else {
+      const columnStart = text.length;
+      text = `${text}${part.text}`;
+      mappings.push({ columnStart, columnEnd: text.length, original: part.span });
     }
-    const columnStart = text.length;
-    text += part.text;
-    mappings.push({ columnStart, columnEnd: text.length, original: part.original });
   }
 
   return mappings.length ? { text, mappings } : { text };
 }
 
-/** Purely structural line with no source mappings (boilerplate). */
+/** 
+ * Purely structural line with no source mappings (boilerplate). 
+ */
 export function plain(text: string): Line {
   return { text };
+}
+
+export function indentLines(lines: Line[]): Line[] {
+  return lines.map(line => ({
+    text: ' '.repeat(2) + line.text,
+    mappings: line.mappings?.map(mapping => ({
+      ...mapping,
+      columnStart: mapping.columnStart + 2,
+      columnEnd: mapping.columnEnd + 2,
+    })),
+  }));
 }

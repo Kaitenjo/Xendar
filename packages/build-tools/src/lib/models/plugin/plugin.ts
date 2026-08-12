@@ -1,9 +1,10 @@
 import { isValidCustomElementName, slice } from '@xaendar/common';
-import { compile } from '@xaendar/compiler';
+import { compile, Cursor, resolveTemplateSpan, TypeCheckResult } from '@xaendar/compiler';
 import { basename, dirname, extname, resolve } from 'node:path';
 import { CompilerOptions, Diagnostic, findConfigFile, parseJsonConfigFileContent, readConfigFile, sys } from 'typescript';
 import type { Logger, Plugin } from 'vite';
 import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex';
+import { clearImportRegistry, clearImportsForParent, findParentsForImport, registerImportMapping } from '../import-registry';
 import { disposeLanguageService, getLanguageService, registerRealFile, removeRealFile, removeVirtualFile, upsertVirtualFile } from '../language-service';
 import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model';
 import { clearTemplateRegistry, findComponentForTemplate, registerTemplateMapping, removeTemplateMapping } from '../template-registry';
@@ -76,6 +77,14 @@ export function xaendarPlugin(): Plugin {
         return null;
       }
 
+      clearImportsForParent(id);
+      for (const importedPath of extractImportedComponentPaths(templateSource, dirname(templatePath))) {
+        if (host.fileExists(importedPath)) {
+          this.addWatchFile(importedPath);
+          registerImportMapping(importedPath, id);
+        }
+      }
+
       let cssContent: string | undefined;
 
       if (stylePath && host.fileExists(stylePath)) {
@@ -84,7 +93,7 @@ export function xaendarPlugin(): Plugin {
       }
 
       let compiledMethods: string | undefined;
-      let typecheckBody: string | undefined;
+      let typecheckBody: TypeCheckResult | undefined;
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
@@ -92,9 +101,7 @@ export function xaendarPlugin(): Plugin {
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
-        if (typeof err === 'string') {
-          logError(`Failed to compile template\n${templatePath}:\n${err}`);
-        }
+        logError(`Failed to compile template - ${templatePath}:\n${err instanceof Error ? err.message : err}`);
         return null;
       }
 
@@ -113,13 +120,19 @@ export function xaendarPlugin(): Plugin {
       registerRealFile(id);
 
       const shimPath = `${id}.__typecheck__.ts`;
-      upsertVirtualFile(shimPath, buildTypecheckShim(className, id, typecheckBody));
+      const shim = buildTypecheckShim(className, id, typecheckBody.text);
+      upsertVirtualFile(shimPath, shim.code);
 
       const languageService = getLanguageService(compilerOptions);
       const diagnostics = languageService.getSemanticDiagnostics(shimPath);
 
       for (let i = 0; i < diagnostics.length; i++) {
-        logError(describeDiagnostic(templatePath, diagnostics[i]));
+        logError(`Failed to compile template - ${templatePath}:\n${describeDiagnostic(templateSource, diagnostics[i], shim.bodyLineOffset, typecheckBody.mappingTable)}`);
+      }
+
+      // After logging every diagnostics we have to return null to raise an error
+      if (diagnostics.length) {
+        return null;
       }
 
       return {
@@ -131,6 +144,13 @@ export function xaendarPlugin(): Plugin {
         if (COMPONENT_FILE_RE.test(id)) {
           removeVirtualFile(`${id}.__typecheck__.ts`);
           removeRealFile(id);
+
+          const parents = findParentsForImport(id);
+          for (const parentId of parents) {
+            removeVirtualFile(`${parentId}.__typecheck__.ts`);
+            logError(`Component "${id}" was deleted but is still imported by "${parentId}". Update its @import statement.`);
+          }
+          clearImportsForParent(id);
         } else if (id.endsWith('.html')) {
           const componentId = findComponentForTemplate(id);
           if (componentId) {
@@ -145,6 +165,7 @@ export function xaendarPlugin(): Plugin {
 
       server.httpServer?.on('close', () => {
         clearTemplateRegistry();
+        clearImportRegistry();
         disposeLanguageService();
         logger = undefined;
       });
@@ -202,6 +223,34 @@ function extractDecoratorPaths(jsSource: string, componentDir: string): { templa
     templatePath: templateUrl ? resolve(componentDir, templateUrl) : undefined,
     stylePath: styleUrl ? resolve(componentDir, styleUrl) : undefined
   };
+}
+
+/**
+ * TODO: This could be eliminated if we find a way to extract the metadata informations
+ * from the AST after the compile function has been invoked.
+ * Currently we watch the improted files BEFORE compile function has been called, making
+ * this optimization impossible.
+ * When a global cache of the import metadata will be implemented we can safely remove this
+ * 
+ * Extracts the absolute paths of every component declared via `@import { X }
+ * from '...'` inside a DSL template, resolving them relative to the
+ * template's own directory (paths in the template are relative to the
+ * .html file, not to the component's .ts file).
+ *
+ * @param templateSource - The raw content of the `.xd.component.html` template.
+ * @param templateDir - The directory containing the template file.
+ * @returns The list of imported absolute paths (may be empty).
+ */
+function extractImportedComponentPaths(templateSource: string, templateDir: string): string[] {
+  const importRegex = /@import\s*\{[^}]*\}\s*from\s*['"](.+?)['"]/g;
+  const paths = new Array<string>();
+  let match: RegExpExecArray | null;
+
+  while ((match = importRegex.exec(templateSource)) !== null) {
+    paths.push(resolve(templateDir, match[1]));
+  }
+
+  return paths;
 }
 
 /**
@@ -363,16 +412,20 @@ function loadCompilerOptions(fromDir: string): CompilerOptions {
  *   (the `function typeCheck() {...}` blocks and friends).
  * @returns The full shim source, ready to be passed to `updateVirtualFile`.
  */
-function buildTypecheckShim(className: string, componentFilePath: string, body: string): string {
+function buildTypecheckShim(className: string, componentFilePath: string, body: string): { code: string, bodyLineOffset: number } {
   const importSpecifier = `./${basename(componentFilePath, extname(componentFilePath))}`;
 
-  return [
+  const prefixLines = [
     `import { ${className} } from '${importSpecifier}';`,
     '',
     `declare const root: ${className};`,
     '',
-    body,
-  ].join('\n');
+  ];
+
+  return {
+    code: [...prefixLines, body].join('\n'),
+    bodyLineOffset: prefixLines.length,
+  };
 }
 
 /**
@@ -383,15 +436,24 @@ function buildTypecheckShim(className: string, componentFilePath: string, body: 
  * the original DSL template — remapping to template positions is not yet
  * implemented (see the module-level doc comment on `xaendarPlugin`).
  */
-function describeDiagnostic(templatePath: string, diagnostic: Diagnostic): string {
-  const message = flattenMessage(diagnostic);
-  if (diagnostic.file && diagnostic.start !== undefined) {
-    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-    return `${templatePath}:${line + 1}:${character + 1} - ${message}`;
+function describeDiagnostic(templateSource: string, diagnostic: Diagnostic, bodyLineOffset: number, mappingTable: TypeCheckResult['mappingTable']): string {
+  const message = typeof diagnostic.messageText === 'string' ? diagnostic.messageText : diagnostic.messageText.messageText;
+  const cursor = new Cursor(templateSource);
+  if (!diagnostic.file || diagnostic.start === undefined) {
+    return message;
   }
-  return message;
-}
 
-function flattenMessage(diagnostic: Diagnostic): string {
-  return typeof diagnostic.messageText === 'string' ? diagnostic.messageText : diagnostic.messageText.messageText;
+  const shimPosition = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+  const bodyLine = shimPosition.line - bodyLineOffset;
+  if (bodyLine < 0) {
+    return message;
+  }
+
+  const templateSpan = resolveTemplateSpan(mappingTable, { line: bodyLine, character: shimPosition.character });
+  if (!templateSpan) {
+    return message;
+  }
+
+  const templatePosition = cursor.getPositionFromCharacterIndex(templateSpan.start);
+  return `${templatePosition} - ${message}\n ---> ${slice(templateSource, templateSpan.start, templateSpan.end)}`;
 }

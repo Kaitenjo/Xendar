@@ -1,33 +1,15 @@
-import { indent } from '@xaendar/common';
+// states/type-check-element.state.ts
 import { CompilerContext } from '../../generator/models/compiler-context.model';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { TypeCheckContext } from '../models/type-checker-context';
-import { ComponentEventMetadata, ComponentPropertyMetadata, TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
+import { Line } from '../types/generated-line.type';
+import { TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
 import { ProcessNode } from '../types/type-checker-process-node.type';
+import { indentLines, line, mapped, plain } from '../utils/line-builder.utils';
 
-/**
- * Type-checks an element node: its attribute/property bindings, its event
- * handlers, and recursively its children.
- *
- * Two completely different validation paths, depending on the tag:
- *
- * - **Native tags** (`div`, `button`, ...): bindings are just resolved
- *   expressions/handler calls, exactly as before — there's no component
- *   contract to check them against.
- * - **Custom elements** (tag contains a hyphen): every binding is checked
- *   by NAME against the `@Property`/`@Event` metadata extracted from the
- *   imported component class. An unknown name is a hard error (the
- *   template is binding to something the component doesn't expose) — not
- *   a warning, consistent with the "no matching @import" check already in
- *   place for the tag itself.
- *
- * No variable is declared for the element itself (see the module doc on
- * `TypeChecker` for why) — attribute expressions and event calls are
- * emitted as bare statements, validated in place.
- */
-export function typeCheckElement(node: ElementNode, processNode: ProcessNode, context: TypeCheckContext): string[] {
-  const lines = new Array<string>();
+export function typeCheckElement(node: ElementNode, processNode: ProcessNode, context: TypeCheckContext): Line[] {
+  const lines = new Array<Line>();
 
   if (isCustomElementTag(node.tagName)) {
     const metadata = context.getImportBySelector(node.tagName);
@@ -40,7 +22,6 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
     lines.push(...typeCheckNativeBindings(node, context));
   }
 
-
   const children = node.children;
   for (let i = 0; i < children.length; i++) {
     lines.push(...processNode(children[i], context))
@@ -49,46 +30,35 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
   return lines;
 }
 
-/**
- * Validates every attribute/property and event binding on a custom-element
- * node against the `@Property`/`@Event` metadata of the resolved component.
- *
- * Property values are checked with `satisfies` against `property.type` —
- * chosen over a typed `const` so an unused local never shows up if the
- * consuming project has `noUnusedLocals` enabled. Event handlers get a
- * block-scoped `$event` typed from `event.detailType`, wrapped in its own
- * `{ }` block so multiple event bindings on sibling elements never clash
- * on the `$event` name.
- */
-function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContextComponentImport, context: TypeCheckContext): string[] {
-  const lines = new Array<string>();
-  const requiredProperties = new Set(metadata.properties.filter(property => property.required).map(property => property.alias ?? property.name));
+function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContextComponentImport, context: TypeCheckContext): Line[] {
+  const lines = new Array<Line>();
+  const requiredProperties = new Set(metadata.properties.entries().filter(([_, value]) => value.required).map(([key]) => key));
 
   const attributes = node.attributes;
   for (let i = 0; i < attributes.length; i++) {
     const { name, value } = attributes[i];
-    const property = findProperty(metadata, name);
+    const property = metadata.properties.get(name);
     if (property) {
-      requiredProperties.delete(property.alias ?? property.name);
+      requiredProperties.delete(name);
       lines.push(
-        '{',
-        ...indent(typeof value === 'object'
-          ? [`(${resolveExpression(value.expression, context, { resolver: 'root' })}) satisfies ${property.type};`]
-          : ['let x!: string', `x satisfies ${property.type};`]
+        plain('{'),
+        ...indentLines(typeof value === 'object'
+          ? [line('(', mapped(resolveExpression(value.expression, context, { resolver: 'root' }), value.span), `) satisfies ${property.type};`)]
+          : [plain('let x!: string;'), line(mapped(`x satisfies ${property.type};`, attributes[i].span))]
         ),
-        '}'
+        plain('}')
       );
     }
   }
 
   if (requiredProperties.size) {
-    throw new Error(`${node.tagName} is missing the following required properties: ${Array.from(requiredProperties.values()).join(`\n`)}`, { cause: node.span });
+    throw new Error(`${node.tagName} is missing the following required properties:\n ● ${Array.from(requiredProperties.values()).join(`\n ● `)}`, { cause: node.span });
   }
 
   const events = node.events;
   for (let i = 0; i < events.length; i++) {
     const { name, handler, parameters } = events[i];
-    const event = findEvent(metadata, name);
+    const event = metadata.events.get(name)
     if (!event) {
       throw new Error(`Unknown event "${name}" on <${node.tagName}> (${metadata.className} has no @Event with this name).`, { cause: node.span });
     }
@@ -100,62 +70,31 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
       .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
       .join(', ');
 
-    /*
-      Scoped in its own block so sibling elements' `$event` (each typed
-      differently, per event) never collide in the flat shim function.
-    */
-    lines.push('{');
+    lines.push(plain('{'));
 
     if (event.type !== 'void') {
-      lines.push(indent(`let $event!: CustomEvent<${event.type}>;`))
+      lines.push(...indentLines([plain(`let $event!: CustomEvent<${event.type}>;`)]));
     }
 
-    lines.push(
-      indent(`root.${handler}(${args});`),
-      '}'
-    );
+    // NOTA: mappiamo l'intera chiamata sullo span del binding evento
+    // (`events[i].span`, l'intero `(click)="handler($event)"`), non sui
+    // singoli parametri — se in futuro serve granularità sul singolo
+    // argomento, servirebbe uno span per parametro dal parser.
+    lines.push(...indentLines([line(mapped(`root.${handler}(${args});`, events[i].span))]));
+    lines.push(plain('}'));
   };
 
   return lines;
 }
 
-/**
- * Looks up a `@Property` entry in `metadata` by its external (template-facing)
- * name, taking `alias` into account: if the property declares an alias, that
- * alias is what the template must use, not the class field name.
- */
-function findProperty(metadata: TypeCheckContextComponentImport, externalName: string): ComponentPropertyMetadata | undefined {
-  return metadata.properties.find(property => (property.alias ?? property.name) === externalName);
-}
-
-/**
- * Looks up an `@Event` entry in `metadata` by its template-facing event name.
- */
-function findEvent(metadata: TypeCheckContextComponentImport, externalName: string): ComponentEventMetadata | undefined {
-  return metadata.events.find(event => event.name === externalName);
-}
-
-/**
- * Resolves attribute/property bindings and event handlers on a native HTML
- * element node (any tag without a hyphen).
- *
- * Bound attribute values (i.e. those carrying an `{ expression }` object
- * rather than a plain string) are emitted as bare expression statements so
- * that the TypeScript compiler validates them in the shim. Static string
- * attributes are skipped — there is nothing to type-check.
- *
- * Event bindings are emitted as `root.<handler>(<args>)` calls. `$event` is
- * registered as an unresolvable identifier in the event's own sub-context so
- * that it is accepted without a declaration being emitted into the shim.
- */
-function typeCheckNativeBindings(node: ElementNode, context: TypeCheckContext): string[] {
-  const lines = new Array<string>();
+function typeCheckNativeBindings(node: ElementNode, context: TypeCheckContext): Line[] {
+  const lines = new Array<Line>();
 
   const attributes = node.attributes;
   for (let i = 0; i < attributes.length; i++) {
     const { value } = attributes[i];
     if (typeof value !== 'string') {
-      lines.push(`${resolveExpression(value.expression, context, { resolver: 'root' })};`);
+      lines.push(line(mapped(`${resolveExpression(value.expression, context, { resolver: 'root' })};`, value.span)));
     }
   };
 
@@ -169,19 +108,12 @@ function typeCheckNativeBindings(node: ElementNode, context: TypeCheckContext): 
       .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
       .join(', ');
 
-    lines.push(`root.${handler}(${args});`);
+    lines.push(line(mapped(`root.${handler}(${args});`, events[i].span)));
   };
 
   return lines;
 }
 
-/**
- * Returns true if `tagName` has the shape of a custom element (per the
- * Custom Elements spec: contains a hyphen). This is a pure classification
- * check — it does NOT validate whether the name is actually usable as a
- * new custom element (reserved names, etc.); use `isValidCustomElementName`
- * for that, at declaration time.
- */
 export function isCustomElementTag(tagName: string): boolean {
   return /^[a-z][a-z0-9._\-]*-[a-z0-9._\-]*$/.test(tagName);
 }

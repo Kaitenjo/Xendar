@@ -1,4 +1,4 @@
-import { statSync } from 'node:fs';
+import { statSync, writeFileSync } from 'node:fs';
 import { CompilerOptions, createDocumentRegistry, createLanguageService, getDefaultLibFilePath, LanguageService, LanguageServiceHost, ScriptSnapshot, sys } from 'typescript';
 
 /**
@@ -44,7 +44,7 @@ const realFiles = new Set<string>();
  * getLanguageService() and torn down by disposeLanguageService(). 
  * */
 let languageService: LanguageService | undefined;
- 
+
 /** 
  * The compilerOptions the current languageService was created with, kept
  * around so getLanguageService() can detect when they change and force a

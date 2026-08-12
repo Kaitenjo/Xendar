@@ -44,6 +44,11 @@ export class Parser {
     [TokenType.SWITCH]: parseSwitchControlFlow,
     [TokenType.IMPORT]: parseImport
   }
+  /**
+   * In rare situations, parse node could be called recursively.
+   * 
+   */
+  private thrown = false;
 
   /**
    * Creates a new Parser instance.
@@ -94,7 +99,7 @@ export class Parser {
       const state = this._states[token.type];
 
       if (!state) {
-        throw `No transition function for token type ${TokenType[token.type]}`;
+        throw `No transition function for token of type ${TokenType[token.type]}`;
       }
 
       const node = state(this._cursor, this.parseNode.bind(this), token as never);
@@ -109,10 +114,14 @@ export class Parser {
         },
       };
     } catch (err) {
+      if (this.thrown) {
+        throw err;
+      }
+      this.thrown = true;
       const message = err instanceof Error ? err.message : err;
       const currentToken = this._cursor.peek();
       const stateEndIndex = currentToken.type !== TokenType.EOF ? currentToken.span.end : undefined;
-      throw `${this._cursor.getPositionFromCharacterIndex(startOffset + 1)} ${message}\n ---> ${slice(this._input, startOffset, stateEndIndex)}`;
+      throw `${this._cursor.getPositionFromCharacterIndex(startOffset + 1)} - ${message}\n ---> ${slice(this._input, startOffset, stateEndIndex)}`;
     }
   }
 }

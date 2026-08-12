@@ -1,8 +1,9 @@
-import { indent } from '@xaendar/common';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { SwitchNode } from '../../parser/types/nodes/switch-node.type';
 import { TypeCheckContext } from '../models/type-checker-context';
+import { Line } from '../types/generated-line.type';
 import { ProcessNode } from '../types/type-checker-process-node.type';
+import { indentLines, line, mapped, plain } from '../utils/line-builder.utils';
 
 /**
  * Type-checks a `@switch` block using a real TypeScript `switch` statement.
@@ -19,9 +20,9 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * emitted as stacked `case` labels sharing that same body, matching real
  * JS/TS fallthrough syntax directly.
  */
-export function typeCheckSwitch(node: SwitchNode, processNode: ProcessNode, context: TypeCheckContext): string[] {
+export function typeCheckSwitch(node: SwitchNode, processNode: ProcessNode, context: TypeCheckContext): Line[] {
   const expression = resolveExpression(node.expression, context, { resolver: 'root' });
-  const lines = [`switch (${expression}) {`];
+  const lines = [line('switch (', mapped(expression, node.span), ') {')];
 
   const children = node.children;
   for (let i = 0; i < children.length; i++) {
@@ -29,20 +30,23 @@ export function typeCheckSwitch(node: SwitchNode, processNode: ProcessNode, cont
     const conditions = caseNode.condition;
     if (conditions?.length) {
       for (let j = 0; j < conditions.length; j++) {
-        lines.push(`  case ${conditions[j]}:`)
+        // Se in futuro ogni condizione porta un proprio span (fallthrough
+        // con provenienze diverse), sostituisci con:
+        // line('  case ', mapped(conditions[j], conditionSpans[j]), ':')
+        lines.push(plain(`  case ${conditions[j]}:`));
       }
     } else {
-      lines.push('  default:');
+      lines.push(plain('  default:'));
     }
 
-    lines.push(...indent(
-      indent([
+    lines.push(...indentLines(
+      indentLines([
         ...caseNode.children.flatMap(child => processNode(child, context)),
-        'break;',
+        plain('break;'),
       ])));
   }
 
-  lines.push('}');
+  lines.push(plain('}'));
 
   return lines;
 }

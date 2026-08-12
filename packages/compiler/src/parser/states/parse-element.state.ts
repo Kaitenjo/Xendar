@@ -98,10 +98,15 @@ function isTagClose(cursor: ParserCursor, tagName: string): boolean {
   
   switch (nextToken.type) {
     case TokenType.EOF:
-      throw new Error(`Expected closing tag ${tagName}`);
+      throw new Error(`Expected closing tag ${tagName} while file is over`);
     
     case TokenType.TAG_CLOSE_NAME:
-      return nextToken.parts[0] === tagName;
+      const tokenTagName = nextToken.parts[0]; 
+      if (tokenTagName === tagName) {
+        return true;
+      } else {
+        throw `Expected closing tag ${tagName}, found ${tokenTagName}`;
+      }
     
     default:
       return false;

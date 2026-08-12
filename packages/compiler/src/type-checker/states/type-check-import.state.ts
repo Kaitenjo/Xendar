@@ -1,6 +1,8 @@
 import { ImportNode } from '../../parser/types/nodes/import-node.type';
 import { TypeCheckContext } from '../models/type-checker-context';
+import { Line } from '../types/generated-line.type';
 import { ProcessNode } from '../types/type-checker-process-node.type';
+import { plain } from '../utils/line-builder.utils';
 
 /**
  * Type-checks an `@import` node.
@@ -10,27 +12,24 @@ import { ProcessNode } from '../types/type-checker-process-node.type';
  * decorator analysis) happens in a separate async phase via
  * `TypeChecker.populateImportMetadata()`.
  */
-export function typeCheckImport(node: ImportNode, _processNode: ProcessNode, _context?: TypeCheckContext): string[] {
+export function typeCheckImport(node: ImportNode, _processNode: ProcessNode, _context?: TypeCheckContext): Line[] {
   const source = node.path;
   const escapedSource = escapeTypeString(source);
-  const lines = new Array<string>();
+  const lines = new Array<Line>();
 
-  
   for (let i = 0; i < node.specifiers.length; i++) {
     const { imported, local } = node.specifiers[i];
 
     switch (imported) {
       case '*':
-        lines.push(`let ${local}!: typeof import('${escapedSource}');`);
+        lines.push(plain(`let ${local}!: typeof import('${escapedSource}');`));
         break;
-
       case 'default':
-        lines.push(`let ${local}!: typeof import('${escapedSource}')['default'];`);
+        lines.push(plain(`let ${local}!: typeof import('${escapedSource}')['default'];`));
         break;
-
       default:
         const escapedImported = escapeTypeString(imported);
-        lines.push(`let ${local}!: typeof import('${escapedSource}')['${escapedImported}'];`);
+        lines.push(plain(`let ${local}!: typeof import('${escapedSource}')['${escapedImported}'];`));
         break;
     }
   }

@@ -5,8 +5,7 @@
  * (lexer, parser, etc.) and computes line/column only on demand, typically
  * for formatting error messages or diagnostics.
  */
-export abstract class Cursor {
-
+export class Cursor {
   /**
    * @param input - The full source text to operate on.
    */
@@ -45,7 +44,7 @@ export abstract class Cursor {
 
     const row = low;
     const column = pos - lineStarts[row];
-    return `[Ln ${row}, Col ${column}]`;
+    return `[Ln ${row + 1}, Col ${column + 1}]`;
   }
 
   /**

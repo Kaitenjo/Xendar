@@ -1,5 +1,6 @@
 import { ASTNode } from '../../parser/types/ast.type';
 import { TypeCheckContext } from '../models/type-checker-context';
+import { Line } from './generated-line.type';
 import { ProcessNode } from './type-checker-process-node.type';
 
 /**
@@ -20,4 +21,4 @@ export type TypeCheckerTransitionFunction<T extends ASTNode = ASTNode> = (
   node: T,
   processNode: ProcessNode,
   context: TypeCheckContext,
-) => string[]
+) => Line[]

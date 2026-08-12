@@ -1,13 +1,13 @@
 {
   "name": "@xaendar/cli",
-  "version": "0.9.4",
+  "version": "0.9.16",
   "description": "Cli tool for Xaendar framework",
   "author": "Kaitenjo",
   "license": "MIT",
   "type": "module",
   "dependencies": {
     "commander": "^15.0.0",
-    "@xaendar/common": "0.9.4"
+    "@xaendar/common": "0.9.16"
   },
   "devDependencies": {
     "type-fest": "^5.7.0"

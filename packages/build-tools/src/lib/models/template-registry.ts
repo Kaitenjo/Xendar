@@ -68,8 +68,7 @@ export function removeTemplateMapping(templatePath: string): void {
  * a single `templateUrl`), but this scans defensively in case of stale
  * entries from a renamed templateUrl.
  *
- * @param componentId - Absolute path of the component file being torn
- *   down.
+ * @param componentId - Absolute path of the component file being torn down.
  */
 export function removeAllMappingsForComponent(componentId: string): void {
   for (const [templatePath, ownerId] of templateToComponent) {

@@ -1,41 +1,37 @@
-import { CompletionItem, CompletionItemKind, Position } from 'vscode-languageserver/node';
 import { getLanguageService } from '@xaendar/language-core';
+import { CompilerOptions, ScriptElementKind } from 'typescript';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { CompletionItem, CompletionItemKind, Position } from 'vscode-languageserver/node';
 import { getCompiledTemplate } from './document-manager';
 import { mapTemplatePositionToShim } from './position-mapping';
-import { CompilerOptions, ScriptElementKind } from 'typescript';
 
-export function getCompletions(
-  templateUri: string,
-  templateSource: string,
-  position: Position,
-  compilerOptions: CompilerOptions
-): CompletionItem[] {
+export function getCompletions(templateUri: string, templateDocument: TextDocument, position: Position, compilerOptions: CompilerOptions): CompletionItem[] {
   const compiled = getCompiledTemplate(templateUri);
-  if (!compiled) return [];
+  if (!compiled) {
+    return [];
+  }
 
-  const shimPosition = mapTemplatePositionToShim(
-    compiled.typecheckBody.mappingTable,
-    compiled.bodyLineOffset,
-    templateSource,
-    position
-  );
-  if (!shimPosition) return []; // cursore su markup statico, non su un'espressione
+  const shimPosition = mapTemplatePositionToShim(compiled.typecheckBody.mappingTable, compiled.bodyLineOffset, templateDocument, position);
+  if (!shimPosition) {
+    return [];
+  }
 
   const languageService = getLanguageService(compilerOptions);
   const shimSourceFile = languageService.getProgram()?.getSourceFile(compiled.shimPath);
-  if (!shimSourceFile) return [];
+  if (!shimSourceFile) {
+    return [];
+  }
 
   const offset = shimSourceFile.getPositionOfLineAndCharacter(shimPosition.line, shimPosition.character);
   const tsCompletions = languageService.getCompletionsAtPosition(compiled.shimPath, offset, {});
-  if (!tsCompletions) return [];
+  if (!tsCompletions) {
+    return [];
+  }
 
   return tsCompletions.entries.map(entry => ({
     label: entry.name,
     kind: mapKind(entry.kind),
     sortText: entry.sortText,
-    // Il testo di inserimento va bene com'è: siamo dentro un'espressione TS
-    // già delimitata da {}, quindi non serve remapparlo — è testo puro,
-    // non uno span da tradurre indietro nel template.
   }));
 }
 

@@ -1,13 +1,13 @@
 import { isValidCustomElementName, slice } from '@xaendar/common';
 import { compile, Cursor, resolveTemplateSpan, TypeCheckResult } from '@xaendar/compiler';
-import { basename, dirname, extname, resolve } from 'node:path';
-import { CompilerOptions, Diagnostic, findConfigFile, parseJsonConfigFileContent, readConfigFile, sys } from 'typescript';
+import { createShim, disposeLanguageService, extractClassName, extractDecoratorPaths, getLanguageService, loadCompilerOptions, registerRealFile, removeRealFile, removeVirtualFile } from '@xaendar/language-core';
+import { dirname, resolve } from 'node:path';
+import { CompilerOptions, Diagnostic } from 'typescript';
 import type { Logger, Plugin } from 'vite';
 import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex';
 import { clearImportRegistry, clearImportsForParent, findParentsForImport, registerImportMapping } from '../import-registry';
-import { disposeLanguageService, getLanguageService, registerRealFile, removeRealFile, removeVirtualFile, upsertVirtualFile } from '../language-service';
 import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model';
-import { clearTemplateRegistry, findComponentForTemplate, registerTemplateMapping, removeTemplateMapping } from '../template-registry';
+import { clearTemplateRegistry, findComponentForTemplate, registerTemplateMapping, removeAllMappingsForComponent, removeTemplateMapping } from '../template-registry';
 
 /**
  * Vite plugin that compiles Xaendar DSL template files (`.xd.component.html`)
@@ -97,7 +97,7 @@ export function xaendarPlugin(): Plugin {
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        const result = await compile(templateSource, dirname(id), varName);
+        const result = await compile(templateSource, dirname(templatePath), varName);
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
@@ -119,12 +119,9 @@ export function xaendarPlugin(): Plugin {
       compilerOptions ??= loadCompilerOptions(dirname(id));
       registerRealFile(id);
 
-      const shimPath = `${id}.__typecheck__.ts`;
-      const shim = buildTypecheckShim(className, id, typecheckBody.text);
-      upsertVirtualFile(shimPath, shim.code);
-
+      const shim = createShim(className, id, typecheckBody);
       const languageService = getLanguageService(compilerOptions);
-      const diagnostics = languageService.getSemanticDiagnostics(shimPath);
+      const diagnostics = languageService.getSemanticDiagnostics(shim.path);
 
       for (let i = 0; i < diagnostics.length; i++) {
         logError(`Failed to compile template - ${templatePath}:\n${describeDiagnostic(templateSource, diagnostics[i], shim.bodyLineOffset, typecheckBody.mappingTable)}`);
@@ -144,7 +141,8 @@ export function xaendarPlugin(): Plugin {
         if (COMPONENT_FILE_RE.test(id)) {
           removeVirtualFile(`${id}.__typecheck__.ts`);
           removeRealFile(id);
-
+          removeAllMappingsForComponent(id);
+          
           const parents = findParentsForImport(id);
           for (const parentId of parents) {
             removeVirtualFile(`${parentId}.__typecheck__.ts`);
@@ -202,27 +200,6 @@ function assertValidCustomElementName(code: string, id: string): void {
       throw `Invalid custom element name "${selector}" in component ${id}`;
     }
   }
-}
-
-/**
- * Extracts the `templateUrl` and `styleUrl` values from the `@WebComponent`
- * decorator in the component source and resolves them to absolute paths.
- *
- * @param jsSource - The raw TypeScript source of the component file.
- * @param componentDir - The directory containing the component file, used as
- *   base for resolving relative decorator paths.
- * @returns An object with the resolved `templatePath` and `stylePath`.
- *   Either field may be `undefined` when the corresponding decorator
- *   property is absent.
- */
-function extractDecoratorPaths(jsSource: string, componentDir: string): { templatePath?: string, stylePath?: string } {
-  const templateUrl = jsSource.match(/templateUrl\s*:\s*["'](.+?)["']/)?.[1];
-  const styleUrl = jsSource.match(/styleUrl\s*:\s*["'](.+?)["']/)?.[1];
-
-  return {
-    templatePath: templateUrl ? resolve(componentDir, templateUrl) : undefined,
-    stylePath: styleUrl ? resolve(componentDir, styleUrl) : undefined
-  };
 }
 
 /**
@@ -320,22 +297,6 @@ ${result}`;
 
   return result.replace(lastStaticBlock, (_, indent, initFn) => `${compiledMethods}\n  static {\n${indent}${initFn}();\n  }`);;
 }
-/**
- * Extracts the class name from the Babel-transpiled JS source.
-
- *
- * Babel always emits `class ClassName extends ...` so this is safe to match.
- * Used to generate a unique name for the per-class CSSStyleSheet variable
- * that must be declared outside the class body to guarantee it exists before
- * `connectedCallback` fires.
- *
- * @param jsSource - The Babel-transpiled JS source of the component.
- * @returns The class name, or `__Component` as a safe fallback.
- */
-function extractClassName(jsSource: string): string {
-  const match = jsSource.match(/class\s+(\w+)\s+extends/);
-  return match?.[1] ?? '__Component';
-}
 
 /**
  * Builds the JS snippet that declares and populates the shared
@@ -372,60 +333,6 @@ function buildStyleSnippet(varName: string, css: string): string {
  */
 function fixDecoratorExport(code: string): string {
   return code.replace(/^export\s+(@\w+[\s\S]*?)\s+(class\s)/gm, '$1\nexport $2');
-}
-
-/**
- * Loads the `tsconfig.json` compilerOptions applicable to the given
- * directory, using TypeScript's standard config file resolution
- * (`findConfigFile` walks up parent directories). Falls back to an empty
- * options object if no config file is found, rather than throwing —
- * type checking simply runs with default settings in that case.
- *
- * @param fromDir - Directory to start searching for `tsconfig.json` from,
- *   typically the directory of the component file being transformed.
- */
-function loadCompilerOptions(fromDir: string): CompilerOptions {
-  const configPath = findConfigFile(fromDir, sys.fileExists, 'tsconfig.json');
-  if (!configPath) {
-    return {};
-  }
-
-  const configFile = readConfigFile(configPath, sys.readFile);
-  const parsed = parseJsonConfigFileContent(configFile.config, sys, dirname(configPath));
-  return parsed.options;
-}
-
-/**
- * Wraps the compiler's fictitious type-check body with the import of the
- * real component class and the `declare const root` binding, so the shim
- * type-checks the DSL expressions against the actual class members.
- *
- * The shim is generated as a sibling of the real component file (same
- * directory, `.__typecheck__.ts` suffix) so that the relative import below
- * resolves correctly via the LanguageServiceHost's standard module
- * resolution against the real filesystem.
- *
- * @param className - Name of the exported component class, as extracted
- *   from the transpiled source.
- * @param componentFilePath - Absolute path of the real component file.
- * @param body - The fictitious-TS type-check body produced by the compiler
- *   (the `function typeCheck() {...}` blocks and friends).
- * @returns The full shim source, ready to be passed to `updateVirtualFile`.
- */
-function buildTypecheckShim(className: string, componentFilePath: string, body: string): { code: string, bodyLineOffset: number } {
-  const importSpecifier = `./${basename(componentFilePath, extname(componentFilePath))}`;
-
-  const prefixLines = [
-    `import { ${className} } from '${importSpecifier}';`,
-    '',
-    `declare const root: ${className};`,
-    '',
-  ];
-
-  return {
-    code: [...prefixLines, body].join('\n'),
-    bodyLineOffset: prefixLines.length,
-  };
 }
 
 /**

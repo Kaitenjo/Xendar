@@ -1,4 +1,4 @@
-import { statSync, writeFileSync } from 'node:fs';
+import { statSync } from 'node:fs';
 import { CompilerOptions, createDocumentRegistry, createLanguageService, getDefaultLibFilePath, LanguageService, LanguageServiceHost, ScriptSnapshot, sys } from 'typescript';
 
 /**
@@ -196,4 +196,21 @@ export function upsertVirtualFile(virtualPath: string, content: string): void {
  */
 export function removeVirtualFile(virtualPath: string): void {
   virtualFiles.delete(virtualPath);
+}
+
+/**
+ * Extracts the class name from the Babel-transpiled JS source.
+
+ *
+ * Babel always emits `class ClassName extends ...` so this is safe to match.
+ * Used to generate a unique name for the per-class CSSStyleSheet variable
+ * that must be declared outside the class body to guarantee it exists before
+ * `connectedCallback` fires.
+ *
+ * @param jsSource - The Babel-transpiled JS source of the component.
+ * @returns The class name, or `__Component` as a safe fallback.
+ */
+export function extractClassName(jsSource: string): string {
+  const match = jsSource.match(/class\s+(\w+)\s+extends/);
+  return match?.[1] ?? '__Component';
 }

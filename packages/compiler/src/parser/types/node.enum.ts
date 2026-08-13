@@ -6,6 +6,11 @@ export enum ASTNodeType {
    * An HTML element node with a tag name, attributes, events, and children.
    */
   Element,
+
+  Attribute,
+
+  Event,
+  
   /**
    * A plain text node.
    */
@@ -37,5 +42,9 @@ export enum ASTNodeType {
   /**
    * A `@case` or `@default` branch inside a `@switch`.
    */
-  Case
+  Case,
+  /**
+   *
+   */
+  Import
 }

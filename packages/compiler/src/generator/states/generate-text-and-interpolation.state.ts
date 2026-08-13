@@ -3,7 +3,7 @@ import { InterpolationNode } from '../../parser/types/nodes/interpolation-node.t
 import { TextNode } from '../../parser/types/nodes/text-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
-import { resolveExpression } from '../utils/render-generator.utils';
+import { resolveExpression } from '../utils/generator.utils';
 
 /**
  * Generates code for a text or interpolation node.

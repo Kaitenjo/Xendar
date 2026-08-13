@@ -1,8 +1,8 @@
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
-import { CompilerContext } from '../models/compiler-context.model';
+import { CompilerContext, IdentifierKind } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
-import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../utils/render-generator.utils';
+import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../utils/generator.utils';
 
 /**
  * Generates code for a `@for` iteration node.
@@ -75,7 +75,7 @@ export function generateFor(node: ForNode, parentNode: string, index: string, co
     args: [forKey, 'parentContext', itemsName, counterName, 'anchor']
   });
 
-  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, ${node.itemAlias} => ${resolveExpression(node.trackExpression, forContext, true)}, this.${forKey}.bind(this));`);
+  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, ${node.itemAlias} => ${resolveExpression(node.trackExpression, forContext, { skipResolution: true })}, this.${forKey}.bind(this));`);
 
   return retVal
 }

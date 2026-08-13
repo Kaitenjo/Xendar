@@ -77,7 +77,8 @@ function checkAndCreateProjectDirectory(path: string): void {
  * @param style - The CSS preprocessor style to use for generated components, passed down to the component generator.
  */
 function createFiles(entries: Entry[], basePath: string, style: string): void {
-  entries.forEach(entry => {
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
     switch (entry.type) {
       case 'file':
       case undefined:
@@ -97,5 +98,5 @@ function createFiles(entries: Entry[], basePath: string, style: string): void {
         generateComponent(entry.name, basePath, false, style);
         break;
     }
-  });
+  };
 }

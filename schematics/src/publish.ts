@@ -48,7 +48,8 @@ async function publishAll(): Promise<void> {
   const packages = readdirSync(DIST_FOLDER);
   console.log(`\n📦 Publishing ${packages.length} @xaendar package(s)...\n`);
 
-  for (const project of packages) {
+  for (let i = 0; i < packages.length; i++) {
+    const project = packages[i];
     const projectPath = resolve(DIST_FOLDER, project);
     console.log(`🚀 Publishing @xaendar/${project}...`);
 

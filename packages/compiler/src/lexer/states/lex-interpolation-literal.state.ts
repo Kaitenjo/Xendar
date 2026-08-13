@@ -1,4 +1,4 @@
-import { GRAVE_ACCENT, RIGHT_BRACE } from '../../costants/chars.constants';
+import { DOUBLE_QUOTE, GRAVE_ACCENT, RIGHT_BRACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -30,6 +30,7 @@ export function lexInterpolationliteral(cursor: LexerCursor, context: LexerTrans
         if (cursor.peek() === RIGHT_BRACE) {
           // Consume '}'
           cursor.advance();
+          
           /*
             After an interpolation we have to understanad where to transite
             The next state depends from the previous state
@@ -39,11 +40,20 @@ export function lexInterpolationliteral(cursor: LexerCursor, context: LexerTrans
 
           switch (previousState) {
             case LexerState.ATTRIBUTE:
+              if (cursor.peek() !== DOUBLE_QUOTE) {
+                throw `Attribute interpolation expression must end with double quotes '"', found '${String.fromCharCode(cursor.peek())}'`;
+              }
+              // Consume '"'
+              cursor.advance();
               state = LexerState.TAG_BODY
               break;
 
             case LexerState.TEXT:
               state = LexerState.TEXT
+              break;
+
+            default:
+              throw `Unexpected state '${previousState}' after interpolation literal`;
           };
 
           retVal = {

@@ -27,7 +27,7 @@ export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFun
         type: TokenType.FOR
       }],
       pushState: true
-    }
+    };
   } else if (cursor.peekMatch('if ')) {
     cursor.advance(2);
     retVal = {
@@ -36,7 +36,7 @@ export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFun
         type: TokenType.IF
       }],
       pushState: true
-    }
+    };
   } else if (cursor.peekMatch('else if ')) {
     cursor.advance(8);
     retVal = {
@@ -45,7 +45,7 @@ export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFun
         type: TokenType.ELSE_IF
       }],
       pushState: true
-    }
+    };
   } else if (cursor.peekMatch('else ')) {
     cursor.advance(5);
     retVal = {
@@ -53,7 +53,7 @@ export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFun
       tokens: [{
         type: TokenType.ELSE
       }]
-    }
+    };
   } else if (cursor.peekMatch('switch ')) {
     cursor.advance(7);
     retVal = {
@@ -62,7 +62,7 @@ export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFun
         type: TokenType.SWITCH
       }],
       pushState: true
-    }
+    };
   } else if (cursor.peekMatch('case ')) {
     cursor.advance(5);
     retVal = {
@@ -71,7 +71,7 @@ export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFun
         type: TokenType.CASE
       }],
       pushState: true
-    }
+    };
   } else if (cursor.peekMatch('default ')) {
     cursor.advance(8);
     retVal = {
@@ -79,7 +79,14 @@ export function lexFlowControl(cursor: LexerCursor, _context: LexerTransitionFun
       tokens: [{
         type: TokenType.DEFAULT
       }]
-    }
+    };
+  } else if (cursor.peekMatch('import ')) {
+    cursor.advance(7);
+    retVal = {
+      state: LexerState.IMPORT
+    };
+  } else {
+    throw `Unknown flow-control keyword`;
   }
 
   return retVal

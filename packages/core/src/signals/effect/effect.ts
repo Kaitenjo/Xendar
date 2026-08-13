@@ -59,7 +59,10 @@ export function effect(fn: NoArgsVoidFunction, options?: EffectOptions): NoArgsV
       queueMicrotask(() => {
         needsEnqueue = true;
         options?.onBeforeRun?.();
-        watcher.getPending().forEach(computed => computed.get());
+        const pendings = watcher.getPending();
+        for (let i = 0; i < pendings.length; i++) {
+          pendings[i].get();
+        }
         options?.onAfterRun?.();
         watcher.watch();
       });

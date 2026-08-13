@@ -1,12 +1,12 @@
+import { ASTNode, ASTNodeWithSpan } from '../ast.type';
 import { ASTNodeType } from '../node.enum';
-import { ASTNode } from '../ast.type';
 import { AttributeNode } from './attribute-node.type';
 import { EventNode } from './event-node.type';
 
 /**
  * AST node representing an HTML element with a tag name, attributes, events, and children.
  */
-export type ElementNode = {
+export type ElementNode = ASTNodeWithSpan<{
   /**
    * Discriminant identifying this node as an element.
    */
@@ -27,4 +27,4 @@ export type ElementNode = {
    * Child AST nodes nested inside this element.
    */
   children: ASTNode[];
-}
+}>

@@ -4,7 +4,7 @@ import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { EventNode } from '../../parser/types/nodes/event-node.type';
 import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
-import { getElementIdentifier, resolveExpression } from '../utils/render-generator.utils';
+import { getElementIdentifier, resolveExpression } from '../utils/generator.utils';
 
 /**
  * Generates code for an HTML element node: creates the DOM element, sets attributes,
@@ -21,33 +21,33 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
   const events = mapEvents(node.events, compilerContext);
   const nodeName = getElementIdentifier(node, parentNode, index);
   const tagName = node.tagName;
-  const retval: GeneratorTransitionFunctionReturnType = {
+  const retVal: GeneratorTransitionFunctionReturnType = {
     code: [],
     functionsToProcess: new Map()
   }
 
   switch (tagName) {
     case 'svg':
-      retval.code.push('context.createElement = createSVGElement');
+      retVal.code.push('context.createElement = createSVGElement');
       break;
     case 'math':
-      retval.code.push('context.createElement = createMATHMLElement');
+      retVal.code.push('context.createElement = createMATHMLElement');
   }
 
-  retval.code.push(`const ${nodeName} = _renderElement(${parentNode}, context, ${anchor}, '${tagName}',`);
+  retVal.code.push(`const ${nodeName} = _renderElement(${parentNode}, context, ${anchor}, '${tagName}',`);
   
   attributes.length
-    ? retval.code.push(
+    ? retVal.code.push(
       ...indent([
         '[',
         ...indent(attributes),
         '],'
       ])
     )
-    : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} [],`;
+    : retVal.code[retVal.code.length - 1] = `${retVal.code[retVal.code.length - 1]} [],`;
 
   events.length
-    ? retval.code.push(
+    ? retVal.code.push(
       ...indent([
         '[',
         ...indent(events),
@@ -55,17 +55,17 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
       ]),
       ');'
     )
-    : retval.code[retval.code.length - 1] = `${retval.code[retval.code.length - 1]} []);`;
+    : retVal.code[retVal.code.length - 1] = `${retVal.code[retVal.code.length - 1]} []);`;
 
     
   switch (tagName) {
     case 'svg':
     case 'math':
-      retval.code.push('context.createElement = createElement');
+      retVal.code.push('context.createElement = createElement');
   }
 
   if (node.children.length) {
-    retval.functionsToProcess!.set(`${nodeName}Children`, {
+    retVal.functionsToProcess!.set(`${nodeName}Children`, {
       fn: { 
         node, 
         parentNode: nodeName, 
@@ -74,9 +74,10 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
       },
       args: [nodeName, 'parentContext']
     });
-    retval.code.push(`this.${nodeName}Children(${nodeName}, context);`)
+    retVal.code.push(`this.${nodeName}Children(${nodeName}, context);`);
   }
-  return retval;
+  
+  return retVal;
 }
 
 /**
@@ -132,11 +133,11 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
           ...indent(parameters),
           ']'
         ]),
-        '}'
+        '},'
       );
     } else {
       eventCode[eventCode.length - 1] = `${eventCode[eventCode.length - 1]}]`;
-      eventCode.push('}');
+      eventCode.push('},');
     }
 
     return eventCode;

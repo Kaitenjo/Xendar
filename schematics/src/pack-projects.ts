@@ -37,7 +37,10 @@ function packAll(): void {
 
   mkdirSync(outputPath);
 
-  for (const project of readdirSync(buildPackagesPath)) {
+  const projects = readdirSync(buildPackagesPath);
+
+  for (let i = 0; i < projects.length; i++) {
+    const project = projects[i];
     const projectPath = resolve(buildPackagesPath, project);
 
     console.log(`\n▶ Pack: ${project}`);

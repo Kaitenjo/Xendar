@@ -149,7 +149,9 @@ export class State<T = any> {
 
     if (!this.#equals.call(this, this.#value, newValue)) {
       this.#value = newValue;
-      this.#sinks.forEach(sink => sink instanceof Computed ? sink.setState('dirty', PRIVATE) : sink.notify(PRIVATE));
+      for (const sink of this.#sinks) {
+        sink instanceof Computed ? sink.setState('dirty', PRIVATE) : sink.notify(PRIVATE)
+      }
     }
   }
 

@@ -239,7 +239,9 @@ export class Computed<T = any> {
     this.#state = newState;
 
     if (this.#state === 'dirty' || this.#state === 'checked') {
-      this.#sinks.forEach(sink => sink instanceof Computed ? sink.setState('checked', PRIVATE) : sink.notify(PRIVATE))
+      for (const sink of this.#sinks) {
+        sink instanceof Computed ? sink.setState('checked', PRIVATE) : sink.notify(PRIVATE);
+      }
     }
   }
 
@@ -258,7 +260,9 @@ export class Computed<T = any> {
   public addSink(sink: Computed<unknown> | Watcher, symbol: symbol) {
     assertPrivateContext(symbol);
     if (this.#sinks.size === 0) {
-      this.#sources.forEach(source => source.addSink(this, PRIVATE));
+      for (const source of this.#sources) {
+        source.addSink(this, PRIVATE);
+      }
     }
     this.#sinks.add(sink);
   }
@@ -279,7 +283,9 @@ export class Computed<T = any> {
     this.#sinks.delete(sink);
 
     if (this.#sinks.size === 0) {
-      this.#sources.forEach(source => source.removeSink(this, PRIVATE));
+      for (const source of this.#sources) {
+        source.removeSink(this, PRIVATE);
+      }
     }
   }
 
@@ -317,7 +323,9 @@ export class Computed<T = any> {
    * @see Signal algorithms — "Algorithm: recalculate dirty computed Signal"
    */
   #computeValue(): void {
-    this.#sources.forEach(source => source.removeSink(this, PRIVATE));
+    for (const source of this.#sources) {
+      source.removeSink(this, PRIVATE);
+    }
     this.#sources.clear();
 
     pushComputed(this);
@@ -341,9 +349,13 @@ export class Computed<T = any> {
 
     this.setState('clean', PRIVATE);
 
-    outcome === 'dirty'
-      ? this.#sinks.forEach(sink => sink instanceof Computed ? sink.setState('dirty', PRIVATE) : sink.notify(PRIVATE))
-      : this.#propagateClean();
+    if (outcome === 'dirty') {
+      for (const sink of this.#sinks) {
+        sink instanceof Computed ? sink.setState('dirty', PRIVATE) : sink.notify(PRIVATE);
+      }
+    } else {
+      this.#propagateClean();
+    }
   }
 
   /**
@@ -401,15 +413,23 @@ export class Computed<T = any> {
    * @see Signal algorithms — "Algorithm: recalculate dirty computed Signal"
    */
   #propagateClean(): void {
-    [...this.#sinks]
-      .filter((sink): sink is Computed<unknown> => sink instanceof Computed && sink.#state === 'checked')
-      .forEach(sink => {
-        const allSourcesClean = [...sink.#sources].every(source => !(source instanceof Computed) || source.#state === 'clean');
+    for (const sink of this.#sinks) {
+      if (sink instanceof Computed && sink.#state === 'checked') {
+        let allSourcesClean = true;
+
+        for (const source of sink.#sources) {
+          if (source instanceof Computed && source.#state !== 'clean') {
+            allSourcesClean = false;
+            break;
+          }
+        }
+
         if (allSourcesClean) {
           sink.#state = 'clean';
           sink.#propagateClean();
         }
-      });
+      }
+    }
   }
 
   /**

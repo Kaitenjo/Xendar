@@ -18,7 +18,7 @@ const external = [
 ]
 
 export default function getViteConfig(name: string, dirName: string, options?: ViteConfigOptions): UserConfig {
-  const fileName = name.split('/').join('-').slice(1);
+  const fileName = JSON.parse(JSON.stringify(name.split('/').join('-').slice(1)));
   const outDir = resolve(dirName, `../../dist/${name}`);
   const distDir = join(outDir, 'dist');
 
@@ -82,6 +82,7 @@ export default function getViteConfig(name: string, dirName: string, options?: V
         }
       },
       dts({
+        exclude: ['**/*.spec.ts'],
         rollupTypes: true,
         outDir: distDir,
         root: resolve(dirName, 'src/public-api.ts'),

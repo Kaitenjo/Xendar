@@ -1,10 +1,10 @@
+import { ASTNode, ASTNodeWithSpan } from '../ast.type';
 import { ASTNodeType } from '../node.enum';
-import { ASTNode } from '../ast.type';
 
 /**
  * AST node representing a `@case` or `@default` branch inside a `@switch` block.
  */
-export type CaseNode = {
+export type CaseNode = ASTNodeWithSpan<{
   /**
    * Discriminant identifying this node as a case.
    */
@@ -17,4 +17,4 @@ export type CaseNode = {
    * Child nodes rendered when this case matches.
    */
   children: ASTNode[];
-}
+}>

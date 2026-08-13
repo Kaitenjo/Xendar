@@ -1,16 +1,16 @@
 {
   "name": "@xaendar/compiler",
-  "version": "0.7.19",
+  "version": "0.9.16",
   "type": "module",
   "author": "Kaitenjo",
   "license": "MIT",
   "description": "A library for transpiling Xaendar Templates into JavaScript code",
   "xaendar": {
-    "target": "browser"
+    "target": "node"
   },
   "dependencies": {
-    "@xaendar/common": "0.7.19",
-    "@xaendar/types": "0.7.19",
+    "@xaendar/common": "0.9.16",
+    "@xaendar/types": "0.9.16",
     "typescript": "^6.0.3"
   }
 }

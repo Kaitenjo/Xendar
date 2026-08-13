@@ -38,6 +38,9 @@ export function lexTagOpenName(cursor: LexerCursor, _context: LexerTransitionFun
       case SPACE:
       case SLASH:
       case GREATER_THEN:
+        if (!tagName) {
+          throw `Tag name cannot be empty `;
+        }
         retVal = {
           state: LexerState.TAG_BODY,
           tokens: [{ 

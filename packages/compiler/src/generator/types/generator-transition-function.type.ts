@@ -12,8 +12,8 @@ import { GeneratorTransitionFunctionReturnType } from './generator-transition-fu
  * normally instead of inserting relative to a reserved position).
  *
  * @param node - The AST node currently being processed.
- * @param identifier - A stable identifier for the generated output segment.
  * @param parentNode - The identifier of the parent node in the generation flow.
+ * @param index - A stable identifier for the generated output segment.
  * @param compilerContext - The current compiler context node.
  * @param anchor - The name of the anchor variable to forward to direct
  *   rendering calls emitted for this node, or `null` if none is available
@@ -22,8 +22,8 @@ import { GeneratorTransitionFunctionReturnType } from './generator-transition-fu
  */
 export type GeneratorTransitionFunction<T extends ASTNode = ASTNode> = (
   node: T,
-  identifier: string,
   parentNode: string,
+  index: string,
   compilerContext: CompilerContext,
   anchor: string | null
-) => GeneratorTransitionFunctionReturnType
+) => GeneratorTransitionFunctionReturnType | undefined

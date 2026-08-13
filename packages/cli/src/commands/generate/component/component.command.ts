@@ -53,15 +53,13 @@ export function generateComponent(name: string, path: string, force?: boolean, s
     [`${name}.xd.component.spec.ts`, specTemplate(name)],
   ];
 
-  for (const [filename, content] of files) {
+  for (let i = 0; i < files.length; i++) {
+    const [filename, content] = files[i];
     writeFileSync(join(dir, filename), content, 'utf8');
   }
 
   console.log();
-  console.log(`✔  Component "${name}" generated:`);
-  for (const [filename] of files) {
-    console.log(`${name}/${filename}`);
-  }
+  console.log(`✔  Component "${name}" generated`);
 }
 
 /**

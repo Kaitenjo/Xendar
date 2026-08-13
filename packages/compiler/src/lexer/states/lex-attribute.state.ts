@@ -1,4 +1,4 @@
-import { DOUBLE_QUOTE, EQUAL_THEN, LEFT_BRACE, SPACE } from '../../costants/chars.constants';
+import { DOUBLE_QUOTE, EQUAL_THEN, GREATER_THEN, LEFT_BRACE, SINGLE_QUOTE, SLASH, SPACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -38,13 +38,47 @@ export function lexAttribute(cursor: LexerCursor, _context: LexerTransitionFunct
         }
         break;
 
+      /*
+        Cover cases where the attribute name is immediately followed by '>' or '/'
+        without a separating space.
+        Ex:
+        <input disabled>
+        <input disabled/>
+      */
+      case GREATER_THEN:
+      case SLASH:
+        read = false;
+        retVal = {
+          state: LexerState.TAG_BODY,
+          tokens: [{
+            type: TokenType.ATTRIBUTE,
+            parts: [attribute]
+          }]
+        }
+        break;
+
       case EQUAL_THEN:
+        /*
+          Unlike event handler where we can simply throw error if eventName is
+          followed by a space instead of "=", in the attributes the situation is 
+          different.
+
+          Attributes can have a name without any value
+          e.g. <input disabled />
+          
+          So we cannot throw if an attribute is followed by a space instead of "="
+          But we have to check if we find a "=" without a previous valid attribute name
+          e.g. <input disabled ="false" />
+        */
+        if (!attribute) {
+          throw new Error('Attribute cannot start with \'=\'');
+        }
+
         cursor.advance();
         
-        // If attibutes as a value, it must start with double quotes
+        // If attribute has a value, it must start with double quotes
         if (cursor.peek() !== DOUBLE_QUOTE) {
-          const { row, column } = cursor.position;
-          throw new Error(`Attribute value must start with double quotes '"'.Row ${row} Col ${column}`);
+          throw `Attribute value must start with double quotes '"'`;
         }
 
         // Consume '"'
@@ -61,6 +95,16 @@ export function lexAttribute(cursor: LexerCursor, _context: LexerTransitionFunct
           }]
         }
         break;
+
+      case DOUBLE_QUOTE:
+      case SINGLE_QUOTE:
+        /*
+          Break is missing or purpose cause the code after the if 
+          would be the same as default case
+        */
+        if (!attribute) {
+          throw new Error('Attribute cannot start with \' or \"');
+        }
 
       default:
         cursor.advance();

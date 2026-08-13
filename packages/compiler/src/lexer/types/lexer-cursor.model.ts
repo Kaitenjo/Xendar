@@ -1,7 +1,8 @@
+import { slice } from '@xaendar/common';
 import { PositiveInteger, TupleOfLength } from '@xaendar/types';
 import { CR, EOF, LF, SPACE } from '../../costants/chars.constants';
+import { Cursor } from '../../models/cursor';
 import { CurrentChar } from './current-char.type';
-import { CursorPosition } from './current-position.type';
 
 /**
  * Cursor abstraction used by the Lexer to navigate the input source.
@@ -16,7 +17,7 @@ import { CursorPosition } from './current-position.type';
  * it does not know about tokens, states, or grammar rules.
  * Its sole responsibility is controlled navigation of the input stream.
  */
-export class LexerCursor {
+export class LexerCursor extends Cursor {
   /**
    * Representation of the current character.
    *
@@ -46,33 +47,15 @@ export class LexerCursor {
    * Value: Unicode code point
    */
   private readonly _peekCache = new Map<number, number>();
-  /**
-   * Logical position of the cursor in the input.
-   *
-   * - `row`: zero-based line number
-   * - `column`: zero-based column number
-   */
-  private readonly _position: CursorPosition = {
-    row: 0,
-    column: 0
-  };
-  /**
-   * Returns a read-only snapshot of the current cursor position.
-   */
-  public get position(): Readonly<CursorPosition> {
-    return this._position;
-  }
-
-  public get formattedPosition(): string {
-    return `[Ln ${this._position.row}, Col ${this._position.column}]`
-  }
 
   /**
    * Creates a new cursor for the given input source.
    *
    * @param input - Full source string to be tokenised.
    */
-  constructor(public input: string) { }
+  constructor(input: string) { 
+    super(input);
+  }
 
   /**
    * Advances the cursor by the specified number of characters.
@@ -88,7 +71,7 @@ export class LexerCursor {
    */
   public advance(chars = 1): void {
     if (chars < 1) {
-      throw new Error(`${chars} is not a valid value. Please enter a number equal or greater than 1`);
+      throw `${chars} is not a valid value. Please enter a number equal or greater than 1`;
     }
 
     const newIndex = this._currentChar.index + chars;
@@ -99,19 +82,13 @@ export class LexerCursor {
       this._currentChar.value = '';
       this.throwEOFError();
     } else {
-      /*
-        Before updating the character, adjust logical position.
-        Line breaks reset column and increment row.
-      */
-      if ([LF, CR].includes(this._currentChar.code)) {
-        this._position.row++;
-        this._position.column = 0;
-      } else {
-        this._position.column++;
+      // Clear cache when advance
+      for (let i = this._currentChar.index + 1; i <= newIndex ; i++) {
+        this._peekCache.delete(i);
       }
-
+      
       this._currentChar.index = newIndex;
-      this._currentChar.value = this.input[newIndex]!;
+      this._currentChar.value = this.input[newIndex];
       this._currentChar.code = this.input.charCodeAt(newIndex);
     }
   }
@@ -145,8 +122,8 @@ export class LexerCursor {
 
     // RegExp path — slice input and test
     const start = this._currentChar.index + 1;
-    const slice = this.input.slice(start, start + length!);
-    return pattern.test(slice);
+    const slicedInput = slice(this.input, start, start + length!);
+    return pattern.test(slicedInput);
   }
 
   /**

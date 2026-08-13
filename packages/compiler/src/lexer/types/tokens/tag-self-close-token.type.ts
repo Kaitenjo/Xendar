@@ -1,9 +1,10 @@
 import { TokenType } from '../token-type.enum';
+import { TokenWithSpan } from '../token.type';
 
 /**
  * Token emitted when the lexer encounters a self-closing tag marker `/>`.
  */
-export type TagSelfCloseToken = {
+export type TagSelfCloseToken = TokenWithSpan<{
   /**
    * Discriminant identifying this token as a self-closing tag.
    */
@@ -12,4 +13,4 @@ export type TagSelfCloseToken = {
    * No associated parts for this token.
    */
   parts: []
-}
+}>

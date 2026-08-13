@@ -1,13 +1,8 @@
 import { Generator } from './generator/generator';
 import { Lexer } from './lexer/lexer';
-import { TokenType } from './lexer/types/token-type.enum';
 import { Parser } from './parser/parser';
-import { parseElement } from './parser/states/compiler/parse-element.state';
-import { parseForControlFlow } from './parser/states/compiler/parse-for.state';
-import { parseIfControlFlow } from './parser/states/compiler/parse-if.state';
-import { parseInterpolation } from './parser/states/compiler/parse-interpolation.state';
-import { parseSwitchControlFlow } from './parser/states/compiler/parse-switch.state';
-import { parseText } from './parser/states/compiler/parse-text.state';
+import { TypeChecker } from './type-checker/type-checker';
+import { TypeCheckResult } from './type-checker/types/type-checker-result.type';
 
 /**
  * Compiles a template string into a Javascript render function body.
@@ -22,16 +17,11 @@ import { parseText } from './parser/states/compiler/parse-text.state';
  *   into the generated `adoptedStyleSheets` assignment.
  * @returns A string containing the compiled Javascript render method body.
  */
-export function compile(input: string, cssVariableName?: string): string {
+export async function compile(input: string, baseDir: string, cssVariableName?: string): Promise<{ javascript: string; typescript: TypeCheckResult; }> {
   const tokens = new Lexer(input).tokenize();
-  const nodes = new Parser(tokens, {
-    [TokenType.TEXT]: parseText,
-    [TokenType.INTERPOLATION_EXPRESSION]: parseInterpolation,
-    [TokenType.INTERPOLATION_LITERAL]: parseInterpolation,
-    [TokenType.TAG_OPEN_NAME]: parseElement,
-    [TokenType.IF]: parseIfControlFlow,
-    [TokenType.FOR]: parseForControlFlow,
-    [TokenType.SWITCH]: parseSwitchControlFlow
-  }).parse();
-  return new Generator(nodes, cssVariableName).generate();
+  const nodes = new Parser(input, tokens).parse();
+  return {
+    javascript: new Generator(input, nodes).generate(cssVariableName),
+    typescript: await new TypeChecker(input, nodes).generate(baseDir)
+  } 
 }

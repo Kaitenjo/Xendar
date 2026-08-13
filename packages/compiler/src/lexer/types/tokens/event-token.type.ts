@@ -1,15 +1,16 @@
 import { TokenType } from '../token-type.enum';
+import { TokenWithSpan } from '../token.type';
 
 /**
- * Token emitted when the lexer consumes a DOM event binding declared with `@eventName=handler`.
+ * Token emitted for the event name in a DOM event binding `@eventName=handler`.
  */
-export type EventToken = {
+export type EventToken = TokenWithSpan<{
   /**
    * Discriminant identifying this token as an event binding.
    */
   type: TokenType.EVENT
   /**
-   * `parts[0]` is the raw `eventName=handler` string.
+   * `parts[0]` is the event name (e.g. `click`, `collapsedChange`).
    */
   parts: [string]
-}
+}>

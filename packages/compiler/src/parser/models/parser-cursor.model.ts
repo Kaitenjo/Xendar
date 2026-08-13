@@ -1,6 +1,8 @@
 import { PositiveInteger, TupleOfLength } from '@xaendar/types';
 import { TokenType } from '../../lexer/types/token-type.enum';
 import { Token } from '../../lexer/types/token.type';
+import { EOFToken } from '../../lexer/types/tokens/eof-token.type';
+import { Cursor } from '../../models/cursor';
 import { CurrentToken } from '../types/current-token.type';
 
 /**
@@ -15,7 +17,7 @@ import { CurrentToken } from '../types/current-token.type';
  * This class does not perform parsing itself: it only
  * manages position and access to the token stream.
  */
-export class ParserCursor {
+export class ParserCursor extends Cursor {
 
   /**
    * Representation of the current token.
@@ -34,16 +36,19 @@ export class ParserCursor {
   /**
    * Returns a read-only snapshot of the current token.
    */
-  public getCcurrentToken<TokenType extends Token>(): Readonly<CurrentToken<TokenType>> {
+  public getCurrentToken<TokenType extends Exclude<Token, EOFToken>>(): Readonly<CurrentToken<TokenType>> {
     return this._currentToken as Readonly<CurrentToken<TokenType>>;
   }
 
   /**
    * Creates a new ParserCursor for the given token array.
    *
+   * @param input - The full source text to operate on. 
    * @param _tokens - The array of tokens to navigate.
    */
-  constructor(private readonly _tokens: Token[]) { }
+  constructor(input: string, private readonly _tokens: Token[]) { 
+    super(input)
+  }
 
   /**
    * Advances the cursor by the specified number of tokens.
@@ -55,17 +60,17 @@ export class ParserCursor {
    */
   public advance(chars = 1): void {
     if (chars < 1) {
-      throw new Error(`${chars} is not a valid value. Please enter a number equal or greater than 1`);
+      throw `${chars} is not a valid value. Please enter a number equal or greater than 1`;
     }
 
     const newIndex = this._currentToken.index + chars;
 
     if (newIndex >= this._tokens.length) {
-      this._currentToken.value = { type: TokenType.EOF };
+      this._currentToken.value = { type: TokenType.EOF  };
       this._currentToken.index = -1;
     } else {
       this._currentToken.index = newIndex;
-      this._currentToken.value = this._tokens[newIndex]!;
+      this._currentToken.value = this._tokens[newIndex];
     }
   }
 
@@ -113,6 +118,6 @@ export class ParserCursor {
    * Peeks a single token at the given absolute index.
    */
   private peekOneToken(index: number): Token {
-    return index < this._tokens.length ? this._tokens[index]! : { type: TokenType.EOF };
+    return index < this._tokens.length ? this._tokens[index] : { type: TokenType.EOF };
   }
 }

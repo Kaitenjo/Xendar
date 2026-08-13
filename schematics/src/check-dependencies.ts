@@ -57,7 +57,8 @@ async function checkDependencies(): Promise<void> {
   const projectPaths = getProjectPaths();
   const mainPackageJsonDependencies = getMainPackageJsonDependencies();
 
-  for (const projectPath of projectPaths) {
+  for (let i = 0; i < projectPaths.length; i++) {
+    const projectPath = projectPaths[i];
     const packageJson = getPackageJson(projectPath);
     const depCheckResult = await depcheck(projectPath, deepCheckOptions);
 

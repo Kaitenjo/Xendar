@@ -1,10 +1,10 @@
+import { ASTNode, ASTNodeWithSpan } from '../ast.type';
 import { ASTNodeType } from '../node.enum';
-import { ASTNode } from '../ast.type';
 
 /**
  * AST node representing an `@else` branch attached to an `@if` node.
  */
-export type ElseNode = {
+export type ElseNode = ASTNodeWithSpan<{
   /**
    * Discriminant identifying this node as an else branch.
    */
@@ -13,4 +13,4 @@ export type ElseNode = {
    * Child nodes rendered when the `@if` condition is false.
    */
   children: ASTNode[];
-}
+}>

@@ -24,7 +24,7 @@ export class CompilerContext {
    * and touched in anyway
    * (e.g. $event)
    */
-  private _unresolvableIdentifiers = new Array<string>;
+  private _unresolvableIdentifiers = new Array<string>()
 
   /**
    * Creates a new scope context.
@@ -32,13 +32,14 @@ export class CompilerContext {
    * @param identifiers - Named identifier bindings declared in this scope.
    *   Plain strings default to kind `'value'`; pass a `[name, kind]` tuple
    *   to declare a signal-backed identifier.
-   * @param _parent - Optional parent context representing the enclosing scope.
+   * @param parent - Optional parent context representing the enclosing scope.
    */
   constructor(
     identifiers: Array<string | [string, IdentifierKind]> = [],
-    private _parent?: CompilerContext
+    protected parent?: CompilerContext
   ) {
-    for (const identifier of identifiers) {
+    for (let i = 0; i < identifiers.length; i++) {
+      const identifier = identifiers[i];
       typeof identifier === 'string' ? this._identifiers.set(identifier, 'value') : this._identifiers.set(identifier[0], identifier[1]);
     }
   }
@@ -106,7 +107,7 @@ export class CompilerContext {
    * @returns `true` if the identifier exists in the scope chain, `false` otherwise.
    */
   public hasIdentifier(name: string): boolean {
-    return this._identifiers.has(name) || (this._parent?.hasIdentifier(name) ?? false);
+    return this._identifiers.has(name) || (this.parent?.hasIdentifier(name) ?? false);
   }
 
   /**
@@ -118,7 +119,7 @@ export class CompilerContext {
    *   anywhere in the scope chain.
    */
   public getIdentifierKind(name: string): IdentifierKind | undefined {
-    return this._identifiers.get(name) ?? this._parent?.getIdentifierKind(name);
+    return this._identifiers.get(name) ?? this.parent?.getIdentifierKind(name);
   }
 
   /**
@@ -129,6 +130,6 @@ export class CompilerContext {
    * @returns `true` if the identifier exists in the scope chain, `false` otherwise.
    */
   public hasUnresolvableIdentifier(name: string): boolean {
-    return this._unresolvableIdentifiers.includes(name);
+    return this._unresolvableIdentifiers.includes(name) || (this.parent?.hasUnresolvableIdentifier(name) ?? false);
   }
 }

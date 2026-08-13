@@ -1,4 +1,4 @@
-import { COMMA, GREATER_THEN, LEFT_BRACE, LEFT_BRACKET, LPAREN, RPAREN, SLASH, SPACE } from '../../costants/chars.constants';
+import { DOUBLE_QUOTE, EQUAL_THEN, GREATER_THEN, LPAREN, SLASH, SPACE } from '../../costants/chars.constants';
 import { LexerCursor } from '../types/lexer-cursor.model';
 import { LexerState } from '../types/lexer-state.enum';
 import { TokenType } from '../types/token-type.enum';
@@ -7,15 +7,16 @@ import { LexerTransitionFunctionReturnType } from '../types/transition-function/
 
 /**
  * Consumes a DOM event binding starting with `@` and reads until a delimiter
- * (space, `/`, or `>`) is found. Emits an EVENT token containing the raw binding string.
+ * or `=` is found. Emits an EVENT token containing only the event name,
+ * then transitions to EVENT_HANDLER to parse the handler token.
  *
  * @param cursor - The lexer cursor positioned on the `@` character.
  * @param _context - Unused lexer context.
- * @returns Transition result with the EVENT token and the TAG_BODY state.
+ * @returns Transition result with the EVENT token and EVENT_HANDLER state.
  */
 export function lexEvent(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
   let read = true;
-  let event = '';
+  let eventName = '';
   let retVal!: LexerTransitionFunctionReturnType;
 
   // Consume '@' character
@@ -24,32 +25,27 @@ export function lexEvent(cursor: LexerCursor, _context: LexerTransitionFunctionC
   while (read) {
     switch (cursor.peek()) {
       case SPACE:
-      case SLASH:
-      case GREATER_THEN:
-        retVal = {
-          state: LexerState.TAG_BODY
-        };
-        read = false;
-        break;
+        throw 'No spaces are allowed in event name';
 
-      case LPAREN:
-        let state = LexerState.EVENT_PARAMETER;
-
-        // consume '('
-        cursor.advance();
-        cursor.skipSpaces();
-
-        if (cursor.peek() === RPAREN) {
-          state = LexerState.TAG_BODY;
-          // Consume '()"'
-          cursor.advance(2);
+      case EQUAL_THEN:
+        if (!eventName) {
+          throw 'Event name cannot be empty';
         }
 
+        // Consume '='
+        cursor.advance();
+
+        if (cursor.peek() !== DOUBLE_QUOTE) {
+          throw 'Event handler must be included in Double Quotes';
+        }
+
+        // Consume '"'
+        cursor.advance();
         retVal = {
-          state,
+          state: LexerState.EVENT_HANDLER,
           tokens: [{
             type: TokenType.EVENT,
-            parts: [event]
+            parts: [eventName]
           }]
         };
         read = false;
@@ -57,7 +53,7 @@ export function lexEvent(cursor: LexerCursor, _context: LexerTransitionFunctionC
 
       default:
         cursor.advance();
-        event = `${event}${cursor.currentChar.value}`
+        eventName = `${eventName}${cursor.currentChar.value}`;
     }
   }
 

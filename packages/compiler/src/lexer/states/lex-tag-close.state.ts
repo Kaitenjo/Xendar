@@ -30,6 +30,9 @@ export function lexTagClose(cursor: LexerCursor, _context: LexerTransitionFuncti
   while (read) {
     switch (cursor.peek()) {
       case GREATER_THEN:
+        if (!tagName) {
+          throw `Tag close name cannot be empty`;
+        }
         cursor.advance();
         retVal = {
           state: LexerState.TEXT,
@@ -42,7 +45,7 @@ export function lexTagClose(cursor: LexerCursor, _context: LexerTransitionFuncti
         break;
 
       case SPACE:
-        throw new Error('Tag Close Name cannot contains spaces');
+        throw `Tag close name cannot contain spaces`;
 
       default:
         cursor.advance();

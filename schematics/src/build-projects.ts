@@ -119,9 +119,7 @@ function buildProject(projectName: string): void {
     markComplete(projectName);
   };
 
-  const onError = (err: Error) => {
-    console.error(`❌ @xaendar/${projectName} fallito:`, err.message);
-  };
+  const onError = (err: Error) => console.error(`❌ @xaendar/${projectName} fallito:`, err.message);
 
   try {
     const buildPromise = target === 'node'
@@ -158,7 +156,8 @@ function buildXaendarAliasMap(): Record<string, string> {
   const packageFolders = readdirSync(packagesDir);
   const aliasMap: Record<string, string> = {};
 
-  for (const folder of packageFolders) {
+  for (let i = 0; i < packageFolders.length; i++) {
+    const folder = packageFolders[i];
     try {
       const pkgJsonPath = resolve(packagesDir, folder, 'package.json');
       const pkg: XaendarPackageJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
@@ -199,7 +198,7 @@ async function buildNode(projectName: string, projectPath: string, pkg: XaendarP
   if (pkg.xaendar?.dts) {
     const mainTsConfigPath = resolve(projectsPath, '../tsconfig.json');
     const mainTsConfig: TsConfigJson = JSON.parse(readFileSync(mainTsConfigPath, 'utf-8'));
-    
+
     dts = {
       compilerOptions: {
         moduleResolution: mainTsConfig.compilerOptions!.moduleResolution!,
@@ -301,7 +300,7 @@ function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackage
   };
 
   mkdirSync(options.outDir, { recursive: true });
-  
+
   const packageJsonPath = resolve(options.outDir, 'package.json');
   writeFileSync(packageJsonPath, JSON.stringify(distPkg, null, 2), 'utf-8');
 }

@@ -1,5 +1,5 @@
 import { AT_SIGN, CR, LEFT_BRACE, LESS_THAN, LF, RIGHT_BRACE, SLASH } from "../../costants/chars.constants.js";
-import { isNotBlank } from "../../utils/chars.utils.js";
+import { isNotBlank } from "../utils/chars.utils.js";
 import { LexerCursor } from "../types/lexer-cursor.model.js";
 import { LexerState } from "../types/lexer-state.enum.js";
 import { TokenType } from "../types/token-type.enum.js";

@@ -60,13 +60,13 @@ export function validateExpression(source: string): ExpressionValidationResult {
   const sourceFile = createSourceFile('expression.ts', `${prefix}${source}`, ScriptTarget.ESNext, true);
 
   const statement = sourceFile.statements[0] as VariableStatement;
-  const expression = statement.declarationList.declarations[0]!.initializer!;
+  const expression = statement.declarationList.declarations[0].initializer!;
 
   const diagnostics = new Array<ExpressionDiagnostic>;
   visitNode(expression, prefix.length, diagnostics);
 
   if (diagnostics.length) {
-    throw new Error(diagnostics.reduce((acc, d) => `${acc}${d.message}\n`, ''));
+    throw diagnostics.reduce((acc, d) => `${acc}${d.message}\n`, '');
   }
 
   return {
@@ -88,13 +88,13 @@ export function validateExpression(source: string): ExpressionValidationResult {
  */
 function visitNode(node: Node, offset: number, diagnostics: ExpressionDiagnostic[]): void {
   if (!isAllowedNode(node)) {
-    throw new Error(buildDisallowedMessage(node));
+    throw buildDisallowedMessage(node);
   }
 
   forEachChild(node, child => visitNode(child, offset, diagnostics));
 
   if (diagnostics.length) {
-    throw new Error(diagnostics[0]!.message);
+    throw diagnostics[0].message;
   }
 }
 
@@ -215,6 +215,8 @@ function isAllowedNode(node: Node): boolean {
     // foo(...args), [...items]
     case SyntaxKind.SpreadElement:
 
+    case SyntaxKind.TaggedTemplateExpression:
+      
     // ---- Internal structural nodes ----
     // Visited during recursion but carry no semantic meaning of their own.
     case SyntaxKind.SyntaxList:
@@ -247,9 +249,6 @@ function buildDisallowedMessage(node: Node): string {
     case SyntaxKind.ArrowFunction:
     case SyntaxKind.FunctionExpression:
       return 'Function expressions are not allowed inside template expressions.';
-
-    case SyntaxKind.TaggedTemplateExpression:
-      return 'Tagged template expressions are not allowed inside template expressions.';
 
     case SyntaxKind.BinaryExpression: {
       const bin = node as BinaryExpression;

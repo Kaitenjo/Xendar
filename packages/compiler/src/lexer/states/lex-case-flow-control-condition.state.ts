@@ -3,7 +3,7 @@ import { LexerState } from "../types/lexer-state.enum.js";
 import { TokenType } from "../types/token-type.enum.js";
 import { LexerTransitionFunctionContext } from "../types/transition-function/transition-function-context.type.js";
 import { LexerTransitionFunctionReturnType } from "../types/transition-function/transition-function-return-type.type.js";
-import { consumeFlowControlCondition } from "../utils/consume-flow-control-condition.utils.js";
+import { lexFlowControlCondition } from "../utils/lex-flow-control-condition.utils.js";
 
 /**
  * Consumes the condition expression `(...)` of a flow-control directive,
@@ -11,11 +11,11 @@ import { consumeFlowControlCondition } from "../utils/consume-flow-control-condi
  * raw expression string and transitions to FLOW_CONTROL_BLOCK.
  *
  * @param cursor - The lexer cursor positioned at the opening `(`.
- * @param _context - Unused lexer context.
+ * @param context - Unused lexer context.
  * @returns Transition result with the CONDITION token and the FLOW_CONTROL_BLOCK state.
  */
-export function lexCaseFlowControlCondition(cursor: LexerCursor, _context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
-  const condition = consumeFlowControlCondition(cursor, _context);
+export function lexCaseFlowControlCondition(cursor: LexerCursor, context: LexerTransitionFunctionContext): LexerTransitionFunctionReturnType {
+  const condition = lexFlowControlCondition(cursor, context);
   cursor.skipSpaces();
 
   return {

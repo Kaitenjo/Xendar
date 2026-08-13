@@ -1,0 +1,15 @@
+{
+  "name": "@xaendar/language-server",
+  "version": "0.9.16",
+  "type": "module",
+  "author": "Kaitenjo",
+  "license": "MIT",
+  "description": "",
+  "exports": {
+    ".": "./src/public-api.ts"
+  },
+  "xaendar": {
+    "target": "node",
+    "dts": true
+  }
+}

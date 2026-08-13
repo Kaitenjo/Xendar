@@ -1,9 +1,10 @@
 import { TokenType } from '../token-type.enum';
+import { TokenWithSpan } from '../token.type';
 
 /**
  * Token emitted when the lexer consumes an HTML attribute name.
  */
-export type AttributeToken = {
+export type AttributeToken = TokenWithSpan<{
   /**
    * Discriminant identifying this token as an attribute.
    */
@@ -12,4 +13,4 @@ export type AttributeToken = {
    * `parts[0]` is the raw `name` string.
    */
   parts: [string]
-}
+}>

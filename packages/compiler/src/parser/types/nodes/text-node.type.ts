@@ -1,9 +1,10 @@
+import { ASTNodeWithSpan } from '../ast.type';
 import { ASTNodeType } from '../node.enum';
 
 /**
  * AST node representing a run of plain text content.
  */
-export type TextNode = {
+export type TextNode = ASTNodeWithSpan<{
   /**
    * Discriminant identifying this node as plain text.
    */
@@ -12,4 +13,4 @@ export type TextNode = {
    * The text content string.
    */
   value: string;
-}
+}>

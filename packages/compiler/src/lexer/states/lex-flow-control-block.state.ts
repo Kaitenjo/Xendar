@@ -23,7 +23,7 @@ export function lexFlowControlBlock(cursor: LexerCursor, _context: LexerTransiti
   cursor.skipSpaces();
 
   if (cursor.peek() !== LEFT_BRACE) {
-    throw new Error(`Expected '{' but got '${String.fromCharCode(cursor.peek())}' at row ${cursor.position.row}, col ${cursor.position.column}`);
+    throw `Expected '{' but got '${String.fromCharCode(cursor.peek())}'`;
   }
 
   // consume '{'

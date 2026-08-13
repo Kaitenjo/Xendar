@@ -25,18 +25,20 @@ export function _renderElement(parentNode: Element, context: Context, anchor: Co
   const element = context.createElement(tagName);
   mountNode(element, parentNode, context, anchor)
 
-  attributes.forEach(({ name, value, literal } )=> {
+  for (let i = 0; i < attributes.length; i++) {
+    const { name, value, literal } = attributes[i];
     literal
       ? element.setAttribute(name, String(value()))
       : context.listen(effect(() => element.setAttribute(name, String(value()))))
-  });
+  }
 
-  events.forEach(event => {
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i];
     const handler = ($event: Event) => context.getEventHandler(event.handler)(...event.parameters.map(event => event($event)));
     const name = event.name;
     element.addEventListener(name, handler);
     context.listen(() => element.removeEventListener(name, handler))
-  });
+  }
 
   return element;
 }
@@ -49,7 +51,7 @@ export function _renderElement(parentNode: Element, context: Context, anchor: Co
  */
 export function createElement(tagName: string): HTMLElement {
   return document.createElement(tagName);
-} 
+}
 
 /**
  * Creates an SVG element with the specified tag name using the SVG namespace.

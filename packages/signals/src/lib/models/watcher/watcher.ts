@@ -91,14 +91,20 @@ export class Watcher {
    * @see Signal algorithms — 'Method: Signal.subtle.Watcher.prototype.getPending()'
    */
   public getPending(): Computed<unknown>[] {
-    return [...this.#signals].filter((signal): signal is Computed<unknown> => {
+    const filteredSignals = new Array<Computed<unknown>>();
+
+    for (const signal of this.#signals) {
       if (!(signal instanceof Computed)) {
-        return false;
+        continue;
       }
 
       const state = signal.getState(PRIVATE);
-      return state === 'dirty' || state === 'checked';
-    });
+      if (state === 'dirty' || state === 'checked') {
+        filteredSignals.push(signal);
+      }
+    }
+
+    return filteredSignals;
   }
 
   /**
@@ -118,22 +124,22 @@ export class Watcher {
    * @see Signal algorithms — 'Method: Signal.subtle.Watcher.prototype.watch(...signals)'
    */
   public watch(...signals: (State | Computed)[]) {
-    if (GLOBAL_STATE.frozen) {
-      throw new Error('Cannot watch signals while frozen');
+  if (GLOBAL_STATE.frozen) {
+    throw new Error('Cannot watch signals while frozen');
+  }
+
+  for (let i = 0; i < signals.length; i++) {
+    const signal = signals[i];
+    if (this.#signals.has(signal)) {
+      throw new Error('Cannot watch a signal that is already being watched');
     }
 
-    signals.forEach(signal => {
-      if (this.#signals.has(signal)) {
-        throw new Error('Cannot watch a signal that is already being watched');
-      }
-
-      this.#signals.add(signal)
-      signal.addSink(this, PRIVATE);
-    });
-
-
-    this.setState('watching', PRIVATE);
+    this.#signals.add(signal)
+    signal.addSink(this, PRIVATE);
   }
+
+  this.setState('watching', PRIVATE);
+}
 
   /**
    * Removes the given Signals from the watched set.
@@ -156,32 +162,33 @@ export class Watcher {
    * @see Signal algorithms — 'Method: Signal.subtle.Watcher.prototype.unwatch(...signals)'
    */
   public unwatch(...signals: (State | Computed)[]) {
-    if (GLOBAL_STATE.frozen) {
-      throw new Error('Cannot unwatch signals while frozen');
-    }
-
-    signals.forEach(signal => {
-      if (!this.#signals.has(signal)) {
-        throw new Error('Cannot unwatch a signal that is not being watched');
-      }
-
-      this.#signals.delete(signal)
-      signal.removeSink(this, PRIVATE);
-    });
-
-    if (!this.#signals.size) {
-      this.setState('waiting', PRIVATE)
-    }
+  if (GLOBAL_STATE.frozen) {
+    throw new Error('Cannot unwatch signals while frozen');
   }
+
+  for (let i = 0; i < signals.length; i++) {
+    const signal = signals[i];
+    if (!this.#signals.has(signal)) {
+      throw new Error('Cannot unwatch a signal that is not being watched');
+    }
+
+    this.#signals.delete(signal)
+    signal.removeSink(this, PRIVATE);
+  }
+
+  if (!this.#signals.size) {
+    this.setState('waiting', PRIVATE)
+  }
+}
 
   /**
    * Get the current state of the Watcher.
    * @param symbol - The private symbol for prevent external calls.
    */
   public getState(symbol: symbol): WatcherState {
-    assertPrivateContext(symbol);
-    return this.#state;
-  }
+  assertPrivateContext(symbol);
+  return this.#state;
+}
 
   /**
    * Set the current state of the Watcher.
@@ -190,21 +197,21 @@ export class Watcher {
    * @throws If the transition from `pending` to `watching` is attempted.
    */
   public setState(newState: WatcherState, symbol: symbol): void {
-    assertPrivateContext(symbol);
+  assertPrivateContext(symbol);
 
-    if (this.#state === newState) {
-      return;
-    }
+    if(this.#state === newState) {
+  return;
+}
 
-    if (!this.#isValidTransition(this.#state, newState)) {
-      if (isDevMode()) {
-        console.warn(`Invalid state transition from ${this.#state} to ${newState} in Watcher`);
-        console.warn(new Error().stack)
-      }
-      return;
-    }
+if (!this.#isValidTransition(this.#state, newState)) {
+  if (isDevMode()) {
+    console.warn(`Invalid state transition from ${this.#state} to ${newState} in Watcher`);
+    console.warn(new Error().stack)
+  }
+  return;
+}
 
-    this.#state = newState
+this.#state = newState
   }
 
   /**
@@ -212,33 +219,33 @@ export class Watcher {
    * @param symbol - The private symbol for prevent external calls.
    */
   public notify(symbol: symbol): void {
-    assertPrivateContext(symbol);
+  assertPrivateContext(symbol);
 
     GLOBAL_STATE.frozen = true;
 
-    try {
-      this.setState('pending', PRIVATE)
+  try {
+    this.setState('pending', PRIVATE)
       this.#notifyCallback.call(this);
-    } catch (error) {
-      // This log is not present in the TC39 spec, could be removed in next versions
-      if (isDevMode()) {
-        console.error('Error thrown while running a Watcher notify callback:', error);
-      }
-      throw error;
-    } finally {
-      this.setState('waiting', PRIVATE);
-      GLOBAL_STATE.frozen = false;
+  } catch(error) {
+    // This log is not present in the TC39 spec, could be removed in next versions
+    if (isDevMode()) {
+      console.error('Error thrown while running a Watcher notify callback:', error);
     }
+    throw error;
+  } finally {
+    this.setState('waiting', PRIVATE);
+    GLOBAL_STATE.frozen = false;
   }
+}
 
-  #isValidTransition(from: WatcherState, to: WatcherState): boolean {
-    switch (from) {
-      case 'waiting':
-        return to === 'watching';
-      case 'watching':
-        return to === 'pending' || to === 'waiting';
-      case 'pending':
-        return to === 'waiting';
-    }
+#isValidTransition(from: WatcherState, to: WatcherState): boolean {
+  switch (from) {
+    case 'waiting':
+      return to === 'watching';
+    case 'watching':
+      return to === 'pending' || to === 'waiting';
+    case 'pending':
+      return to === 'waiting';
   }
+}
 }

@@ -1,11 +1,12 @@
-import { ASTNodeType } from "../../parser/types/node.enum"
-import { ElementNode } from "../../parser/types/nodes/element-node.type"
-import { ForNode } from "../../parser/types/nodes/for-node.type"
-import { IfNode } from "../../parser/types/nodes/if-node.type"
-import { InterpolationNode } from "../../parser/types/nodes/interpolation-node.type"
-import { SwitchNode } from "../../parser/types/nodes/switch-node.type"
-import { TextNode } from "../../parser/types/nodes/text-node.type"
-import { GeneratorTransitionFunction } from "./generator-transition-function.type"
+import { ASTNodeType } from '../../parser/types/node.enum'
+import { ElementNode } from '../../parser/types/nodes/element-node.type'
+import { ForNode } from '../../parser/types/nodes/for-node.type'
+import { IfNode } from '../../parser/types/nodes/if-node.type'
+import { ImportNode } from '../../parser/types/nodes/import-node.type'
+import { InterpolationNode } from '../../parser/types/nodes/interpolation-node.type'
+import { SwitchNode } from '../../parser/types/nodes/switch-node.type'
+import { TextNode } from '../../parser/types/nodes/text-node.type'
+import { GeneratorTransitionFunction } from './generator-transition-function.type'
 
 type OmittedKeys = Exclude<ASTNodeType, 
  | ASTNodeType.Text
@@ -14,6 +15,7 @@ type OmittedKeys = Exclude<ASTNodeType,
  | ASTNodeType.If
  | ASTNodeType.For
  | ASTNodeType.Switch
+ | ASTNodeType.Import
 >
 
 /**
@@ -32,6 +34,7 @@ export type GeneratorStates = {
   [ASTNodeType.If]: GeneratorTransitionFunction<IfNode>,
   [ASTNodeType.For]: GeneratorTransitionFunction<ForNode>,
   [ASTNodeType.Switch]: GeneratorTransitionFunction<SwitchNode>
+  [ASTNodeType.Import]: GeneratorTransitionFunction<ImportNode>
 } & 
 { 
   [K in OmittedKeys]?: undefined 

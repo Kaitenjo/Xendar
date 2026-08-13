@@ -31,6 +31,10 @@ export enum LexerState {
    */
   EVENT = 'event',
   /**
+   * Consuming the handler name of a DOM event binding after `=`.
+   */
+  EVENT_HANDLER = 'event-handler',
+  /**
    * Consuming a DOM event parameter
    */
   EVENT_PARAMETER = 'parameter',
@@ -67,4 +71,10 @@ export enum LexerState {
    * Consuming a template-literal string inside `` {`...`} ``.
    */
   INTERPOLATION_LITERAL = 'interpolation-literal',
+  /**
+   * Consuming an import statement `@import { X, Y, ... }
+   */
+  IMPORT = 'import',
+
+  IMPORT_PATH = 'import-path'
 }

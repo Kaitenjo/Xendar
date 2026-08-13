@@ -103,7 +103,28 @@ export class Context {
    * @param context - The child context to remove.
    */
   public removeChild(context: Context) {
-    this._children = this._children.filter(child => child !== context);
+    const children = this._children;
+    const newChildren = new Array<Context>(children.length - 1);
+
+    let i = 0;
+    let found = false;
+
+    while (!found) {
+      const child = children[i];
+      if (child !== context) {
+        newChildren[i] = child;
+      } else {
+        found = true;
+      }
+
+      i++;
+    }
+
+    for (let j = i; j < children.length; j++) {
+      newChildren[j - 1] = children[j];
+    }
+
+    this._children = newChildren;
   }
 
   /**
@@ -154,8 +175,14 @@ export class Context {
    * considered disposed and should no longer be used.
    */
   public unlisten(): void {
-    this._unwatchFns.forEach(fn => fn());
-    this._children.forEach(child => child.unlisten());
+    for (let i = 0; i < this._unwatchFns.length; i++) {
+      this._unwatchFns[i]();
+    }
+
+    for (let i = 0; i < this._children.length; i++) {
+      this._children[i].unlisten();
+    }
+
     this._unwatchFns = [];
     this._children = [];
     this._nodes = [];

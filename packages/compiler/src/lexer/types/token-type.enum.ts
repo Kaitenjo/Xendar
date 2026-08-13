@@ -31,13 +31,17 @@ export enum TokenType {
    */
   ATTRIBUTE_VALUE,
   /**
-   * A DOM event binding declared with `@eventName=handler`.
+    * A DOM event name declared in a binding like `@eventName=handler`.
    */
   EVENT,
   /**
-   * An event paremeter included in a event call '()'
+   * The event handler name declared in a binding like `@eventName=handler`.
    */
-  EVENT_PAREMETER,
+  EVENT_HANDLER,
+  /**
+   * An event parAmeter included in a event call '()'
+   */
+  EVENT_PARAMETER,
   /**
    * A template-literal interpolation string enclosed in `` {`...`} ``.
    */
@@ -86,6 +90,10 @@ export enum TokenType {
    * The closing `}` of a flow-control block body.
    */
   BLOCK_CLOSE,
+
+  IMPORT,
+
+  IMPORT_PATH,
   /**
    * Sentinel token emitted when the end of the input is reached.
    */

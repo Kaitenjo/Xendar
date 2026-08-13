@@ -28,7 +28,7 @@ export function packageJson(name: string, version: string): string {
     "@xaendar/build-tools": "^${version}",
     "@xaendar/cli": "^${version}",
     "typescript": "^6.0.3",
-    "vite": "^8.1.3",
+    "vite": "^8.2.1",
     "vitest": "^4.1.10"
   }
 }

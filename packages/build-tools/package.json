@@ -11,8 +11,9 @@
   "dependencies": {
     "@xaendar/common": "0.9.16",
     "@xaendar/compiler": "0.9.16",
-    "vite": "^8.2.1",
-    "typescript": "^6.0.3"
+    "@xaendar/language-core": "0.9.16",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1"
   },
   "xaendar": {
     "target": "node",

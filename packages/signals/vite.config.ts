@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
-import getViteConfig from '../../vite-config';
+import getViteConfig from '../../vite-config.js';
 
-export default defineConfig(getViteConfig('@xaendar/signals', __dirname, {
+export default defineConfig(getViteConfig('@xaendar/signals', import.meta.dirname, {
   plugins: [
     {
       name: 'types',

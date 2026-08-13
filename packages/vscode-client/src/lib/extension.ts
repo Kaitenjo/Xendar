@@ -1,11 +1,11 @@
-import * as path from 'node:path';
+import { join } from 'node:path';
 import { ExtensionContext, workspace } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
 
 let client: LanguageClient | null = null;
 
 export function activate(context: ExtensionContext) {
-  const serverModule = context.asAbsolutePath(path.join('server', 'out', 'server.js'));
+  const serverModule = context.asAbsolutePath(join('server', 'out', 'server.js'));
 
   const serverOptions: ServerOptions = {
     run: { 

@@ -82,7 +82,9 @@ export default function getViteConfig(name: string, dirName: string, options?: V
         }
       },
       dts({
-        exclude: ['**/*.spec.ts'],
+        // This path depends on the root value below
+        exclude: ['../../../**/*.spec.ts'],
+        include: ['../../../**/*.ts'],
         rollupTypes: true,
         outDir: distDir,
         root: resolve(dirName, 'src/public-api.ts'),

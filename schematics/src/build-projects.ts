@@ -201,14 +201,13 @@ async function buildNode(projectName: string, projectPath: string, pkg: XaendarP
 
     dts = {
       compilerOptions: {
-        moduleResolution: mainTsConfig.compilerOptions!.moduleResolution!,
-        module: mainTsConfig.compilerOptions!.module!,
         ignoreDeprecations: '6.0',
         rootDir: resolve(projectPath, '../..'),
         paths: Object.entries(mainTsConfig.compilerOptions!.paths!).reduce<Record<string, string[]>>((acc, [key, paths]) => {
           acc[key] = paths.map(p => resolve(projectPath, '../..', `${p}.ts`).replace(/\\/g, '/'));
           return acc;
-        }, {})
+        }, {}),
+        types: ['*']
       }
     };
 

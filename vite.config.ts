@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { defineConfig } from 'vite';
 
-console.log(path.resolve(__dirname, 'packages/signals/src'));
+const dirName = import.meta.dirname;
 
 export default defineConfig({
   root: 'src',
@@ -11,20 +11,20 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@xaendar/common': path.resolve(__dirname, 'packages/common/src/public-api.ts'),
-      '@xaendar/signals': path.resolve(__dirname, 'packages/signals/src/public-api.ts'),
-      '@xaendar/types': path.resolve(__dirname, 'packages/types/src/public-api.ts'),
+      '@xaendar/common': path.resolve(dirName, 'packages/common/src/public-api.ts'),
+      '@xaendar/signals': path.resolve(dirName, 'packages/signals/src/public-api.ts'),
+      '@xaendar/types': path.resolve(dirName, 'packages/types/src/public-api.ts'),
     }
   },
   build: {
     target: 'esnext',
     lib: {
-      entry: path.resolve(__dirname, 'src/test.ts'),
+      entry: path.resolve(dirName, 'src/test.ts'),
       fileName: () => `test.es.js`,
       formats: ['es']
     },
     sourcemap: true,
-    outDir: path.resolve(__dirname, 'dist/src'),
+    outDir: path.resolve(dirName, 'dist/src'),
     emptyOutDir: true
   }
 });

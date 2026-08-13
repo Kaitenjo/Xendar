@@ -10,6 +10,10 @@
   },
   "xaendar": {
     "target": "node",
-    "dts": true
+    "dts": false
+  },
+  "dependencies": {
+    "vscode": "^1.1.37",
+    "vscode-languageclient": "^10.1.0"
   }
 }

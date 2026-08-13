@@ -9,6 +9,7 @@
     ".": "./src/public-api.ts"
   },
   "dependencies": {
+    "@xaendar/compiler": "0.9.16",
     "typescript": "^6.0.3"
   },
   "xaendar": {

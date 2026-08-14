@@ -26,7 +26,6 @@
     "commander": "^15.0.0",
     "fast-glob": "^3.3.3",
     "typescript": "^6.0.3",
-    "vscode": "^1.1.37",
     "vscode-languageclient": "^10.1.0",
     "vscode-languageserver": "^10.1.0",
     "vscode-languageserver-textdocument": "^1.0.12",
@@ -35,6 +34,7 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.58.12",
     "@types/node": "^26.2.0",
+    "@types/vscode": "^1.125.0",
     "@vitest/coverage-v8": "^4.1.10",
     "depcheck": "^1.4.7",
     "nodemon": "^3.1.14",

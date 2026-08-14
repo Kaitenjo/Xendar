@@ -8,14 +8,14 @@ import { getCompiledTemplate, recompileTemplate } from './document-manager';
 import { toLspDiagnostic } from './lps-diagnostics';
 import { buildComponentIndex, indexComponent, removeComponentFromIndex, resolveComponentForTemplate } from './template-registry';
 
+let workspaceRoots = new Array<string>();
+
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
 
-connection.onInitialize(async () => {
-  const folders = await connection.workspace.getWorkspaceFolders();
-  if (folders?.length) {
-    const roots = folders.map(folder => fromUri(folder.uri));
-    await buildComponentIndex(roots);
+connection.onInitialize(async ({ workspaceFolders }) => {
+  if (workspaceFolders?.length) {
+    workspaceRoots = workspaceFolders.map(f => fromUri(f.uri));
   }
 
   return {
@@ -26,6 +26,8 @@ connection.onInitialize(async () => {
     }
   }
 });
+
+connection.onInitialized(async () => await buildComponentIndex(workspaceRoots));
 
 connection.onDidChangeWatchedFiles(event => {
   for (let i = 0; i < event.changes.length; i++) {

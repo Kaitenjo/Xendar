@@ -9,11 +9,9 @@
     ".": "./src/public-api.ts"
   },
   "xaendar": {
-    "target": "node",
-    "dts": false
+    "target": "extension"
   },
   "dependencies": {
-    "vscode": "^1.1.37",
     "vscode-languageclient": "^10.1.0"
   }
 }

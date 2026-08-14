@@ -6,7 +6,7 @@ import { build as viteBuild } from 'vite';
 
 const projectsPath = '../packages';
 
-type XaendarTarget = 'browser' | 'node';
+type XaendarTarget = 'browser' | 'node' | 'extension';
 
 type XaendarPackageJson = PackageJson & {
   /**
@@ -121,10 +121,20 @@ function buildProject(projectName: string): void {
 
   const onError = (err: Error) => console.error(`❌ @xaendar/${projectName} fallito:`, err.message);
 
+  let buildPromise: Promise<void> | ReturnType<typeof viteBuild>;
+
   try {
-    const buildPromise = target === 'node'
-      ? buildNode(projectName, projectPath, pkg)
-      : buildBrowser(projectPath);
+    switch (target) {
+      case 'browser':
+        buildPromise = buildBrowser(projectPath);
+        break;
+      case 'node':
+        buildPromise = buildNode(projectName, projectPath, pkg);
+        break;
+      case 'extension':
+        buildPromise = buildExtension(projectName, projectPath, pkg);
+        break;
+    }
 
     buildPromise.then(onSuccess).catch(onError);
   } catch (err) {
@@ -135,7 +145,7 @@ function buildProject(projectName: string): void {
 /**
  * Builds a browser package using Vite.
  */
-function buildBrowser(projectPath: string): Promise<unknown> {
+function buildBrowser(projectPath: string): ReturnType<typeof viteBuild> {
   return viteBuild({
     root: projectPath,
     configFile: resolve(projectPath, 'vite.config.ts'),
@@ -163,7 +173,9 @@ function buildXaendarAliasMap(): Record<string, string> {
       const pkg: XaendarPackageJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
 
       // Only create aliases for @xaendar-scoped packages
-      if (!pkg.name?.startsWith('@xaendar/')) continue;
+      if (!pkg.name?.startsWith('@xaendar/')) {
+        continue;
+      }
 
       const entryFile = pkg.xaendar?.entry ?? 'src/public-api.ts';
       const absolutePath = resolve(packagesDir, folder, entryFile).replace(/\\/g, '/');
@@ -185,7 +197,7 @@ function buildXaendarAliasMap(): Record<string, string> {
  * - If `noExternal` is set, all dependencies are bundled inline (self-contained executable).
  * - Declaration files are emitted unless `xaendar.dts` is explicitly `false`.
  */
-async function buildNode(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<unknown> {
+async function buildNode(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<void> {
   const entry = pkg.xaendar?.entry ?? 'src/public-api.ts';
   const bundleAll = pkg.xaendar?.noExternal === true;
   const outDir = resolve(projectPath, '../../dist/@xaendar', projectName);
@@ -303,6 +315,84 @@ function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackage
   const packageJsonPath = resolve(options.outDir, 'package.json');
   writeFileSync(packageJsonPath, JSON.stringify(distPkg, null, 2), 'utf-8');
 }
+
+async function buildExtension(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<void> {
+  const entry = pkg.xaendar?.entry ?? 'src/public-api.ts';
+  const outDir = resolve(projectPath, '../../dist/@xaendar', projectName);
+  const distDir = resolve(outDir, 'dist');
+  const entryPath = resolve(projectPath, entry).replace(/\\/g, '/');
+
+  await tsupBuild({
+    entry: {
+      [projectName]: entryPath
+    },
+    outDir: distDir,
+    format: ['cjs'],
+    platform: 'node',
+    target: 'node18',
+    bundle: true,
+    external: ['vscode'],
+    dts: false,
+    sourcemap: true,
+    minify: false,
+    clean: true,
+    tsconfig: resolve(projectsPath, '../tsconfig.json'),
+  });
+  writePackageJsonForExtensionProject(projectName, pkg, outDir);
+  await buildLanguageServerInto(resolve(projectPath, '../language-server'), resolve(outDir, 'server'));
+}
+
+async function buildLanguageServerInto(serverProjectPath: string, serverOutDir: string): Promise<void> {
+  const serverEntry = resolve(serverProjectPath, 'src/lib/server.ts');
+
+  await tsupBuild({
+    entry: { server: serverEntry },
+    outDir: serverOutDir,
+    format: ['cjs'],
+    platform: 'node',
+    target: 'node18',
+    bundle: true,
+    external: ['vscode'],
+    dts: false,
+    sourcemap: true,
+    clean: true,
+    tsconfig: resolve(projectsPath, '../tsconfig.json'),
+  });
+}
+
+function writePackageJsonForExtensionProject(projectName: string, pkg: XaendarPackageJson, outDir: string): void {
+  const distPkg = {
+    name: pkg.name!,
+    version: pkg.version!,
+    description: pkg.description ?? '',
+    author: pkg.author ?? '',
+    license: pkg.license ?? 'MIT',
+    type: 'module',
+    publisher: "xaendar",
+    engines: {
+      vscode: "^1.90.0"
+    },
+    categories: ["Programming Languages", "Linters"],
+    activationEvents: [
+      "workspaceContains:**/*.xd.component.html"
+    ],
+    main: `./dist/${projectName}.cjs`,
+    contributes: {
+      languages: [
+        {
+          id: "xaendar-html",
+          extensions: [".xd.component.html"],
+          aliases: ["Xaendar Template"]
+        }
+      ]
+    },
+  };
+
+  mkdirSync(outDir, { recursive: true });
+  const packageJsonPath = resolve(outDir, 'package.json');
+  writeFileSync(packageJsonPath, JSON.stringify(distPkg, null, 2), 'utf-8');
+}
+
 /**
  * Marks a project as complete and triggers dependents whose deps are now satisfied.
  */

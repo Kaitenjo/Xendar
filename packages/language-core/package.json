@@ -8,12 +8,11 @@
   "exports": {
     ".": "./src/public-api.ts"
   },
+  "xaendar": {
+    "build": false
+  },
   "dependencies": {
     "@xaendar/compiler": "0.9.16",
     "typescript": "^6.0.3"
-  },
-  "xaendar": {
-    "target": "node",
-    "dts": true
   }
 }

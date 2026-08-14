@@ -1,5 +1,4 @@
 import { TypeCheckResult } from '@xaendar/compiler';
-import { Position } from 'vscode';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 /**
@@ -18,7 +17,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
  *   dentro nessuna espressione mappata (es. testo statico HTML).
  */
 export function mapTemplatePositionToShim(mappingTable: TypeCheckResult['mappingTable'], bodyLineOffset: number, templateDocument: TextDocument, position: { line: number, character: number }): { line: number, character: number } | undefined {
-  const charIndex = templateDocument.offsetAt(new Position(position.line, position.character));
+  const charIndex = templateDocument.offsetAt(position);
 
   for (const [shimLine, lineMappings] of mappingTable) {
     for (const mapping of lineMappings) {

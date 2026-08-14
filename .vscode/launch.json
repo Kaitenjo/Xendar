@@ -36,6 +36,18 @@
       "env": {
         "TSX_TSCONFIG_PATH": "${workspaceFolder}/tsconfig.json"
       }
+    },
+    {
+      "name": "Run Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/@xaendar/vscode-client"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/@xaendar/vscode-client/dist/**/*.cjs"
+      ],
+      "preLaunchTask": "${defaultBuildTask}"
     }
   ]
 }

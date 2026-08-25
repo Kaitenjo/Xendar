@@ -1,5 +1,2 @@
-- Creare una cache dei metadati dei componenti improtati nei template
-
-- Se due componenti A e B importanto C, l'estrazionei dei metadati di C deve avvenire solo una volta
-Ad oggi, le ut ility di estrazione dei nomi delle classi e dei metadati funzionano soltanto se vi è un solo componente per file 
-poiche ritornano il primo match della regex
+- Creare una cache dei metadati dei componenti improtati nei template, se due componenti A e B importanto C, l'estrazionei dei metadati di C deve avvenire solo una volta
+- Ad oggi, le ut ility di estrazione dei nomi delle classi e dei metadati funzionano soltanto se vi è un solo componente per file poiche ritornano il primo match della regex

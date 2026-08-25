@@ -9,7 +9,8 @@
     ".": "./src/public-api.ts"
   },
   "xaendar": {
-    "build": false
+    "target": "node",
+    "dts": true
   },
   "dependencies": {
     "@xaendar/compiler": "0.9.16",

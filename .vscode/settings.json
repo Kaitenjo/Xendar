@@ -51,7 +51,6 @@
     "typeinfo": "cpp",
     "variant": "cpp"
   },
-  "C_Cpp.errorSquiggles": "disabled",
   "typescript.tsdk": "node_modules\\typescript\\lib",
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#910c0c",

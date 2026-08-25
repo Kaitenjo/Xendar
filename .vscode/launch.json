@@ -47,7 +47,23 @@
       "outFiles": [
         "${workspaceFolder}/dist/@xaendar/vscode-client/dist/**/*.cjs"
       ],
-      "preLaunchTask": "${defaultBuildTask}"
+      "preLaunchTask": "build:watch:extension"
+    },
+    {
+      "name": "Attach to Server",
+      "type": "node",
+      "request": "attach",
+      "port": 6009,
+      "restart": true,
+      "outFiles": [
+        "${workspaceFolder}/dist/@xaendar/vscode-client/server/**/*.cjs"
+      ]
+    },
+  ],
+  "compounds": [
+    {
+      "name": "Dev Extension",
+      "configurations": ["Run Extension", "Attach to Server"],
     }
   ]
 }

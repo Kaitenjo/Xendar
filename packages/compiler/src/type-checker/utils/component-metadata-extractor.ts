@@ -18,7 +18,7 @@ export async function extractComponentMetadata(modulePath: string, symbolName: s
   if (!filePath) {
     return undefined;
   }
-
+  
   const source = await readFile(filePath, 'utf8');
   const sourceFile = createSourceFile(filePath, source, ScriptTarget.Latest, true);
 

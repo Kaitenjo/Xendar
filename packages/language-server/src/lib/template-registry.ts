@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import fg from 'fast-glob';
 import { resolve } from 'node:path';
-import { extractDecoratorPaths } from '@xaendar/language-core';
+import { extractClassName, extractDecoratorPaths } from '@xaendar/language-core';
+
+// TODO: Instead of extracting the class name from the related .ts file on each
+// compilation, read the file and use a regular expression on its contents.
+// Load it lazily on the first compilation and reuse it instead of recalculating it.
 
 /**
  * Bidirectional template <-> component index for the entire workspace.
@@ -9,7 +13,7 @@ import { extractDecoratorPaths } from '@xaendar/language-core';
  * by the client's file watchers, so templates and classes can live in
  * arbitrarily different paths without guessing where to look on each lookup.
  */
-const templateToComponent = new Map<string, string>();
+const templateToComponent = new Map<string, Map<string, string[]>>();
 const componentToTemplate = new Map<string, string>();
 
 /**
@@ -47,20 +51,23 @@ export function indexComponent(componentPath: string): void {
       return;
     }
 
+    const className = extractClassName(source);
     const resolvedTemplate = resolve(templatePath);
-    const previous = componentToTemplate.get(componentPath);
-    if (previous && previous !== resolvedTemplate) {
-      templateToComponent.delete(previous);
-    }
-
-    templateToComponent.set(resolvedTemplate, componentPath);
+    const associatedComponentsPaths = templateToComponent.get(resolvedTemplate) ?? new Map;
+    const associatedComponentsAtPaths = associatedComponentsPaths.get(componentPath);
+    associatedComponentsAtPaths ? associatedComponentsAtPaths.push(className) : associatedComponentsPaths.set(componentPath, [className]);
+    templateToComponent.set(resolvedTemplate, associatedComponentsPaths);
     componentToTemplate.set(componentPath, resolvedTemplate);
   } catch (err) {
     console.warn(err);
   }
 }
 
-/** Removes a component from the index when its `.ts` file is deleted. */
+/**
+ * Removes a component from the index when its `.ts` file is deleted.
+ *
+ * @param componentPath - Absolute path to the deleted component file.
+ */
 export function removeComponentFromIndex(componentPath: string): void {
   const templatePath = componentToTemplate.get(componentPath);
   if (templatePath) {
@@ -69,7 +76,13 @@ export function removeComponentFromIndex(componentPath: string): void {
   componentToTemplate.delete(componentPath);
 }
 
-/** O(1) lookup instead of a filesystem scan — search cost is paid once in `buildComponentIndex`. */
-export function resolveComponentForTemplate(templatePath: string): string | undefined {
-  return templateToComponent.get(resolve(templatePath));
+/**
+ * Resolves the component associated with a template in constant time.
+ *
+ * @param templatePath - Path to the template file.
+ * @returns The associated component path, or `undefined` when it is not indexed.
+ */
+export function resolveComponentForTemplate(templatePath: string): ReturnType<(typeof templateToComponent['get'])> {
+  const path = resolve(templatePath);
+  return templateToComponent.get(path);
 }

@@ -97,7 +97,7 @@ export function xaendarPlugin(): Plugin {
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        const result = await compile(templateSource, dirname(templatePath), varName);
+        const result = await compile(templateSource, { baseDir: dirname(templatePath), cssVariableName: varName });
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
@@ -119,7 +119,7 @@ export function xaendarPlugin(): Plugin {
       compilerOptions ??= loadCompilerOptions(dirname(id));
       registerRealFile(id);
 
-      const shim = createShim(className, id, typecheckBody);
+      const shim = createShim(new Map([['', [className]]]), typecheckBody);
       const languageService = getLanguageService(compilerOptions);
       const diagnostics = languageService.getSemanticDiagnostics(shim.path);
 

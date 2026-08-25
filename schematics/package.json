@@ -4,6 +4,7 @@
     "build": "tsc -p tsconfig.json",
     "build-projects": "node dist/build-projects.js",
     "build:watch": "tsc -p tsconfig.json --watch",
+    "build:watch:extension": "node dist/build-extension.js",
     "compile-projects": "node dist/compile-projects.js",
     "check-dependencies": "node dist/check-dependencies.js",
     "pack": "node dist/pack-projects.js",

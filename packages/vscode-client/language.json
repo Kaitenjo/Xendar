@@ -1,0 +1,48 @@
+{
+  "scopeName": "xaendar.injection",
+  "injectionSelector": "L:text.html.basic",
+  "patterns": [
+    { "include": "#import-statement" },
+    { "include": "#event-binding" },
+    { "include": "#property-binding" },
+    { "include": "#interpolation" },
+    { "include": "#control-flow" }
+  ],
+  "repository": {
+    "import-statement": {
+      "match": "^\\s*(@import)\\s*(\\{)([^}]*)(\\})\\s*(from)\\s*('[^']*'|\"[^\"]*\")",
+      "captures": {
+        "1": { "name": "keyword.control.import.xaendar" },
+        "2": { "name": "punctuation.definition.block.xaendar" },
+        "3": { "name": "variable.other.readwrite.xaendar" },
+        "4": { "name": "punctuation.definition.block.xaendar" },
+        "5": { "name": "keyword.control.import.xaendar" },
+        "6": { "name": "string.quoted.xaendar" }
+      }
+    },
+    "event-binding": {
+      "match": "(@[a-zA-Z][\\w-]*)(=)(\"[^\"]*\")",
+      "captures": {
+        "1": { "name": "entity.other.attribute-name.event.xaendar" },
+        "2": { "name": "punctuation.separator.key-value.xaendar" },
+        "3": { "name": "string.quoted.double.xaendar" }
+      }
+    },
+    "property-binding": {
+      "match": "([a-zA-Z][\\w-]*)(=)(\"\\{[^}]*\\}\")",
+      "captures": {
+        "1": { "name": "entity.other.attribute-name.binding.xaendar" },
+        "2": { "name": "punctuation.separator.key-value.xaendar" },
+        "3": { "name": "string.quoted.double.xaendar" }
+      }
+    },
+    "interpolation": {
+      "match": "\\{\\{[^}]*\\}\\}",
+      "name": "meta.embedded.expression.xaendar"
+    },
+    "control-flow": {
+      "match": "@(if|else|for|switch|case|default)\\b",
+      "name": "keyword.control.xaendar"
+    }
+  }
+}

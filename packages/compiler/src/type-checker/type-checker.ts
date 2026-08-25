@@ -1,4 +1,6 @@
-import { indent, slice } from '@xaendar/common';
+import { slice } from '@xaendar/common';
+import { skipGeneration } from '../generator/states/skip-generation.state.js';
+import { Cursor } from '../models/cursor.js';
 import { ASTNode } from '../parser/types/ast.type.js';
 import { ASTNodeType } from '../parser/types/node.enum.js';
 import { ImportNode } from '../parser/types/nodes/import-node.type.js';
@@ -7,15 +9,13 @@ import { TypeCheckContext } from './models/type-checker-context.js';
 import { typeCheckElement } from './states/type-check-element.state.js';
 import { typeCheckFor } from './states/type-check-for.state.js';
 import { typeCheckIf } from './states/type-check-if.state.js';
-import { typeCheckImport } from './states/type-check-import.state.js';
 import { typeCheckSwitch } from './states/type-check-switch.state.js';
 import { typeCheckTextAndInterpolation } from './states/type-check-text-and-interpolation.state.js';
+import { Line, LineMapping } from './types/generated-line.type.js';
 import { TypeCheckResult } from './types/type-checker-result.type.js';
 import { TypeCheckerStates } from './types/type-checker-states.type.js';
 import { extractComponentMetadata } from './utils/component-metadata-extractor.js';
-import { Line, LineMapping } from './types/generated-line.type.js';
-import { plain, indentLines } from './utils/line-builder.utils.js';
-import { Cursor } from '../models/cursor.js';
+import { indentLines, plain } from './utils/line-builder.utils.js';
 
 /**
  * Generates a single, flat TypeScript function body ("shim") from a
@@ -54,7 +54,7 @@ export class TypeChecker {
     [ASTNodeType.If]: typeCheckIf,
     [ASTNodeType.For]: typeCheckFor,
     [ASTNodeType.Switch]: typeCheckSwitch,
-    [ASTNodeType.Import]: typeCheckImport,
+    [ASTNodeType.Import]: () => []
   };
 
   /**
@@ -89,7 +89,7 @@ export class TypeChecker {
               this._context.addImport(metadata);
             }
           }
-        )
+          )
       )
     );
   }
@@ -132,7 +132,7 @@ export class TypeChecker {
         message = err;
       }
 
-      throw span 
+      throw span
         ? `${new Cursor(this._input).getPositionFromCharacterIndex(span.start + 1)} - ${message}\n ---> ${slice(this._input, span.start, span.end)}}`
         : message;
     }

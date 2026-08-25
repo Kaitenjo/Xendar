@@ -4,5 +4,5 @@ export type CompiledTemplate = {
   typecheckBody: TypeCheckResult;
   shimPath: string;
   bodyLineOffset: number;
-  className: string;
+  classNames: string[];
 }

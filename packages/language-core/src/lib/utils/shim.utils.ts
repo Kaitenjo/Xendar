@@ -2,9 +2,10 @@ import { TypeCheckResult } from '@xaendar/compiler';
 import { basename, extname, resolve } from 'node:path';
 import { upsertVirtualFile } from '../language-service';
 
-export function createShim(className: string, shimId: string, typecheckBody: TypeCheckResult): { code: string, bodyLineOffset: number, path: string } {
-  const shimPath = `${shimId}.__typecheck__.ts`;
-  const shim = buildTypecheckShim(className, shimId, shimPath, typecheckBody.text);
+export function createShim(componentData: Map<string, string[]>, typecheckBody: TypeCheckResult): { code: string, bodyLineOffset: number, path: string, classNames: string[] } {
+  const entries = Array.from(componentData.entries());
+  const shimPath = `${entries[0][0]}.__typecheck__.ts`;
+  const shim = buildTypecheckShim(entries, shimPath, typecheckBody.text);
   upsertVirtualFile(shimPath, shim.code);
   return shim;
 }
@@ -19,27 +20,31 @@ export function createShim(className: string, shimId: string, typecheckBody: Typ
  * resolves correctly via the LanguageServiceHost's standard module
  * resolution against the real filesystem.
  *
- * @param className - Name of the exported component class, as extracted
+ * @param classNames - Name of the exported component class, as extracted
  *   from the transpiled source.
- * @param componentFilePath - Absolute path of the real component file.
+ * @param componentFilePath - Absolute path of the real component files.
  * @param body - The fictitious-TS type-check body produced by the compiler
  *   (the `function typeCheck() {...}` blocks and friends).
  * @returns The full shim source, ready to be passed to `updateVirtualFile`.
  */
-function buildTypecheckShim(className: string, shimPath: string, componentFilePath: string, body: string): { code: string, bodyLineOffset: number, path: string } {
-  const importSpecifier = `./${basename(componentFilePath, extname(componentFilePath))}`;
+function buildTypecheckShim(componentData: [string, string[]][], shimPath: string, body: string): { code: string, bodyLineOffset: number, path: string, classNames: string[] } {
+  const prefixLinesLength = componentData.length + 3;
+  const prefixLines = new Array<string>(prefixLinesLength).fill(''); 
+  const classNames = new Array<string>();
 
-  const prefixLines = [
-    `import { ${className} } from '${importSpecifier}';`,
-    '',
-    `declare const root: ${className};`,
-    '',
-  ];
+  for (let i = 0; i < componentData.length; i++) {
+    const [path, classes] = componentData[i];
+    classNames.push(...classes);
+    prefixLines[i] = `import { ${classes.join(', ')} } from './${basename(path, extname(path))}';`
+  }
+
+  prefixLines[prefixLinesLength - 2] = `declare const root: ${classNames.join(' & ')};`
 
   return {
     code: [...prefixLines, body].join('\n'),
-    bodyLineOffset: prefixLines.length,
-    path: shimPath
+    bodyLineOffset: prefixLinesLength,
+    path: shimPath,
+    classNames
   };
 }
 

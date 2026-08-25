@@ -338,7 +338,7 @@ async function buildExtension(projectName: string, projectPath: string, pkg: Xae
     clean: true,
     tsconfig: resolve(projectsPath, '../tsconfig.json'),
   });
-  writePackageJsonForExtensionProject(projectName, pkg, outDir);
+  writePackageJsonForExtensionProject(projectName, projectPath, pkg, outDir);
   await buildLanguageServerInto(resolve(projectPath, '../language-server'), resolve(outDir, 'server'));
 }
 
@@ -360,7 +360,7 @@ async function buildLanguageServerInto(serverProjectPath: string, serverOutDir: 
   });
 }
 
-function writePackageJsonForExtensionProject(projectName: string, pkg: XaendarPackageJson, outDir: string): void {
+function writePackageJsonForExtensionProject(projectName: string, projectPath: string, pkg: XaendarPackageJson, outDir: string): void {
   const distPkg = {
     name: pkg.name!,
     version: pkg.version!,
@@ -384,6 +384,13 @@ function writePackageJsonForExtensionProject(projectName: string, pkg: XaendarPa
           extensions: [".xd.component.html"],
           aliases: ["Xaendar Template"]
         }
+      ],
+      grammars: [
+        {
+          language: "xaendar-html",
+          scopeName: "xaendar.injection",
+          path: "./language.json"
+        }
       ]
     },
   };
@@ -391,6 +398,10 @@ function writePackageJsonForExtensionProject(projectName: string, pkg: XaendarPa
   mkdirSync(outDir, { recursive: true });
   const packageJsonPath = resolve(outDir, 'package.json');
   writeFileSync(packageJsonPath, JSON.stringify(distPkg, null, 2), 'utf-8');
+
+  const languageJsonPath = resolve(projectPath, 'language.json');
+  const languageJson = readFileSync(languageJsonPath, 'utf-8');
+  writeFileSync(resolve(outDir, 'language.json'), languageJson);
 }
 
 /**

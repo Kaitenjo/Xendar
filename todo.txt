@@ -1,6 +1,5 @@
-Rivedere interpolazioni
-- Non funzionano se dopo la ` finale non segue subito la }
-`} funziona
-`  } non funziona <--- da fixare
+- Creare una cache dei metadati dei componenti improtati nei template
 
-Il render generator non aggiunge correttamente il this. alle variabili interne all'interpolazione
+- Se due componenti A e B importanto C, l'estrazionei dei metadati di C deve avvenire solo una volta
+Ad oggi, le ut ility di estrazione dei nomi delle classi e dei metadati funzionano soltanto se vi è un solo componente per file 
+poiche ritornano il primo match della regex

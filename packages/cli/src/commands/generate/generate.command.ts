@@ -9,9 +9,9 @@ import { generateComponent } from './component/component.command';
  *   added to the root program.
  */
 export function generateCommand(): Command {
-  const generate = new Command('generate').alias('g').description('Generate Xaendar building blocks');
-
-  generate
+  return new Command('generate')
+    .alias('g')
+    .description('Generate Xaendar building blocks')
     .command('component <name>')
     .alias('c')
     .option('-p, --path <path>', 'Custom path for the generated component (default: current directory)')
@@ -21,6 +21,4 @@ export function generateCommand(): Command {
       const path = options.path || process.cwd();
       generateComponent(name, path, !!options.force);
     });
-
-  return generate;
 }

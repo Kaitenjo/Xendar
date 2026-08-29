@@ -1,6 +1,6 @@
 {
   "name": "xaendar",
-  "version": "0.9.16",
+  "version": "0.9.19",
   "author": "Kaitenjo",
   "license": "ISC",
   "type": "module",
@@ -24,17 +24,18 @@
     "xd": "node dist/@xaendar/cli/dist/cli.js new backoffice --style css"
   },
   "dependencies": {
+    "@rolldown/plugin-babel": "^0.2.3",
     "commander": "^15.0.0",
     "fast-glob": "^3.3.3",
     "typescript": "^6.0.3",
-    "vscode-languageclient": "^10.1.0",
-    "vscode-languageserver": "^10.1.0",
-    "vscode-languageserver-textdocument": "^1.0.12",
-    "vscode-uri": "^3.1.0"
+    "vscode-languageclient": "^10.1.1",
+    "vscode-languageserver": "^10.1.1",
+    "vscode-languageserver-textdocument": "^1.0.14",
+    "vscode-uri": "^3.2.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.59.0",
-    "@types/node": "^26.2.0",
+    "@types/convert-source-map": "^2.0.3",
+    "@types/node": "^26.4.0",
     "@types/vscode": "^1.134.0",
     "@vitest/coverage-v8": "^4.1.11",
     "depcheck": "^1.4.7",

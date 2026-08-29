@@ -19,7 +19,8 @@ const deepCheckOptions = {
     'testing'
   ],
   ignoreMatches: [
-    'json-schema'
+    'json-schema',
+    'vscode'
   ],
   ignorePatterns: [
     '*.json',

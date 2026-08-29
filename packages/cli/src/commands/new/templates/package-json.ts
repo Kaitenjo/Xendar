@@ -12,7 +12,7 @@ export function packageJson(name: string, version: string): string {
   "private": true,
   "scripts": {
     "build": "vite build",
-    "start": "vite",
+    "start": "xd start",
     "test": "vitest",
     "xd": "xd"
   },
@@ -22,14 +22,11 @@ export function packageJson(name: string, version: string): string {
     "@xaendar/types": "^${version}"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-decorators": "^8.0.2",
-    "@rolldown/plugin-babel": "^0.2.3",
-    "@vitest/coverage-v8": "^4.1.10",
-    "@xaendar/build-tools": "^${version}",
+    "@vitest/coverage-v8": "^4.1.11",
     "@xaendar/cli": "^${version}",
     "typescript": "^6.0.3",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }
 `;

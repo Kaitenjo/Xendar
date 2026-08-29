@@ -101,7 +101,7 @@ export function xaendarPlugin(): Plugin {
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {
-        logError(`Failed to compile template - ${templatePath}:\n${err instanceof Error ? err.message : err}`);
+        logError(`Failed to compile template - ${templatePath}\n${err instanceof Error ? err.message : err}`);
         return null;
       }
 
@@ -119,12 +119,13 @@ export function xaendarPlugin(): Plugin {
       compilerOptions ??= loadCompilerOptions(dirname(id));
       registerRealFile(id);
 
+      // Questo nbon funziona cosi, era stato scritto solo per far compilare
       const shim = createShim(new Map([['', [className]]]), typecheckBody);
       const languageService = getLanguageService(compilerOptions);
       const diagnostics = languageService.getSemanticDiagnostics(shim.path);
 
       for (let i = 0; i < diagnostics.length; i++) {
-        logError(`Failed to compile template - ${templatePath}:\n${describeDiagnostic(templateSource, diagnostics[i], shim.bodyLineOffset, typecheckBody.mappingTable)}`);
+        logError(`Failed to compile template - ${templatePath}\n${describeDiagnostic(templateSource, diagnostics[i], shim.bodyLineOffset, typecheckBody.mappingTable)}`);
       }
 
       // After logging every diagnostics we have to return null to raise an error

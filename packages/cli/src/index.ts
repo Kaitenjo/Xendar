@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { generateCommand } from './commands/generate/generate.command';
 import { newCommand } from './commands/new/new.command';
+import { startCommand } from './commands/start/start.command';
 
 const version = JSON.parse(readFileSync(resolve(import.meta.filename, '..', '../package.json'), 'utf-8')).version;
 
@@ -14,5 +15,6 @@ program
 
 program.addCommand(generateCommand());
 program.addCommand(newCommand());
+program.addCommand(startCommand());
 
 program.parse();

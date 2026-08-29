@@ -92,9 +92,9 @@ const template = `
 `
 
 const filePath = 'dist/compiled.js'
-compile(template, 'TestComponent').then(output => {
+compile(template, { baseDir: 'asd', cssVariableName: 'asd' }).then(output => {
   writeFileSync(filePath, output.javascript);
-  writeFileSync('dist/compiled.ts', output.typescript);
+  writeFileSync('dist/compiled.ts', output.typescript.text);
 }).catch(err => {
   console.error(`Failed to compile template:${String(err.message.replace(/^Error:\s*/, ''))}`)
 });

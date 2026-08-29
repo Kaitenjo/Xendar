@@ -34,7 +34,7 @@ type XaendarPackageJson = PackageJson & {
      * If `true`, all dependencies are bundled inline (not externalized).
      * Used for CLI executables that should be self-contained.
      */
-    noExternal?: boolean;
+    executable?: boolean;
     /**
      * Whether to generate source maps for the output files. Defaults to `true`.
      */
@@ -153,43 +153,6 @@ function buildBrowser(projectPath: string): ReturnType<typeof viteBuild> {
 }
 
 /**
- * Scans the `packages/` directory and builds an alias map for all `@xaendar/*` packages.
- * 
- * This allows esbuild to resolve monorepo packages by their source files rather than
- * relying on `node_modules` symlinks, which is needed when the original `package.json`
- * files don't have an `exports` field (exports are injected during the Vite build).
- * 
- * @returns A map from package name (e.g. `@xaendar/common`) to its entry file path.
- */
-function buildXaendarAliasMap(): Record<string, string> {
-  const packagesDir = resolve(projectsPath);
-  const packageFolders = readdirSync(packagesDir);
-  const aliasMap: Record<string, string> = {};
-
-  for (let i = 0; i < packageFolders.length; i++) {
-    const folder = packageFolders[i];
-    try {
-      const pkgJsonPath = resolve(packagesDir, folder, 'package.json');
-      const pkg: XaendarPackageJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-
-      // Only create aliases for @xaendar-scoped packages
-      if (!pkg.name?.startsWith('@xaendar/')) {
-        continue;
-      }
-
-      const entryFile = pkg.xaendar?.entry ?? 'src/public-api.ts';
-      const absolutePath = resolve(packagesDir, folder, entryFile).replace(/\\/g, '/');
-
-      aliasMap[pkg.name] = absolutePath;
-    } catch {
-      // Not a valid package folder — skip silently
-    }
-  }
-
-  return aliasMap;
-}
-
-/**
  * Builds a Node package using tsup.
  *
  * - Entry point: `xaendar.entry` from package.json, defaults to `src/public-api.ts`.
@@ -199,7 +162,6 @@ function buildXaendarAliasMap(): Record<string, string> {
  */
 async function buildNode(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<void> {
   const entry = pkg.xaendar?.entry ?? 'src/public-api.ts';
-  const bundleAll = pkg.xaendar?.noExternal === true;
   const outDir = resolve(projectPath, '../../dist/@xaendar', projectName);
   const distDir = resolve(outDir, 'dist');
   const entryPath = resolve(projectPath, entry).replace(/\\/g, '/');
@@ -228,51 +190,6 @@ async function buildNode(projectName: string, projectPath: string, pkg: XaendarP
     };
   }
 
-  let bin: Record<string, unknown> = {};
-  let dependencies = pkg.dependencies;
-  let options: Parameters<typeof tsupBuild>[0] = {
-    external: Object.keys(pkg.dependencies ?? {})
-  };
-
-  if (bundleAll) {
-    bin = {
-      bin: {
-        xd: `./dist/${projectName}.js`,
-      }
-    }
-
-    dependencies = {};
-
-    options = {
-      noExternal: [/.*/],
-      esbuildOptions: opts => {
-        opts.alias = buildXaendarAliasMap();
-        opts.external = [
-          'node:*',
-          'events',
-          'fs',
-          'path',
-          'os',
-          'url',
-          'util',
-          'stream',
-          'buffer',
-          'crypto',
-          'child_process',
-          'process',
-          'module',
-        ];
-
-        opts.banner = {
-          js: `
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-`.trim(),
-        }
-      }
-    }
-  }
-
   await tsupBuild({
     entry: {
       [projectName]: entryPath
@@ -283,13 +200,23 @@ const require = createRequire(import.meta.url);
     dts,
     sourcemap: false,
     clean: true,
-    tsconfig: resolve(projectsPath, '../tsconfig.json'),
-    ...options,
+    external: pkg.dependencies ? Object.keys(pkg.dependencies) : undefined,
+    tsconfig: resolve(projectsPath, '../tsconfig.json')
   });
-  return writePackageJsonForNodeProject(projectName, pkg, { types, outDir, bin, dependencies });
+  return writePackageJsonForNodeProject(projectName, pkg, { types, outDir });
 }
 
-function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackageJson, options: { types: { types: string } | object, outDir: string, bin: Record<string, unknown>, dependencies: PackageJson['dependencies'] }): void {
+function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackageJson, options: { types: { types: string } | object, outDir: string }): void {
+  const executable = pkg.xaendar?.executable === true;
+  let bin: Record<string, unknown> = {};
+  if (executable) {
+    bin = {
+      bin: {
+        xd: `./dist/${projectName}.js`,
+      }
+    }
+  }
+
   const distPkg = {
     name: pkg.name!,
     version: pkg.version!,
@@ -297,7 +224,7 @@ function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackage
     author: pkg.author ?? '',
     license: pkg.license ?? 'MIT',
     type: 'module',
-    ...options.bin,
+    ...bin,
     exports: {
       '.': {
         ...options.types,
@@ -307,7 +234,7 @@ function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackage
     },
     main: `./dist/${projectName}.js`,
     ...options.types,
-    dependencies: options.dependencies
+    dependencies: pkg.dependencies
   };
 
   mkdirSync(options.outDir, { recursive: true });

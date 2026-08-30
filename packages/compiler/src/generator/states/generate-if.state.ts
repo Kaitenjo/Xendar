@@ -6,7 +6,7 @@ import { GeneratorTransitionFunctionReturnType } from '../types/generator-transi
 import { getBlockIdentifier, resolveExpression } from '../utils/generator.utils';
 
 export function generateIf(node: IfNode, parentNode: string, index: string, compilerContext: CompilerContext): GeneratorTransitionFunctionReturnType {
-  const ifContext = new CompilerContext([], compilerContext);
+  const ifContext = new CompilerContext(compilerContext);
   const retVal: GeneratorTransitionFunctionReturnType = {
     code: [],
     functionsToProcess: new Map()
@@ -17,7 +17,7 @@ export function generateIf(node: IfNode, parentNode: string, index: string, comp
   retVal.code.push(
     ...indent([
       '{',
-      ...indent([`condition: () => ${resolveExpression(node.conditionNode, compilerContext)},`, `block: this.${ifKey}.bind(this)`]),
+      ...indent([`condition: () => ${resolveExpression(node.conditionNode, compilerContext).expression},`, `block: this.${ifKey}.bind(this)`]),
       '},'
     ])
   );
@@ -30,14 +30,14 @@ export function generateIf(node: IfNode, parentNode: string, index: string, comp
   let alt = node.alternate;
   let i = 0;
   while (alt?.type === ASTNodeType.ElseIf) {
-    const elseIfContext = new CompilerContext([], compilerContext);
+    const elseIfContext = new CompilerContext(compilerContext);
     const keyElseIf = getBlockIdentifier('elseIf', parentNode, `${index}_${i}`);
     const conditionNode = alt.conditionNode;
 
     retVal.code.push(
       ...indent([
         '{',
-        ...indent([`condition: () => ${resolveExpression(conditionNode, compilerContext)},`, `block: this.${keyElseIf}.bind(this)`]),
+        ...indent([`condition: () => ${resolveExpression(conditionNode, compilerContext).expression},`, `block: this.${keyElseIf}.bind(this)`]),
         '},'
       ])
     );
@@ -51,7 +51,7 @@ export function generateIf(node: IfNode, parentNode: string, index: string, comp
   }
 
   if (alt) {
-    const elseContext = new CompilerContext([], compilerContext);
+    const elseContext = new CompilerContext(compilerContext);
     const keyElse = getBlockIdentifier('else', parentNode, index);
     retVal.code.push(
       ...indent([

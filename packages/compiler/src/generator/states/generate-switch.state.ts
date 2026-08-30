@@ -20,12 +20,12 @@ export function generateSwitch(node: SwitchNode, parentNode: string, index: stri
     functionsToProcess: new Map()
   }
 
-  retVal.code.push(`_switch(${parentNode}, context, () => ${resolveExpression(node.expression, compilerContext)}, [`);
+  retVal.code.push(`_switch(${parentNode}, context, () => ${resolveExpression(node.expression, compilerContext).expression}, [`);
 
   const children = node.children;
   for (let i = 0; i < children.length; i++) {
     const caseNode = children[i];
-    const caseContext = new CompilerContext([], compilerContext);
+    const caseContext = new CompilerContext(compilerContext);
     const caseKey = caseNode.condition ? getBlockIdentifier('case', parentNode, `${index}_${i}`) : getBlockIdentifier('default', parentNode, index);
 
     retVal.functionsToProcess!.set(caseKey, {

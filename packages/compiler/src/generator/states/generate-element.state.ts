@@ -89,8 +89,12 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
  */
 function mapAttributes(attributes: AttributeNode[], compilerContext: CompilerContext): string[] {
   return attributes?.map(({ name, value }) => {
-    const isLiteral = typeof value === 'string';
-    return `{ name: '${name}', value: () => ${isLiteral ? `'${value}'` : resolveExpression(value.expression, compilerContext)}, literal: ${isLiteral} },`
+    if (typeof value === 'string') {
+       return `{ name: '${name}', value: () => '${value}', reactive: false },`
+    } else {
+      const { expression, reactive } = resolveExpression(value.expression, compilerContext);
+      return `{ name: '${name}', value: () => ${expression}, reactive: ${reactive} },`
+    }
   })
 }
 
@@ -110,7 +114,7 @@ function mapEvents(events: EventNode[], compilerContext: CompilerContext): strin
   const mappedEvents = events.map(event => {
     let parsedEventParameter = false;
     const parameters = event.parameters.map(parameter => {
-      const resolvedParameter = resolveExpression(parameter, compilerContext);
+      const resolvedParameter = resolveExpression(parameter, compilerContext).expression;
       if (!parsedEventParameter && resolvedParameter === '$event') {
         parsedEventParameter = true;
         return `($event) => ${resolvedParameter},`

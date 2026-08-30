@@ -262,7 +262,7 @@ export const ROOT_NODE = 'root';
  * // typeof id !== 'boolean' || pippo instanceof HTMLElement
  * // → typeof this.id !== 'boolean' || this.pippo instanceof HTMLElement
  */
-export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options?: ResolveExpressionOptions): string {
+export function resolveExpression(expression: Expression, compilerContext: CompilerContext, options?: ResolveExpressionOptions): { expression: string, reactive?: boolean } {
   return emitNode(expression, expression, compilerContext, mapDefaultOptions(options));
 }
 
@@ -277,31 +277,29 @@ export function resolveExpression(expression: Expression, compilerContext: Compi
  * - Otherwise recurses into children and concatenates their output.
  */
 
-function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, options: Required<ResolveExpressionOptions>): string {
+function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, options: Required<ResolveExpressionOptions>): { expression: string, reactive?: boolean } {
   // Leaf Identifier that needs resolution
   if (isIdentifier(node) && needsResolution(node, parent)) {
     const text = node.text;
-    if (compilerContext?.hasUnresolvableIdentifier(text) || options.skipResolution) {
-      return text;
+    if (compilerContext.hasUnresolvableIdentifier(text)) {
+      return { expression: text };
     }
     
-    if (compilerContext) {
-      const resolvedValue = resolveIdentifierAccess(text, compilerContext);
-      if (resolvedValue) {
-        return resolvedValue;
-      }
+    const resolvedValue = resolveIdentifierAccess(text, compilerContext);
+    if (resolvedValue) {
+      return resolvedValue;
     }
     
     if (options.resolver) {
-      return `${options.resolver}.${text}`;
+      return { expression: `${options.resolver}.${text}` };
     }
 
-    return text;
+    return { expression: text };
   }
 
   // No resolvable identifiers in this subtree — emit verbatim
   if (!containsResolvableIdentifier(node, parent)) {
-    return node.getText();
+    return { expression: node.getText() };
   }
 
   /*
@@ -310,16 +308,17 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
     children faithfully instead of joining with a fixed separator.
   */
   const sourceText = node.getSourceFile().text;
-  let result = '';
+  let result: { expression: string, reactive?: boolean } = { expression: '' };
   let lastEnd = node.getStart();
 
   forEachChild(node, child => {
-    result = `${result}${slice(sourceText, lastEnd, child.getStart())}${emitNode(child, node, compilerContext, options)}`;
+    const { expression, reactive } = emitNode(child, node, compilerContext, options);
+    result = { expression: `${result}${slice(sourceText, lastEnd, child.getStart())}${expression}`, reactive };
     lastEnd = child.getEnd();
   });
 
   // Append any trailing text after the last child (e.g. closing paren)
-  return `${result}${slice(sourceText, lastEnd, node.getEnd())}`;
+  return { expression: `${result}${slice(sourceText, lastEnd, node.getEnd())}` };
 }
 
 /**
@@ -341,11 +340,11 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
  * @param compilerContext - The active template scope context.
  * @returns The generated code expression that yields the identifier's value.
  */
-function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): string | undefined {
+function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): { expression: string, reactive: boolean } | undefined {
   if (compilerContext.hasIdentifier(text)) {
     const kind = compilerContext.getIdentifierKind(text);
     const access = `context.get('${text}')`;
-    return kind === 'signal' ? `${access}()` : access;
+    return kind === 'signal' ? { expression: `${access}()`, reactive: true } : { expression: access, reactive: false };
   }
 
   return undefined;
@@ -435,9 +434,9 @@ function getIdentifier(prefix: string, parentNode: string, index: string): strin
   return identifier.replace(/-/g, '_');
 }
 
-function mapDefaultOptions(options?: { skipResolution?: boolean, resolver?: string }): { skipResolution: boolean, resolver: string } {
+function mapDefaultOptions(options?: ResolveExpressionOptions): Required<ResolveExpressionOptions> {
   return {
-    skipResolution: options?.skipResolution ?? false,
     resolver: options?.resolver ?? 'this',
+    emitReactive: options?.emitReactive ?? false
   };
 }

@@ -13,18 +13,21 @@ export type IdentifierKind = 'value' | 'signal';
  */
 export class CompilerContext {
   /**
+   * Parent context representing the enclosing scope.
+   */
+  protected parent: CompilerContext | undefined;
+  /**
    * Identifiers declared directly in this scope, mapped to whether they
    * hold a plain value or a signal (e.g. `@for` implicit variables like
    * `$index` are signals; the loop item itself is a plain value).
    */
-  private _identifiers = new Map<string, IdentifierKind>();
-
+  private readonly _identifiers = new Map<string, IdentifierKind>();
   /**
    * List of identifiers that should not be resolved
    * and touched in anyway
    * (e.g. $event)
    */
-  private _unresolvableIdentifiers = new Array<string>()
+  private readonly _unresolvableIdentifiers = new Map<string, IdentifierKind>()
 
   /**
    * Creates a new scope context.
@@ -34,13 +37,20 @@ export class CompilerContext {
    *   to declare a signal-backed identifier.
    * @param parent - Optional parent context representing the enclosing scope.
    */
+  constructor();
+  constructor(parent: CompilerContext);
+  constructor(idenfitiers: Array<string | [string, IdentifierKind]>);
+  constructor(parent: CompilerContext, idenfitiers: Array<string | [string, IdentifierKind]>);
   constructor(
-    identifiers: Array<string | [string, IdentifierKind]> = [],
-    protected parent?: CompilerContext
+    parent?: CompilerContext | Array<string | [string, IdentifierKind]>,
+    identifiers?: Array<string | [string, IdentifierKind]>,
   ) {
-    for (let i = 0; i < identifiers.length; i++) {
-      const identifier = identifiers[i];
-      typeof identifier === 'string' ? this._identifiers.set(identifier, 'value') : this._identifiers.set(identifier[0], identifier[1]);
+    parent instanceof CompilerContext ? this.parent = parent : identifiers = parent;
+    if (identifiers?.length) {
+      for (let i = 0; i < identifiers.length; i++) {
+        const identifier = identifiers[i];
+        typeof identifier === 'string' ? this._identifiers.set(identifier, 'value') : this._identifiers.set(identifier[0], identifier[1]);
+      }
     }
   }
 
@@ -69,12 +79,12 @@ export class CompilerContext {
    * @param name - The identifier name to register.
    * @throws When an identifier with the same name is already declared in this scope.
    */
-  public addUnresolvableIdentifier(name: string): void {
+  public addUnresolvableIdentifier(name: string, kind: IdentifierKind = 'value'): void {
     if (this.hasIdentifier(name)) {
       throw new Error(`Identifier "${name}" is already declared in this scope.`);
     }
 
-    this._unresolvableIdentifiers.push(name);
+    this._unresolvableIdentifiers.set(name, kind);
   }
 
   /**
@@ -96,7 +106,7 @@ export class CompilerContext {
    * @param name - The identifier name to remove. 
    */
   public removeUnresolvabledIdentifier(name: string): void {
-    this._unresolvableIdentifiers = this._unresolvableIdentifiers.filter(identifier => identifier !== name);
+    this._unresolvableIdentifiers.delete(name);
   }
 
   /**
@@ -130,6 +140,6 @@ export class CompilerContext {
    * @returns `true` if the identifier exists in the scope chain, `false` otherwise.
    */
   public hasUnresolvableIdentifier(name: string): boolean {
-    return this._unresolvableIdentifiers.includes(name) || (this.parent?.hasUnresolvableIdentifier(name) ?? false);
+    return this._unresolvableIdentifiers.has(name) || (this.parent?.hasUnresolvableIdentifier(name) ?? false);
   }
 }

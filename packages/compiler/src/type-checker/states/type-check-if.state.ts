@@ -21,7 +21,7 @@ export function typeCheckIf(node: IfNode, processNode: ProcessNode, context: Typ
   const lines = new Array<Line>();
   const condition = resolveExpression(node.conditionNode, context, { resolver: 'root' });
 
-  lines.push(line('if (', mapped(condition, node.span), ') {'));
+  lines.push(line('if (', mapped(condition.expression, node.span), ') {'));
   lines.push(...indentLines(node.children.flatMap(child => processNode(child, context))));
   lines.push(plain('}'));
 
@@ -29,7 +29,7 @@ export function typeCheckIf(node: IfNode, processNode: ProcessNode, context: Typ
   while (alt?.type === ASTNodeType.ElseIf) {
     const elseIfCondition = resolveExpression(alt.conditionNode, context, { resolver: 'root' });
 
-    lines.push(line('else if (', mapped(elseIfCondition, alt.span), ') {'));
+    lines.push(line('else if (', mapped(elseIfCondition.expression, alt.span), ') {'));
     lines.push(...indentLines(alt.children.flatMap(child => processNode(child, context))));
     lines.push(plain('}'));
 

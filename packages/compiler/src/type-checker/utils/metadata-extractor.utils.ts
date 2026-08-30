@@ -1,126 +1,113 @@
+import { slice } from '@xaendar/common';
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
-import { createSourceFile, DeclarationName, Decorator, Expression, getNameOfDeclaration, isArrayLiteralExpression, isCallExpression, isClassDeclaration, isDecorator, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
+import { createSourceFile, DeclarationName, Decorator, Expression, getNameOfDeclaration, isArrayLiteralExpression, isCallExpression, isDecorator, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isPropertyDeclaration, isStringLiteral, isTypeReferenceNode, ModifierLike, PropertyAssignment, ScriptTarget, SyntaxKind, TypeNode } from 'typescript';
+import { getClassAndWebComponentDeclarationsByName } from '../../utils/metadata.utils';
 import { ComponentEventMetadata, ComponentPropertyMetadata, ComponentPropertyMetadataWishSpan, TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
-import { slice } from '@xaendar/common';
 
 /**
  * Extracts component metadata from a source file by parsing decorators.
  * 
  * @param modulePath - The import module path (e.g., './button.component')
- * @param symbolName - The exported symbol name to look for
+ * @param className - The exported symbol name to look for
  * @param baseDir - The directory context for resolving relative paths
  * @returns Component metadata if found, undefined otherwise
  */
-export async function extractComponentMetadata(modulePath: string, symbolName: string, baseDir = process.cwd()): Promise<TypeCheckContextComponentImport | undefined> {
+export async function extractComponentMetadata(modulePath: string, className: string, baseDir = process.cwd()): Promise<TypeCheckContextComponentImport | undefined> {
   const filePath = resolveModulePath(modulePath, baseDir);
   if (!filePath) {
     return undefined;
   }
-  
+
   const source = await readFile(filePath, 'utf8');
   const sourceFile = createSourceFile(filePath, source, ScriptTarget.Latest, true);
 
   let componentMetadata: TypeCheckContextComponentImport | undefined;
+  let i = 0;
 
-  const statements = sourceFile.statements;
-  for (let i = 0; i < statements.length; i++) {
-    const node = statements[i];
-    if (componentMetadata) {
+  const declarations = getClassAndWebComponentDeclarationsByName(sourceFile, className);
+  if (!declarations) {
+    return;
+  }
+
+  const { klass, decorator } = declarations;
+
+  // Extract selectors from decorator
+  const selectors = extractSelectorsFromDecorator(decorator);
+  if (!selectors?.length) {
+    return;
+  }
+
+  // Extract properties and events
+  const properties = new Map<string, ComponentPropertyMetadataWishSpan>();
+  const events = new Map<string, ComponentEventMetadata>();
+  const members = klass.members;
+
+  for (let j = 0; j < members.length; j++) {
+    const member = members[j];
+    if (!isPropertyDeclaration(member)) {
       continue;
     }
 
-    if (isClassDeclaration(node)) {
-      const className = node.name?.text;
-      if (className !== symbolName) {
-        continue;
-      }
+    // Look for decorators in modifiers (TypeScript stores them there)
+    const memberModifiers = member.modifiers ?? [];
 
-      // Check for @WebComponent decorator in modifiers
-      const modifiers = node.modifiers ?? [];
-      const webComponentDecorator = Array.from(modifiers).find(member => isWebComponentDecorator(member));
-      if (!webComponentDecorator) {
-        continue;
-      }
+    let required = false;
+    const propDecorator = Array.from(memberModifiers).find((member): member is Decorator => {
+      const result = isPropertyDecorator(member);
+      required = !!result.required;
+      return result.decorator
+    });
 
-      // Extract selectors from decorator
-      const selectors = extractSelectorsFromDecorator(webComponentDecorator);
-      if (!selectors?.length) {
-        continue;
-      }
-
-      // Extract properties and events
-      const properties = new Map<string, ComponentPropertyMetadataWishSpan>();
-      const events = new Map<string, ComponentEventMetadata>();
-      const members = node.members;
-
-      for (let j = 0; j < members.length; j++) {
-        const member = members[j];
-        if (!isPropertyDeclaration(member)) {
-          continue;
-        }
-
-        // Look for decorators in modifiers (TypeScript stores them there)
-        const memberModifiers = member.modifiers ?? [];
-
-        let required = false;
-        const propDecorator = Array.from(memberModifiers).find((member): member is Decorator => {
-          const result = isPropertyDecorator(member);
-          required = !!result.required;
-          return result.decorator
-        });
-
-        if (propDecorator) {
-          const nameNode = getNameOfDeclaration(member);
-          if (nameNode && isIdentifier(nameNode)) {
-            const propName = nameNode.text;
-            const metadata = extractPropertyMetadata(nameNode, propName, propDecorator, required);
-            if (metadata) {
-              const actualPropName = metadata.alias ?? propName;
-              const conflictingProperty = properties.get(actualPropName);
-              if (!conflictingProperty) {
-                properties.set(actualPropName, metadata);
-              } else {
-                const { start, end } = conflictingProperty.span;
-                const { line, character } = sourceFile.getLineAndCharacterOfPosition(start);
-                throw `Failed to extract metadata from an imported component in the template - ${filePath}\n[Ln ${line + 1}, Col ${character + 1}] - A property identified by name ${actualPropName} was already defined\n ---> ${slice(source, start - character, end)}`;
-              }
-            }
-          }
-          continue;
-        }
-
-        const eventDecorator = Array.from(memberModifiers).find(member => isEventDecorator(member));
-        if (eventDecorator) {
-          const nameNode = getNameOfDeclaration(member);
-          const eventName = nameNode && isIdentifier(nameNode) ? nameNode.text : undefined;
-          if (eventName) {
-            const metadata = extractEventMetadata(eventDecorator);
-            if (metadata) {
-              events.set(eventName, metadata);
-            }
+    if (propDecorator) {
+      const nameNode = getNameOfDeclaration(member);
+      if (nameNode && isIdentifier(nameNode)) {
+        const propName = nameNode.text;
+        const metadata = extractPropertyMetadata(nameNode, propName, propDecorator, required);
+        if (metadata) {
+          const actualPropName = metadata.alias ?? propName;
+          const conflictingProperty = properties.get(actualPropName);
+          if (!conflictingProperty) {
+            properties.set(actualPropName, metadata);
+          } else {
+            const { start, end } = conflictingProperty.span;
+            const { line, character } = sourceFile.getLineAndCharacterOfPosition(start);
+            throw `Failed to extract metadata from an imported component in the template - ${filePath}\n[Ln ${line + 1}, Col ${character + 1}] - A property identified by name ${actualPropName} was already defined\n ---> ${slice(source, start - character, end)}`;
           }
         }
       }
+      continue;
+    }
 
-      const mappedProperties = new Map<string, ComponentPropertyMetadata>();
-      properties.entries().forEach(([propName, metadata]) => mappedProperties.set(propName, { 
-        name: metadata.name,
-        required: metadata.required,
-        type: metadata.type,
-        alias: metadata.alias
-      }));
-      
-      componentMetadata = {
-        type: 'component',
-        className,
-        selectors,
-        properties: mappedProperties,
-        events,
-      };
+    const eventDecorator = Array.from(memberModifiers).find(member => isEventDecorator(member));
+    if (eventDecorator) {
+      const nameNode = getNameOfDeclaration(member);
+      const eventName = nameNode && isIdentifier(nameNode) ? nameNode.text : undefined;
+      if (eventName) {
+        const metadata = extractEventMetadata(eventDecorator);
+        if (metadata) {
+          events.set(eventName, metadata);
+        }
+      }
     }
   }
+
+  const mappedProperties = new Map<string, ComponentPropertyMetadata>();
+  properties.entries().forEach(([propName, metadata]) => mappedProperties.set(propName, {
+    name: metadata.name,
+    required: metadata.required,
+    type: metadata.type,
+    alias: metadata.alias
+  }));
+
+  componentMetadata = {
+    type: 'component',
+    className,
+    selectors,
+    properties: mappedProperties,
+    events,
+  };
 
   return componentMetadata;
 }
@@ -156,18 +143,6 @@ function resolveModulePath(modulePath: string, baseDir: string): string | undefi
 
   // TODO: Handle package imports and tsconfig aliases
   return undefined;
-}
-
-/**
- * Checks if a modifier is a @WebComponent decorator.
- */
-function isWebComponentDecorator(modifier: ModifierLike): modifier is Decorator {
-  if (modifier.kind !== SyntaxKind.Decorator) {
-    return false;
-  }
-
-  const expr = isCallExpression(modifier.expression) ? modifier.expression.expression : modifier.expression;
-  return isIdentifier(expr) && expr.text === 'WebComponent'
 }
 
 /**

@@ -1,5 +1,5 @@
 import { isValidCustomElementName, slice } from '@xaendar/common';
-import { compile, Cursor, resolveTemplateSpan, TypeCheckResult } from '@xaendar/compiler';
+import { compile, Cursor, extractSignalMembers, resolveTemplateSpan, TypeCheckResult } from '@xaendar/compiler';
 import { createShim, disposeLanguageService, extractClassName, extractDecoratorPaths, getLanguageService, loadCompilerOptions, registerRealFile, removeRealFile, removeVirtualFile } from '@xaendar/language-core';
 import { dirname, resolve } from 'node:path';
 import { CompilerOptions, Diagnostic } from 'typescript';
@@ -62,7 +62,7 @@ export function xaendarPlugin(): Plugin {
         return null;
       }
 
-      const className = extractClassName(code)
+      const className = extractClassName(code);
       const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
       if (!templatePath || !host.fileExists(templatePath)) {
         this.warn(`Could not find template at ${templatePath}`);
@@ -97,7 +97,9 @@ export function xaendarPlugin(): Plugin {
       const varName = cssContent ? `__${className}_sheet` : undefined;
 
       try {
-        const result = await compile(templateSource, { baseDir: dirname(templatePath), cssVariableName: varName });
+        // Todo Create a dedicated cache to store signal values metadata otherwise this will be done every time file is saved
+        const signals = extractSignalMembers(code, className, id);
+        const result = await compile(templateSource, { baseDir: dirname(templatePath), cssVariableName: varName, signals });
         compiledMethods = result.javascript;
         typecheckBody = result.typescript;
       } catch (err) {

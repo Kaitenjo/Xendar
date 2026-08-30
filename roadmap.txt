@@ -1,0 +1,29 @@
+- Creazione di una Cache per l'estrazione metadati dei componenti (Property, Events e WebComponent):
+  Si evita ricalcolo ad ogni salvataggio
+  Se più template importano lo stesso Componente X e i metadati sono già disponibili essi non vengono ricalcolati
+  Va ricalcolata ogni volta che il file .ts viene modificato
+  HIGH priority. Pesa molto a livello di scalabilità delle applicazioni.
+
+- Il plugin supporta soltanto un WebComponent per file, va esteso
+
+- Creazione di una cache per l'estrazione dei Signals da una classe X:
+  Si evita ricalcolo ad ogni salvataggio
+  Va invalidata se:
+  - la classe X viene modificata
+  - un eventuale classe base viene modificata, ma ricalcoliamo solo essa, non anche la classe stessa, essa puo trovarsi in:
+    - stesso file (ricalcoliamo entrambe necessariamente)
+    - un altro file del progetto
+    - pacchetto npm
+    - alias typescript che puo essere risolto in entrambi i casi precedenti
+
+- Riorganizzazioen del pacchetto  build-tools e capire dove inserire le utility di estrazione dei metadati
+
+- Ad oggi le funzioni generate dal generator vengono aggiunte come campi della classe ed è un grave errore
+  Potenzialmente a RunTime esse potrebbero essere rimosse o modificate
+  Capire se:
+  - Definirle programmaticamente con writable e enumerable settato a false
+  - Scriverle nello stesso file .js ma fuori dalla classe (possibile collisione rarissima di nomi di funzione)
+  - Definirle in un altro file importato dal Componente
+
+  Per il secondo e il terzo caso va passato esplicitamente il 'this' per accedere ai campi della classe utilizzati
+  nel template, cosa che ad oggi non è necessaria poiche le funzioni sono metodi del componente stesso

@@ -92,7 +92,7 @@ const template = `
 `
 
 const filePath = 'dist/compiled.js'
-compile(template, { baseDir: 'asd', cssVariableName: 'asd' }).then(output => {
+compile(template, { baseDir: 'asd', cssVariableName: 'asd', signals: [] }).then(output => {
   writeFileSync(filePath, output.javascript);
   writeFileSync('dist/compiled.ts', output.typescript.text);
 }).catch(err => {

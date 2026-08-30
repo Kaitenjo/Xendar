@@ -26,10 +26,10 @@ export function _renderElement(parentNode: Element, context: Context, anchor: Co
   mountNode(element, parentNode, context, anchor)
 
   for (let i = 0; i < attributes.length; i++) {
-    const { name, value, literal } = attributes[i];
-    literal
-      ? element.setAttribute(name, String(value()))
-      : context.listen(effect(() => element.setAttribute(name, String(value()))))
+    const { name, value, reactive } = attributes[i];
+    reactive
+      ? context.listen(effect(() => element.setAttribute(name, String(value()))))
+      : element.setAttribute(name, String(value()))
   }
 
   for (let i = 0; i < events.length; i++) {

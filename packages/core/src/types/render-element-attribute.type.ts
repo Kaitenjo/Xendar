@@ -19,5 +19,5 @@ export type RenderElementAttribute = {
   /** 
    * When `true`, the value is a static string literal; when `false`, it is a reactive expression. 
    */
-  literal: boolean
+  reactive: boolean
 }

@@ -21,7 +21,7 @@ import { indentLines, line, mapped, plain } from '../utils/line-builder.utils';
  * JS/TS fallthrough syntax directly.
  */
 export function typeCheckSwitch(node: SwitchNode, processNode: ProcessNode, context: TypeCheckContext): Line[] {
-  const expression = resolveExpression(node.expression, context, { resolver: 'root' });
+  const { expression } = resolveExpression(node.expression, context, { resolver: 'root' });
   const lines = [line('switch (', mapped(expression, node.span), ') {')];
 
   const children = node.children;

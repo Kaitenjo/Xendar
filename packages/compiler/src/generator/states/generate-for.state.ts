@@ -1,6 +1,6 @@
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
-import { CompilerContext, IdentifierKind } from '../models/compiler-context.model';
+import { CompilerContext } from '../models/compiler-context.model';
 import { GeneratorTransitionFunctionReturnType } from '../types/generator-transition-function-return-type.type';
 import { getBlockIdentifier, getTextIdentifier, resolveExpression } from '../utils/generator.utils';
 
@@ -52,7 +52,13 @@ export function generateFor(node: ForNode, parentNode: string, index: string, co
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
-  const forContext = new CompilerContext([node.itemAlias, [indexName, 'signal'], [firstName, 'signal'], [lastName, 'signal'], [evenName, 'signal'], [oddName, 'signal']], compilerContext);
+  const forContext = new CompilerContext(compilerContext);
+
+  forContext.addUnresolvableIdentifier(node.itemAlias);
+  const identifiers = [indexName, firstName, lastName, evenName, oddName];
+  for (let i = 0; i < identifiers.length; i++) {
+    forContext.addUnresolvableIdentifier(identifiers[i], 'signal');
+  }
 
   const forKey = getBlockIdentifier('for', parentNode, index);
   retVal.functionsToProcess!.set(forKey, {
@@ -75,7 +81,7 @@ export function generateFor(node: ForNode, parentNode: string, index: string, co
     args: [forKey, 'parentContext', itemsName, counterName, 'anchor']
   });
 
-  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, ${node.itemAlias} => ${resolveExpression(node.trackExpression, forContext, { skipResolution: true })}, this.${forKey}.bind(this));`);
+  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, ${node.itemAlias} => ${resolveExpression(node.trackExpression, forContext).expression}, this.${forKey}.bind(this));`);
 
   return retVal
 }

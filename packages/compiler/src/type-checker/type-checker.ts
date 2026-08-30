@@ -1,5 +1,4 @@
 import { slice } from '@xaendar/common';
-import { skipGeneration } from '../generator/states/skip-generation.state.js';
 import { Cursor } from '../models/cursor.js';
 import { ASTNode } from '../parser/types/ast.type.js';
 import { ASTNodeType } from '../parser/types/node.enum.js';
@@ -14,8 +13,8 @@ import { typeCheckTextAndInterpolation } from './states/type-check-text-and-inte
 import { Line, LineMapping } from './types/generated-line.type.js';
 import { TypeCheckResult } from './types/type-checker-result.type.js';
 import { TypeCheckerStates } from './types/type-checker-states.type.js';
-import { extractComponentMetadata } from './utils/component-metadata-extractor.js';
 import { indentLines, plain } from './utils/line-builder.utils.js';
+import { extractComponentMetadata } from './utils/metadata-extractor.utils.js';
 
 /**
  * Generates a single, flat TypeScript function body ("shim") from a
@@ -89,7 +88,7 @@ export class TypeChecker {
               this._context.addImport(metadata);
             }
           }
-          )
+        )
       )
     );
   }

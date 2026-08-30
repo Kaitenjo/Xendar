@@ -32,7 +32,7 @@ export class Generator {
     private _ast: ASTNode[],
   ) { }
 
-  public generate(cssVariableName?: string): string {
+  public generate(cssVariableName: string | undefined, signals: string[]): string {
     const processFunctions = (functionsToProcess: GeneratorTransitionFunctionReturnType['functionsToProcess']) => {
       if (functionsToProcess) {
         for (const [key, value] of functionsToProcess.entries()) {
@@ -43,7 +43,7 @@ export class Generator {
 
     try {
       this._nodeToProcess.clear();
-      const compilerContext = new CompilerContext();
+      const compilerContext = new CompilerContext(signals.map<[string, 'signal']>(signal => [signal, 'signal']));
 
       const generatedCode = [
         '_render() {',

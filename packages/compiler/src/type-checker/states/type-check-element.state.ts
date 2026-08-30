@@ -43,7 +43,7 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
       lines.push(
         plain('{'),
         ...indentLines(typeof value === 'object'
-          ? [line('(', mapped(resolveExpression(value.expression, context, { resolver: 'root' }), value.span), `) satisfies ${property.type};`)]
+          ? [line('(', mapped(resolveExpression(value.expression, context, { resolver: 'root' }).expression, value.span), `) satisfies ${property.type};`)]
           : [plain('let x!: string;'), line(mapped(`x satisfies ${property.type};`, attributes[i].span))]
         ),
         plain('}')
@@ -63,11 +63,11 @@ function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContex
       throw new Error(`Unknown event "${name}" on <${node.tagName}> (${metadata.className} has no @Event with this name).`, { cause: node.span });
     }
 
-    const eventContext = new CompilerContext([], context);
+    const eventContext = new CompilerContext(context);
     eventContext.addUnresolvableIdentifier('$event');
 
     const args = parameters
-      .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
+      .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }).expression)
       .join(', ');
 
     lines.push(plain('{'));
@@ -94,18 +94,18 @@ function typeCheckNativeBindings(node: ElementNode, context: TypeCheckContext): 
   for (let i = 0; i < attributes.length; i++) {
     const { value } = attributes[i];
     if (typeof value !== 'string') {
-      lines.push(line(mapped(`${resolveExpression(value.expression, context, { resolver: 'root' })};`, value.span)));
+      lines.push(line(mapped(`${resolveExpression(value.expression, context, { resolver: 'root' }).expression};`, value.span)));
     }
   };
 
   const events = node.events;
   for (let i = 0; i < events.length; i++) {
     const { handler, parameters } = events[i];
-    const eventContext = new CompilerContext([], context);
+    const eventContext = new CompilerContext(context);
     eventContext.addUnresolvableIdentifier('$event');
 
     const args = parameters
-      .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }))
+      .map(parameter => resolveExpression(parameter, eventContext, { resolver: 'root' }).expression)
       .join(', ');
 
     lines.push(line(mapped(`root.${handler}(${args});`, events[i].span)));

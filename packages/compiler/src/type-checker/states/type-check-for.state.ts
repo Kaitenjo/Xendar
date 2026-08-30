@@ -1,10 +1,9 @@
-import { indent } from '@xaendar/common';
 import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ForImplicitVariables } from '../../parser/types/nodes/for-implicit-variables';
 import { ForNode } from '../../parser/types/nodes/for-node.type';
 import { TypeCheckContext } from '../models/type-checker-context';
-import { ProcessNode } from '../types/type-checker-process-node.type';
 import { Line } from '../types/generated-line.type';
+import { ProcessNode } from '../types/type-checker-process-node.type';
 import { indentLines, line, mapped, plain } from '../utils/line-builder.utils';
 
 /**
@@ -18,16 +17,17 @@ import { indentLines, line, mapped, plain } from '../utils/line-builder.utils';
  * function boundary needed.
  */
 export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: TypeCheckContext): Line[] {
-  const forContext = new TypeCheckContext([], context);
+  const forContext = new TypeCheckContext(context);
   const indexName = resolveImplicit(node, '$index');
   const firstName = resolveImplicit(node, '$first');
   const lastName = resolveImplicit(node, '$last');
   const evenName = resolveImplicit(node, '$even');
   const oddName = resolveImplicit(node, '$odd');
 
-  const identifiers = [indexName, firstName, lastName, evenName, oddName, node.itemAlias];
+  forContext.addUnresolvableIdentifier(node.itemAlias);
+  const identifiers = [indexName, firstName, lastName, evenName, oddName];
   for (let i = 0; i < identifiers.length; i++) {
-    forContext.addUnresolvableIdentifier(identifiers[i])
+    forContext.addUnresolvableIdentifier(identifiers[i], 'signal');
   }
 
   const lines = new Array<Line>();
@@ -49,7 +49,7 @@ export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: T
     plain(`let ${lastName}!: boolean;`),
     plain(`let ${evenName}!: boolean;`),
     plain(`let ${oddName}!: boolean;`),
-    line(mapped(`${resolveExpression(node.trackExpression, context, { skipResolution: true })};`, node.span)),
+    line(mapped(`${resolveExpression(node.trackExpression, context).expression};`, node.span)),
     ...node.children.flatMap(child => processNode(child, forContext)),
   ]));
 

@@ -19,9 +19,9 @@ import { TypeCheckResult } from './type-checker/types/type-checker-result.type';
  * @returns A string containing the compiled Javascript render method body.
  */
 export async function compile(input: string, options: { baseDir: string }): Promise<TypeCheckResult>
-export async function compile(input: string, options: { cssVariableName: string | undefined }): Promise<string>
-export async function compile(input: string, options: { baseDir: string, cssVariableName?: string }): Promise<{ javascript: string; typescript: TypeCheckResult }>
-export async function compile(input: string, options: { baseDir?: string, cssVariableName?: string | undefined }): Promise<string | TypeCheckResult | { javascript: string; typescript: TypeCheckResult }> {
+export async function compile(input: string, options: { cssVariableName: string | undefined, signals: string[] }): Promise<string>
+export async function compile(input: string, options: { baseDir: string, cssVariableName: string | undefined, signals: string[] }): Promise<{ javascript: string; typescript: TypeCheckResult }>
+export async function compile(input: string, options: { baseDir?: string, cssVariableName?: string | undefined, signals?: string[] }): Promise<string | TypeCheckResult | { javascript: string; typescript: TypeCheckResult }> {
   const tokens = new Lexer(input).tokenize();
   const nodes = new Parser(input, tokens).parse();
 
@@ -29,21 +29,22 @@ export async function compile(input: string, options: { baseDir?: string, cssVar
     throw `CssVariableName or BaseDir must be specified`;
   }
   
-  const { baseDir, cssVariableName } = options;
-  if (cssVariableName && baseDir) {
+  const { baseDir, cssVariableName, signals } = options;
+  if (cssVariableName && baseDir && signals) {
     return {
-      javascript: generateJavascriptCode(input, nodes, cssVariableName),
+      javascript: generateJavascriptCode(input, nodes, cssVariableName, signals),
       typescript: await generateTypecheckResult(input, nodes, baseDir)
     }
   } else if (baseDir) {
     return await generateTypecheckResult(input, nodes, baseDir);
   } else {
-    return generateJavascriptCode(input, nodes, cssVariableName);
+    // Safe assertion! Override permit only cssVariableName and signals not nullable simultaneously
+    return generateJavascriptCode(input, nodes, cssVariableName, signals!);
   }
 }
 
-function generateJavascriptCode(input: string, nodes: ASTNode[], cssVariableName: string | undefined): string {
-  return new Generator(input, nodes).generate(cssVariableName);
+function generateJavascriptCode(input: string, nodes: ASTNode[], cssVariableName: string | undefined, signals: string[]): string {
+  return new Generator(input, nodes).generate(cssVariableName, signals);
 }
 
 async function generateTypecheckResult(input: string, nodes: ASTNode[], baseDir: string): Promise<TypeCheckResult> {

@@ -16,6 +16,6 @@ import { line, mapped } from '../utils/line-builder.utils';
  */
 export function typeCheckTextAndInterpolation(node: TextNode | InterpolationNode, _processNode: ProcessNode, context: TypeCheckContext): Line[] {
   return node.type === ASTNodeType.Interpolation
-    ? [line(mapped(`${resolveExpression(node.expression, context, { resolver: 'root' })};`, node.span))]
+    ? [line(mapped(`${resolveExpression(node.expression, context, { resolver: 'root' }).expression};`, node.span))]
     : [];
 }

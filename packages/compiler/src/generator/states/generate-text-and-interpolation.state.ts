@@ -20,7 +20,7 @@ export function generateTextAndInterpolation(node: TextNode | InterpolationNode,
   return {
     code: [`${node.type === ASTNodeType.Text
       ? `_renderLiteralText(${parentNode}, context, '${node.value}');`
-      : `_renderText(${parentNode}, context, () => ${resolveExpression(node.expression, compilerContext)});`
+      : `_renderText(${parentNode}, context, () => ${resolveExpression(node.expression, compilerContext).expression});`
       }`,
     ]
   };

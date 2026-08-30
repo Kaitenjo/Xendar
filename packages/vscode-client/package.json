@@ -1,6 +1,6 @@
 {
   "name": "@xaendar/vscode-client",
-  "version": "0.9.19",
+  "version": "0.9.21",
   "type": "module",
   "author": "Kaitenjo",
   "license": "MIT",
@@ -12,6 +12,6 @@
     "target": "extension"
   },
   "dependencies": {
-    "vscode-languageclient": "^10.1.0"
+    "vscode-languageclient": "^10.1.1"
   }
 }

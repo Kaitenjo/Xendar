@@ -5,7 +5,8 @@ import { PluginOption, UserConfig } from "vite";
 import dts from 'vite-plugin-dts';
 
 export type ViteConfigOptions = {
-  plugins?: PluginOption[]
+  plugins?: PluginOption[],
+  secondaryEntryPoints?: Record<string, string>
 }
 
 const external = [
@@ -21,14 +22,20 @@ export default function getViteConfig(name: string, dirName: string, options?: V
   const fileName = JSON.parse(JSON.stringify(name.split('/').join('-').slice(1)));
   const outDir = resolve(dirName, `../../dist/${name}`);
   const distDir = join(outDir, 'dist');
-
+  const secondaryEntryPoints = options?.secondaryEntryPoints ?? {};
   return {
     build: {
       target: 'esnext',
       lib: {
-        entry: resolve(dirName, 'src/public-api.ts'),
+        entry: {
+          [fileName]: resolve(dirName, 'src/public-api.ts'),
+          ...(Object.entries(secondaryEntryPoints).reduce<Record<string, string>>((acc, [entryPoint, path]) => {
+            acc[entryPoint] = resolve(dirName, path);
+            return acc;
+          }, {}))
+        },
         name,
-        fileName: format => `${fileName}.${format}.js`,
+        fileName: (format, entryName) => `${entryName}.${format}.js`,
         formats: ['es']
       },
       outDir: distDir,
@@ -55,14 +62,23 @@ export default function getViteConfig(name: string, dirName: string, options?: V
             type: "module",
             main: `./dist/${fileName}.es.js`,
             module: `./dist/${fileName}.es.js`,
-            types: `./dist/${fileName}.es.d.ts`,
+            types: `./dist/${fileName}.d.ts`,
             exports: {
               ".": {
                 import: {
-                  types: `./dist/${fileName}.es.d.ts`,
+                  types: `./dist/${fileName}.d.ts`,
                   default: `./dist/${fileName}.es.js`
                 }
-              }
+              },
+              ...(Object.keys(secondaryEntryPoints).reduce<PackageJson.ExportConditions>((acc, entryPoint) => {
+                acc[entryPoint] = {
+                  import: {
+                    types: `./dist/${entryPoint}.d.ts`,
+                    default: `./dist/${entryPoint}.es.js`
+                  }
+                }
+                return acc;
+              }, {}))
             },
             ...(Object.keys(pkg.peerDependencies ?? {}).length ? { peerDependencies: pkg.peerDependencies } : {}),
             ...(Object.keys(pkg.dependencies ?? {}).length ? { dependencies: pkg.dependencies } : {}),
@@ -85,11 +101,12 @@ export default function getViteConfig(name: string, dirName: string, options?: V
         // This path depends on the root value below
         exclude: ['../../../**/*.spec.ts'],
         include: ['../../../**/*.ts'],
+        insertTypesEntry: true,
         rollupTypes: true,
         outDir: distDir,
         root: resolve(dirName, 'src/public-api.ts'),
         afterBuild() {
-          const typesPath = resolve(distDir, `${fileName}.es.d.ts`);
+          const typesPath = resolve(distDir, `${fileName}.d.ts`);
           const content = readFileSync(typesPath, 'utf-8');
           const result = content.replace(/from ['"](?:\.\.\/)*schematics\/packages\/([^/]+)\/src\/public-api['"]/g, (_, pkg) => `from '@xaendar/${pkg}'`);
           writeFileSync(typesPath, result);

@@ -1,46 +1,12 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { build as tsupBuild } from 'tsup';
-import { PackageJson, TsConfigJson } from 'type-fest';
+import { TsConfigJson } from 'type-fest';
 import { build as viteBuild } from 'vite';
+import { buildExtensionProject } from './lib/build-extension.js';
+import { XaendarPackageJson } from './types/xaendar-package-json.type.js';
 
 const projectsPath = '../packages';
-
-type XaendarTarget = 'browser' | 'node' | 'extension';
-
-type XaendarPackageJson = PackageJson & {
-  /**
-   * Custom field used to configure the build process for each package. It specifies
-   */
-  xaendar?: {
-    /**
-     * The intended runtime environment for the package, which determines the build tool and output format. Defaults to `browser`.
-     */
-    target: XaendarTarget;
-    /** 
-     * Entry point relative to the package root. Defaults to `src/public-api.ts`. 
-     */
-    entry?: string;
-    /** 
-     * Whether to emit `.d.ts` declaration files. Defaults to `true`. 
-     */
-    dts?: boolean;
-    /**
-     * Whether to build this package. Set to `false` for internal packages
-     * that are bundled inline by their consumer (e.g. compiler bundled into CLI).
-     */
-    build?: boolean;
-    /**
-     * If `true`, all dependencies are bundled inline (not externalized).
-     * Used for CLI executables that should be self-contained.
-     */
-    executable?: boolean;
-    /**
-     * Whether to generate source maps for the output files. Defaults to `true`.
-     */
-    sourceMap?: boolean;
-  };
-};
 
 /**
  * Reads and parses the `package.json` of a given package folder.
@@ -244,91 +210,13 @@ function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackage
 }
 
 async function buildExtension(projectName: string, projectPath: string, pkg: XaendarPackageJson): Promise<void> {
-  const entry = pkg.xaendar?.entry ?? 'src/public-api.ts';
-  const outDir = resolve(projectPath, '../../dist/@xaendar', projectName);
-  const distDir = resolve(outDir, 'dist');
-  const entryPath = resolve(projectPath, entry).replace(/\\/g, '/');
-
-  await tsupBuild({
-    entry: {
-      [projectName]: entryPath
-    },
-    outDir: distDir,
-    format: ['cjs'],
-    platform: 'node',
-    target: 'node18',
-    bundle: true,
-    external: ['vscode'],
-    dts: false,
-    sourcemap: true,
-    minify: false,
-    clean: true,
-    tsconfig: resolve(projectsPath, '../tsconfig.json'),
+  return buildExtensionProject({
+    projectName,
+    projectPath,
+    pkg,
+    tsconfigPath: resolve(projectsPath, '../tsconfig.json'),
+    watch: false,
   });
-  writePackageJsonForExtensionProject(projectName, projectPath, pkg, outDir);
-  await buildLanguageServerInto(resolve(projectPath, '../language-server'), resolve(outDir, 'server'));
-}
-
-async function buildLanguageServerInto(serverProjectPath: string, serverOutDir: string): Promise<void> {
-  const serverEntry = resolve(serverProjectPath, 'src/lib/server.ts');
-
-  await tsupBuild({
-    entry: { server: serverEntry },
-    outDir: serverOutDir,
-    format: ['cjs'],
-    platform: 'node',
-    target: 'node18',
-    bundle: true,
-    external: ['vscode'],
-    dts: false,
-    sourcemap: true,
-    clean: true,
-    tsconfig: resolve(projectsPath, '../tsconfig.json'),
-  });
-}
-
-function writePackageJsonForExtensionProject(projectName: string, projectPath: string, pkg: XaendarPackageJson, outDir: string): void {
-  const distPkg = {
-    name: pkg.name!,
-    version: pkg.version!,
-    description: pkg.description ?? '',
-    author: pkg.author ?? '',
-    license: pkg.license ?? 'MIT',
-    type: 'module',
-    publisher: "xaendar",
-    engines: {
-      vscode: "^1.90.0"
-    },
-    categories: ["Programming Languages", "Linters"],
-    activationEvents: [
-      "workspaceContains:**/*.xd.component.html"
-    ],
-    main: `./dist/${projectName}.cjs`,
-    contributes: {
-      languages: [
-        {
-          id: "xaendar-html",
-          extensions: [".xd.component.html"],
-          aliases: ["Xaendar Template"]
-        }
-      ],
-      grammars: [
-        {
-          language: "xaendar-html",
-          scopeName: "xaendar.injection",
-          path: "./language.json"
-        }
-      ]
-    },
-  };
-
-  mkdirSync(outDir, { recursive: true });
-  const packageJsonPath = resolve(outDir, 'package.json');
-  writeFileSync(packageJsonPath, JSON.stringify(distPkg, null, 2), 'utf-8');
-
-  const languageJsonPath = resolve(projectPath, 'language.json');
-  const languageJson = readFileSync(languageJsonPath, 'utf-8');
-  writeFileSync(resolve(outDir, 'language.json'), languageJson);
 }
 
 /**

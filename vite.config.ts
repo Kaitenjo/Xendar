@@ -20,7 +20,7 @@ export default defineConfig({
     target: 'esnext',
     lib: {
       entry: path.resolve(dirName, 'src/test.ts'),
-      fileName: () => `test.es.js`,
+      fileName: () => `test.js`,
       formats: ['es']
     },
     sourcemap: true,

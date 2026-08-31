@@ -1,4 +1,4 @@
-import { InputSignal } from '../../types/signals/input-signal.type';
+import { InputSignal } from '../types/input-signal.type';
 
 /**
  * Unique symbol used to mark an object as a valid `InputSignal` instance.

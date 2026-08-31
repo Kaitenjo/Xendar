@@ -1,5 +1,5 @@
-import { EffectOptions } from "@xaendar/signals";
-import { NoArgsVoidFunction } from "@xaendar/types";
+import { EffectOptions } from '@xaendar/signals';
+import { NoArgsVoidFunction } from '@xaendar/types';
 
 /**
  * Runs a side-effectful function and automatically re-runs it whenever any

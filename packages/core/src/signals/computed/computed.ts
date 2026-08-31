@@ -1,5 +1,5 @@
 import { SignalOptions } from '@xaendar/signals';
-import { Computed } from '../../types/signals/computed.type';
+import { Computed } from '../types/computed.type';
 
 /**
  * Creates a read-only computed signal whose value is derived from other signals.

@@ -28,7 +28,7 @@ export function createShim(componentData: Map<string, string[]>, typecheckBody: 
  * @returns The full shim source, ready to be passed to `updateVirtualFile`.
  */
 function buildTypecheckShim(componentData: [string, string[]][], shimPath: string, body: string): { code: string, bodyLineOffset: number, path: string, classNames: string[] } {
-  const prefixLinesLength = componentData.length + 3;
+  const prefixLinesLength = componentData.length + 4;
   const prefixLines = new Array<string>(prefixLinesLength).fill(''); 
   const classNames = new Array<string>();
 
@@ -37,7 +37,7 @@ function buildTypecheckShim(componentData: [string, string[]][], shimPath: strin
     classNames.push(...classes);
     prefixLines[i] = `import { ${classes.join(', ')} } from './${basename(path, extname(path))}';`
   }
-
+  prefixLines[prefixLinesLength - 4] = 'import { Signal } from \'@xaendar/core/signals\'';
   prefixLines[prefixLinesLength - 2] = `declare const root: ${classNames.join(' & ')};`
 
   return {

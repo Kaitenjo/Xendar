@@ -3,7 +3,7 @@ import { INTERNAL_OBSERVED_ATTRIBUTES } from '../costants';
 import { BaseWebComponent } from '../directives/base-web-component';
 import { input } from '../signals/input/input';
 import { PropertyDecoratorOptions, PropertyDecoratorOptionsWithRequired, } from '../types/property-decorator-options.type';
-import { InputSignal } from '../types/signals/input-signal.type';
+import { InputSignal } from '../signals/types/input-signal.type';
 
 const propertyDecoratorOptionsWithRequiredBrand = Symbol('PropertyDecoratorOptionsWithRequiredBrand');
 type PropertyDecoratoprOptionsWithRequiredBrandType<ActualValue = unknown, IncomingValue = ActualValue> = PropertyDecoratorOptionsWithRequired<ActualValue, IncomingValue> & { 

@@ -1,5 +1,5 @@
 import { SignalOptions } from '@xaendar/signals';
-import { Signal as SignalType } from '../../types/signals/signal.type';
+import { Signal as SignalType } from '../types/signal.type';
 
 /**
  * Creates a writable reactive signal.

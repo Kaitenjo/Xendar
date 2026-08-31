@@ -1,6 +1,6 @@
 {
   "name": "xaendar",
-  "version": "0.9.25",
+  "version": "0.9.28",
   "author": "Kaitenjo",
   "license": "ISC",
   "type": "module",
@@ -11,8 +11,7 @@
     "build:src": "vite build",
     "build:watch:extension": "npm run build:watch:extension --prefix schematics",
     "check:dependencies": "npm run check-dependencies --prefix schematics",
-    "compile:projects": "npm run compile-projects --prefix schematics",
-    "deploy": "npm run build:schematics && npm run check:dependencies && npm run compile:projects && npm run update:version && npm run build:projects && npm run pack:projects && npm run publish:projects && npm i",
+    "deploy": "npm run build:schematics && npm run check:dependencies && npm run typecheck:projects && npm run update:version && npm run build:projects && npm run pack:projects && npm run publish:projects && npm i",
     "i": "npm i --omit-optional --ignore-scripts",
     "install:clean": "rimraf package-lock.json node_modules && npm run i",
     "pack:projects": "npm run pack --prefix schematics",
@@ -20,6 +19,7 @@
     "start:node": "nodemon --watch src --watch packages -e ts --exec \"node --inspect-brk --import tsx/esm src/test.ts\"",
     "start:browser": "vite",
     "test:debug": "node --inspect-brk ./node_modules/.bin/vitest run signals",
+    "typecheck:projects": "npm run typecheck-projects --prefix schematics",
     "update:version": "npm run update-version --prefix schematics",
     "xd": "node dist/@xaendar/cli/dist/cli.js new backoffice --style css"
   },

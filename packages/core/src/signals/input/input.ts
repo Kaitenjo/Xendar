@@ -1,5 +1,5 @@
-import { InputSignalOptions } from '../../types/signals/input-signal.options.type';
-import { InputSignal } from '../../types/signals/input-signal.type';
+import { InputSignalOptions } from '../types/input-signal.options.type';
+import { InputSignal } from '../types/input-signal.type';
 import { INPUT_SIGNAL_INSTANCE_SYMBOL } from './input-instance.symbol';
 import { assertPrivateContext } from './input-set.symbol';
 

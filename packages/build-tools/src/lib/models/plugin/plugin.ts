@@ -273,27 +273,43 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
     throw 'Could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.';
   }
 
-  const requiredImports = ['effect', '_if', '_switch', '_for', 'Context', '_iterationVariables', '_renderElement', '_renderText', '_renderLiteralText', 'createElement', 'createSVGElement', 'createMATHMLElement'];
+  const requiredImports = [
+    { value: 'effect', source: '@xaendar/core/signals' },
+    { value: '_if', source: '@xaendar/core' },
+    { value: '_switch', source: '@xaendar/core' },
+    { value: '_for', source: '@xaendar/core' },
+    { value: 'Context', source: '@xaendar/core' },
+    { value: '_iterationVariables', source: '@xaendar/core' },
+    { value: '_renderElement', source: '@xaendar/core' },
+    { value: '_renderText', source: '@xaendar/core' },
+    { value: '_renderLiteralText', source: '@xaendar/core' },
+    { value: 'createElement', source: '@xaendar/core' },
+    { value: 'createSVGElement', source: '@xaendar/core' },
+    { value: 'createMATHMLElement', source: '@xaendar/core' },
+  ];
 
-  const alreadyImported = new Set<string>();
-  const importRegex = /import\s*\{([^}]+)\}\s*from\s*['"][^'"]+['"]/g;
+  const alreadyImported = new Array<{ value: string; source: string }>();
+  const importRegex = /import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g;
   let match: RegExpExecArray | null;
   while ((match = importRegex.exec(result)) !== null) {
     const parts = match[1]?.split(',');
+    const source = match[2];
     if (parts) {
       for (let i = 0; i < parts.length; i++) {
         const name = parts[i].trim().split(/\s+as\s+/)[0]?.trim();
         if (name) {
-          alreadyImported.add(name);
+          alreadyImported.push({ value: name, source });
         }
       }
     }
   }
 
-  const missingImports = requiredImports.filter(name => !alreadyImported.has(name));
+  const missingImports = requiredImports.filter(requiredImport => !alreadyImported.some(imported => imported.value === requiredImport.value && imported.source === requiredImport.source));
 
   if (missingImports.length) {
-    result = `import { ${missingImports.join(', ')} } from '@xaendar/core';
+    const importsBySource = Map.groupBy(missingImports, missingImport => missingImport.source);
+    const importStatements = Array.from(importsBySource, ([source, imports]) => `import { ${imports.map(importItem => importItem.value).join(', ')} } from '${source}';`).join('\n');
+    result = `${importStatements}
 
 ${result}`;
   }

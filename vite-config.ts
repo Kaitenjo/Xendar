@@ -112,7 +112,7 @@ function createGeneratePackageJsonPlugin(dirName: string, fileName: string, outD
             }
           },
           ...(Object.keys(secondaryEntryPoints).reduce<PackageJson.ExportConditions>((acc, entryPoint) => {
-            acc[entryPoint] = {
+            acc[`./${entryPoint}`] = {
               import: {
                 types: `./dist/${entryPoint}.d.ts`,
                 default: `./dist/${entryPoint}.js`

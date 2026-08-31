@@ -122,7 +122,7 @@ export function xaendarPlugin(): Plugin {
       registerRealFile(id);
 
       // Questo nbon funziona cosi, era stato scritto solo per far compilare
-      const shim = createShim(new Map([['', [className]]]), typecheckBody);
+      const shim = createShim(new Map([[id, [className]]]), typecheckBody);
       const languageService = getLanguageService(compilerOptions);
       const diagnostics = languageService.getSemanticDiagnostics(shim.path);
 

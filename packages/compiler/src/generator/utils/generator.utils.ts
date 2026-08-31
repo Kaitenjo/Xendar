@@ -313,12 +313,12 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
 
   forEachChild(node, child => {
     const { expression, reactive } = emitNode(child, node, compilerContext, options);
-    result = { expression: `${result}${slice(sourceText, lastEnd, child.getStart())}${expression}`, reactive };
+    result = { expression: `${result}${slice(sourceText, lastEnd, child.getStart())}${expression}`, reactive: result.reactive || reactive };
     lastEnd = child.getEnd();
   });
 
   // Append any trailing text after the last child (e.g. closing paren)
-  return { expression: `${result}${slice(sourceText, lastEnd, node.getEnd())}` };
+  return { expression: `${result.expression}${slice(sourceText, lastEnd, node.getEnd())}`, reactive: result.reactive };
 }
 
 /**

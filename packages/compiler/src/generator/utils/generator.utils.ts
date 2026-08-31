@@ -313,7 +313,7 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
 
   forEachChild(node, child => {
     const { expression, reactive } = emitNode(child, node, compilerContext, options);
-    result = { expression: `${result}${slice(sourceText, lastEnd, child.getStart())}${expression}`, reactive: result.reactive || reactive };
+    result = { expression: `${result.expression}${slice(sourceText, lastEnd, child.getStart())}${expression}`, reactive: result.reactive || reactive };
     lastEnd = child.getEnd();
   });
 

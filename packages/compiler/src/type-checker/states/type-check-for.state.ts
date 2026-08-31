@@ -44,11 +44,11 @@ export function typeCheckFor(node: ForNode, processNode: ProcessNode, context: T
   ));
 
   lines.push(...indentLines([
-    plain(`let ${indexName}!: number;`),
-    plain(`let ${firstName}!: boolean;`),
-    plain(`let ${lastName}!: boolean;`),
-    plain(`let ${evenName}!: boolean;`),
-    plain(`let ${oddName}!: boolean;`),
+    plain(`let ${indexName}!: Signal<number>;`),
+    plain(`let ${firstName}!: Signal<boolean>;`),
+    plain(`let ${lastName}!: Signal<boolean>;`),
+    plain(`let ${evenName}!: Signal<boolean>;`),
+    plain(`let ${oddName}!: Signal<boolean>;`),
     line(mapped(`${resolveExpression(node.trackExpression, context).expression};`, node.span)),
     ...node.children.flatMap(child => processNode(child, forContext)),
   ]));

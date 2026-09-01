@@ -142,4 +142,16 @@ export class CompilerContext {
   public hasUnresolvableIdentifier(name: string): boolean {
     return this._unresolvableIdentifiers.has(name) || (this.parent?.hasUnresolvableIdentifier(name) ?? false);
   }
+
+  /**
+   * Resolves the kind (`'value'` or `'signal'`) of a unresolvable declared identifier,
+   * walking up the scope chain if not found in this scope.
+   *
+   * @param name - The unresolvable identifier name to look up.
+   * @returns The unresolvable identifier's kind, or `undefined` if it isn't declared
+   *   anywhere in the scope chain.
+   */
+  public getUnresolvableIdentifierKind(name: string): IdentifierKind | undefined {
+    return this._unresolvableIdentifiers.get(name) ?? this.parent?.getUnresolvableIdentifierKind(name);
+  }
 }

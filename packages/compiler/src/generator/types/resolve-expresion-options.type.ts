@@ -7,7 +7,7 @@ export type ResolveExpressionOptions = {
    */
   resolver?: string
   /**
-   * 
+   * Treat an identifier as if it is unresolvable
    */
-  emitReactive?: boolean
+  skipResolution?: boolean
 }

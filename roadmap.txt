@@ -27,3 +27,8 @@
 
   Per il secondo e il terzo caso va passato esplicitamente il 'this' per accedere ai campi della classe utilizzati
   nel template, cosa che ad oggi non è necessaria poiche le funzioni sono metodi del componente stesso
+
+  - Scss, Less e Sass
+  - Direttive
+  - Binding dinamico di eventi e attributi e Direttive
+  - Creazione componenti imperativamente

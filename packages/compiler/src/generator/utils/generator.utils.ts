@@ -281,8 +281,8 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
   // Leaf Identifier that needs resolution
   if (isIdentifier(node) && needsResolution(node, parent)) {
     const text = node.text;
-    if (compilerContext.hasUnresolvableIdentifier(text)) {
-      return { expression: text };
+    if (compilerContext.hasUnresolvableIdentifier(text) || options.skipResolution) {
+      return { expression: text, reactive: compilerContext.getUnresolvableIdentifierKind(text) === 'signal' };
     }
     
     const resolvedValue = resolveIdentifierAccess(text, compilerContext);
@@ -437,6 +437,6 @@ function getIdentifier(prefix: string, parentNode: string, index: string): strin
 function mapDefaultOptions(options?: ResolveExpressionOptions): Required<ResolveExpressionOptions> {
   return {
     resolver: options?.resolver ?? 'this',
-    emitReactive: options?.emitReactive ?? false
+    skipResolution: options?.skipResolution ?? false
   };
 }

@@ -54,7 +54,7 @@ export function generateFor(node: ForNode, parentNode: string, index: string, co
   const oddName = resolveImplicit(node, '$odd');
   const forContext = new CompilerContext(compilerContext);
 
-  forContext.addUnresolvableIdentifier(node.itemAlias);
+  forContext.addIdentifier(node.itemAlias);
   const identifiers = [indexName, firstName, lastName, evenName, oddName];
   for (let i = 0; i < identifiers.length; i++) {
     forContext.addUnresolvableIdentifier(identifiers[i], 'signal');
@@ -81,7 +81,7 @@ export function generateFor(node: ForNode, parentNode: string, index: string, co
     args: [forKey, 'parentContext', itemsName, counterName, 'anchor']
   });
 
-  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, ${node.itemAlias} => ${resolveExpression(node.trackExpression, forContext).expression}, this.${forKey}.bind(this));`);
+  retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, (${node.itemAlias}, ${indexName}) => ${resolveExpression(node.trackExpression, forContext, { skipResolution: true }).expression}, this.${forKey}.bind(this));`);
 
   return retVal
 }

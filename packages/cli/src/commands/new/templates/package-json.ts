@@ -9,6 +9,7 @@ export function packageJson(name: string, version: string): string {
   return `{
   "name": "${name}",
   "version": "0.0.1",
+  "type": "module",
   "private": true,
   "scripts": {
     "build": "vite build",

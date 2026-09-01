@@ -43,7 +43,10 @@ export class Generator {
 
     try {
       this._nodeToProcess.clear();
-      const compilerContext = new CompilerContext(signals.map<[string, 'signal']>(signal => [signal, 'signal']));
+      const compilerContext = new CompilerContext();
+      for (let i = 0; i < signals.length; i++) {
+        compilerContext.addUnresolvableIdentifier(signals[i], 'signal');
+      }
 
       const generatedCode = [
         '_render() {',

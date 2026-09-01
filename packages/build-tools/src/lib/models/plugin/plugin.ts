@@ -286,6 +286,8 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
     { value: 'createElement', source: '@xaendar/core' },
     { value: 'createSVGElement', source: '@xaendar/core' },
     { value: 'createMATHMLElement', source: '@xaendar/core' },
+    { value: 'bindAttribute', source: '@xaendar/core' },
+    { value: 'bindReactiveAttribute', source: '@xaendar/core' },
   ];
 
   const alreadyImported = new Array<{ value: string; source: string }>();

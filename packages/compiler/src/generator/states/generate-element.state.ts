@@ -90,10 +90,10 @@ export function generateElement(node: ElementNode, parentNode: string, index: st
 function mapAttributes(attributes: AttributeNode[], compilerContext: CompilerContext): string[] {
   return attributes?.map(({ name, value }) => {
     if (typeof value === 'string') {
-       return `{ name: '${name}', value: () => '${value}', reactive: false },`
+       return `{ name: '${name}', value: () => '${value}', setter: bindAttribute },`
     } else {
       const { expression, reactive } = resolveExpression(value.expression, compilerContext);
-      return `{ name: '${name}', value: () => ${expression}, reactive: ${reactive} },`
+      return `{ name: '${name}', value: () => ${expression},  setter: ${reactive ? 'bindReactiveAttribute' : 'bindAttribute'} },`
     }
   })
 }

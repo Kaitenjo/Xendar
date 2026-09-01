@@ -1,3 +1,4 @@
+import { NoArgsFunction } from '@xaendar/types';
 import { MATHML_NS, SVG_NS } from '../costants';
 import { effect } from '../signals/effect/effect';
 import { RenderElementAttribute } from '../types/render-element-attribute.type';
@@ -26,10 +27,8 @@ export function _renderElement(parentNode: Element, context: Context, anchor: Co
   mountNode(element, parentNode, context, anchor)
 
   for (let i = 0; i < attributes.length; i++) {
-    const { name, value, reactive } = attributes[i];
-    reactive
-      ? context.listen(effect(() => element.setAttribute(name, String(value()))))
-      : element.setAttribute(name, String(value()))
+    const { name, value, setter } = attributes[i];
+    setter === bindAttribute ? setter(element, name, value) : setter(context, element, name, value)
   }
 
   for (let i = 0; i < events.length; i++) {
@@ -71,4 +70,28 @@ export function createSVGElement(tagName: string): SVGElement {
  */
 export function createMATHMLElement(tagName: string): MathMLElement {
   return document.createElementNS(MATHML_NS, tagName);
-} 
+}
+
+/**
+ * Sets a static attribute value on an HTML element.
+ *
+ * @param element - The element to set the attribute on.
+ * @param name - The name of the attribute.
+ * @param getter - A function that returns the attribute value.
+ */
+export function bindAttribute(element: Element, name: string, getter: NoArgsFunction<unknown>): void {
+  element.setAttribute(name, String(getter()))
+}
+
+/**
+ * Sets a reactive attribute value on an HTML element that updates automatically
+ * whenever the underlying signal changes.
+ *
+ * @param context - The current template execution scope.
+ * @param element - The element to set the attribute on.
+ * @param name - The name of the attribute.
+ * @param getter - A function that returns the attribute value.
+ */
+export function bindReactiveAttribute(context: Context, element: Element, name: string, getter: NoArgsFunction<unknown>): void {
+  context.listen(effect(() => element.setAttribute(name, String(getter()))))
+}

@@ -1,4 +1,5 @@
 import { NoArgsFunction } from "@xaendar/types"
+import { bindAttribute, bindReactiveAttribute } from "../utils"
 
 /**
  * Describes a single HTML attribute to be applied to a rendered DOM element.
@@ -19,5 +20,5 @@ export type RenderElementAttribute = {
   /** 
    * When `true`, the value is a static string literal; when `false`, it is a reactive expression. 
    */
-  reactive: boolean
+  setter: typeof bindAttribute & typeof bindReactiveAttribute;
 }

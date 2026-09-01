@@ -81,7 +81,7 @@ const template = `
   </nav>
 
   <button type="button" class="sidebar__collapse-btn" @click="toggle()" aria-label="Espandi menu">
-    <svg viewBox="0 0 24 24" fill="none" [class.rotated]="collapsed">
+    <svg viewBox="0 0 24 24" fill="none" [class.rotated]="collapsed()">
       <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
     @if (!collapsed()) {
@@ -92,7 +92,7 @@ const template = `
 `
 
 const filePath = 'dist/compiled.js'
-compile(template, { baseDir: 'asd', cssVariableName: 'asd', signals: [] }).then(output => {
+compile(template, { baseDir: 'asd', cssVariableName: 'asd', signals: ['collapsed'] }).then(output => {
   writeFileSync(filePath, output.javascript);
   writeFileSync('dist/compiled.ts', output.typescript.text);
 }).catch(err => {

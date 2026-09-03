@@ -81,6 +81,24 @@ export function generateFor(node: ForNode, parentNode: string, index: string, co
     args: [forKey, 'parentContext', itemsName, counterName, 'anchor']
   });
 
+  /*
+    Skip resolution is needed for a edge case.
+    The track expression define in its context
+    - Item alias
+    - Index alias
+
+    But those values are defined in the iteration context of every item, not in the forContext itself
+    causing an error in the generated expression if we try to resolve it accessing context identifiers.
+
+    This is the only case where we need to access identifiers in an outer context than the one where
+    they live.
+
+    Under the hood the function is invoked inside the for iteration, passing the correct values and
+    making it works at run time.
+    @for (...; track ....) {        <------- Defined here
+                                    <------- Context where executed at runtime
+    }
+  */
   retVal.code.push(`_for(${parentNode}, context, () => ${iterableExpr}, (${node.itemAlias}, ${indexName}) => ${resolveExpression(node.trackExpression, forContext, { skipResolution: true }).expression}, this.${forKey}.bind(this));`);
 
   return retVal

@@ -1,5 +1,5 @@
 import { loadSignals } from '@xaendar/signals';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { effect } from './effect';
 
 loadSignals();

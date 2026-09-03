@@ -178,7 +178,7 @@ function writePackageJsonForNodeProject(projectName: string, pkg: XaendarPackage
   if (executable) {
     bin = {
       bin: {
-        xd: `./dist/${projectName}.js`,
+        xd: `dist/${projectName}.js`,
       }
     }
   }

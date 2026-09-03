@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { PackageJson } from "type-fest";
 import { PluginOption, UserConfig } from "vite";
@@ -9,7 +9,7 @@ import dts from 'vite-plugin-dts';
  */
 export type ViteConfigOptions = {
   plugins?: PluginOption[],
-  secondaryEntryPoints?: Record<string, string>
+  secondaryEntryPoints?: Record<string, string>,
 }
 
 /**
@@ -61,17 +61,25 @@ export default function getViteConfig(name: string, dirName: string, options?: V
       createGeneratePackageJsonPlugin(dirName, fileName, outDir, secondaryEntryPoints),
       createCopyReadmePlugin(dirName, outDir),
       dts({
-        // This path depends on the root value below
-        exclude: ['../../../**/*.spec.ts'],
-        include: ['../../../**/*.ts'],
-        rollupTypes: true,
-        outDir: distDir,
-        root: resolve(dirName, 'src/public-api.ts'),
+        exclude: [`**/packages/${fileName.split('-')[1]}/**/*.spec.ts`],
+        include: [
+          `**/packages/${fileName.split('-')[1]}/**/*.ts`, 
+          '**/packages/signals/**/global.d.ts'
+        ],
+        bundleTypes: true,
+        outDirs: distDir,
+        root: resolve(dirName, 'src'),
         afterBuild() {
-          const typesPath = resolve(distDir, `${fileName}.d.ts`);
-          const content = readFileSync(typesPath, 'utf-8');
-          const result = content.replace(/from ['"](?:\.\.\/)*schematics\/packages\/([^/]+)\/src\/public-api['"]/g, (_, pkg) => `from '@xaendar/${pkg}'`);
-          writeFileSync(typesPath, result);
+          const pkgImportRegex = /from (['"])(?:\.\.\/)*([^/'"]+)\/src\/public-api\1/g;
+          const dts = readdirSync(distDir, { recursive: true, encoding: 'utf-8' }).filter(entry => entry.endsWith('.d.ts')).map((entry) => join(distDir, entry))
+          for (const filePath of dts) {
+            const content = readFileSync(filePath, 'utf-8');
+            const result = content.replace(pkgImportRegex, (_match, quote, pkg) => `from ${quote}@xaendar/${pkg}${quote}`);
+
+            if (result !== content) {
+              writeFileSync(filePath, result);
+            }
+          }
         }
       }),
       ...(options?.plugins ?? [])

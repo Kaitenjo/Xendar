@@ -273,7 +273,7 @@ export function resolveExpression(expression: Expression, compilerContext: Compi
  *   `node.getText()` verbatim — preserving all original spacing,
  *   parentheses, dots, and punctuation.
  * - If the node is a resolvable Identifier, emits the resolved access
- *   expression (see {@link resolveIdentifierAccess}).
+ *   expression.
  * - Otherwise recurses into children and concatenates their output.
  */
 
@@ -281,15 +281,20 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
   // Leaf Identifier that needs resolution
   if (isIdentifier(node) && needsResolution(node, parent)) {
     const text = node.text;
-    if (compilerContext.hasUnresolvableIdentifier(text) || options.skipResolution) {
+    if (options.skipResolution) {
+      return { expression: text }
+    }
+
+    if (compilerContext.hasUnresolvableIdentifier(text)) {
       return { expression: text, reactive: compilerContext.getUnresolvableIdentifierKind(text) === 'signal' };
     }
-    
-    const resolvedValue = resolveIdentifierAccess(text, compilerContext);
-    if (resolvedValue) {
-      return resolvedValue;
+
+    if (compilerContext.hasIdentifier(text)) {
+      const kind = compilerContext.getIdentifierKind(text);
+      const access = `context.get('${text}')`;
+      return kind === 'signal' ? { expression: `${access}()`, reactive: true } : { expression: access, reactive: false };
     }
-    
+
     if (options.resolver) {
       return { expression: `${options.resolver}.${text}` };
     }
@@ -319,35 +324,6 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
 
   // Append any trailing text after the last child (e.g. closing paren)
   return { expression: `${result.expression}${slice(sourceText, lastEnd, node.getEnd())}`, reactive: result.reactive };
-}
-
-/**
- * Decides how to access a resolvable identifier's value in generated code,
- * based purely on compile-time scope information — no runtime type
- * detection is ever needed:
- *
- * - Declared directly in the CURRENT generated function's own scope (e.g.
- *   destructured from `vars` in a `@for` body) → bare reference: `name`,
- *   or `name()` if it's a signal.
- * - Declared in an ANCESTOR scope (an enclosing `@for`/`@if`/element-children
- *   function) → must cross the closure boundary through the runtime
- *   `Context` chain: `parentContext.get('name')`, or with a trailing `()`
- *   if it's a signal.
- * - Not declared anywhere in the template scope chain → assumed to be a
- *   component member: `this.name`.
- *
- * @param text - The identifier name to resolve.
- * @param compilerContext - The active template scope context.
- * @returns The generated code expression that yields the identifier's value.
- */
-function resolveIdentifierAccess(text: string, compilerContext: CompilerContext): { expression: string, reactive: boolean } | undefined {
-  if (compilerContext.hasIdentifier(text)) {
-    const kind = compilerContext.getIdentifierKind(text);
-    const access = `context.get('${text}')`;
-    return kind === 'signal' ? { expression: `${access}()`, reactive: true } : { expression: access, reactive: false };
-  }
-
-  return undefined;
 }
 
 /**

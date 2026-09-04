@@ -17,6 +17,11 @@ export class CompilerContext {
    */
   protected parent: CompilerContext | undefined;
   /**
+   * A set containting all the signals declared in the class (and subclasses)
+   * associated to the template
+   */
+  private readonly _componentSignalsFields = new Set<string>();
+  /**
    * Identifiers declared directly in this scope, mapped to whether they
    * hold a plain value or a signal (e.g. `@for` implicit variables like
    * `$index` are signals; the loop item itself is a plain value).
@@ -88,6 +93,20 @@ export class CompilerContext {
   }
 
   /**
+   * Registers a new signal field name in this scope.
+   *
+   * @param name - The identifier name to register.
+   * @throws When an identifier with the same name is already declared in this scope.
+   */
+  public addSignalClassField(name: string): void {
+    if (this._componentSignalsFields.has(name)) {
+      throw new Error(`Signal field "${name}" is already declared in this scope.`);
+    }
+
+    this._componentSignalsFields.add(name);
+  }
+
+  /**
    * Removes a previously registered identifier from this scope, if present.
    * Does nothing if no identifier with the given name is declared in this scope.
    * Note: this only affects the current scope, not any ancestor scopes.
@@ -121,6 +140,28 @@ export class CompilerContext {
   }
 
   /**
+   * Returns `true` if an identifier with the given name is declared in this
+   * scope or any of its ancestor scopes.
+  *
+  * @param name - The identifier name to look up.
+  * @returns `true` if the identifier exists in the scope chain, `false` otherwise.
+  */
+  public hasUnresolvableIdentifier(name: string): boolean {
+    return this._unresolvableIdentifiers.has(name) || (this.parent?.hasUnresolvableIdentifier(name) ?? false);
+  }
+
+  /**
+   * Returns `true` if a signal field with the given name is declared in this
+   * scope or any of its ancestor scopes.
+   *
+   * @param name - The signal field name to look up.
+   * @returns `true` if the ignal field exists in the scope chain, `false` otherwise.
+   */
+  public hasSignalField(name: string): boolean {
+    return this._componentSignalsFields.has(name) || (this.parent?.hasSignalField(name) ?? false);
+  }
+
+  /**
    * Resolves the kind (`'value'` or `'signal'`) of a declared identifier,
    * walking up the scope chain if not found in this scope.
    *
@@ -130,17 +171,6 @@ export class CompilerContext {
    */
   public getIdentifierKind(name: string): IdentifierKind | undefined {
     return this._identifiers.get(name) ?? this.parent?.getIdentifierKind(name);
-  }
-
-  /**
-   * Returns `true` if an identifier with the given name is declared in this
-   * scope or any of its ancestor scopes.
-   *
-   * @param name - The identifier name to look up.
-   * @returns `true` if the identifier exists in the scope chain, `false` otherwise.
-   */
-  public hasUnresolvableIdentifier(name: string): boolean {
-    return this._unresolvableIdentifiers.has(name) || (this.parent?.hasUnresolvableIdentifier(name) ?? false);
   }
 
   /**

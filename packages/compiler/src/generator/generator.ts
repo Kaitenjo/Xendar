@@ -45,7 +45,7 @@ export class Generator {
       this._nodeToProcess.clear();
       const compilerContext = new CompilerContext();
       for (let i = 0; i < signals.length; i++) {
-        compilerContext.addUnresolvableIdentifier(`this.${signals[i]}`, 'signal');
+        compilerContext.addSignalClassField(signals[i]);
       }
 
       const generatedCode = [

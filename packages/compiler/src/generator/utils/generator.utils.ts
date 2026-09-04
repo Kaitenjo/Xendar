@@ -285,6 +285,10 @@ function emitNode(node: Node, parent: Node, compilerContext: CompilerContext, op
       return { expression: text }
     }
 
+    if (compilerContext.hasSignalField(text)) {
+      return { expression: `this.${text}`, reactive: true };
+    }
+
     if (compilerContext.hasUnresolvableIdentifier(text)) {
       return { expression: text, reactive: compilerContext.getUnresolvableIdentifierKind(text) === 'signal' };
     }

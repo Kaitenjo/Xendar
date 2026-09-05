@@ -1,6 +1,6 @@
 import { CompilerContext } from '../../generator/models/compiler-context.model';
-import { TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
-import { TypeCheckContextImport } from '../types/type-checker-context-imports/type-check-context-import';
+import { ComponentMetadata } from '../../types/component-metadata.type';
+import { ComponentOrDirectiveMetadata } from '../../types/component-or-directive-metadata.type';
 
 /**
  * Type checker context that manages imported component and directive metadata
@@ -12,14 +12,14 @@ export class TypeCheckContext extends CompilerContext {
    * Array of component and directive imports to be tracked during type checking.
    * Stores metadata extracted from @WebComponent and @Directive decorators.
    */
-  private readonly _imports = new Array<TypeCheckContextImport>;
+  private readonly _imports = new Array<ComponentOrDirectiveMetadata>;
 
   /**
    * Adds a new component or directive import to the type checker context.
    *
    * @param value - The component or directive import metadata to be added
    */
-  public addImport(value: TypeCheckContextImport): void {
+  public addImport(value: ComponentOrDirectiveMetadata): void {
     this._imports.push(value);
   }
 
@@ -28,7 +28,7 @@ export class TypeCheckContext extends CompilerContext {
    *
    * @returns Array of all tracked imports
    */
-  public getImportBySelector(tagName: string): TypeCheckContextComponentImport | undefined {
-    return this._imports.find((importValue): importValue is TypeCheckContextComponentImport => importValue.type === 'component' && importValue.selectors.includes(tagName));
+  public getImportBySelector(tagName: string): ComponentMetadata | undefined {
+    return this._imports.find((importValue): importValue is ComponentMetadata => importValue.type === 'component' && importValue.selectors.includes(tagName));
   }
 }

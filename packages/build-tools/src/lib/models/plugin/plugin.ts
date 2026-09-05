@@ -1,9 +1,11 @@
 import { isValidCustomElementName, slice } from '@xaendar/common';
 import { compile, Cursor, extractSignalMembers, resolveTemplateSpan, TypeCheckResult } from '@xaendar/compiler';
-import { createShim, disposeLanguageService, extractClassName, extractDecoratorPaths, getLanguageService, loadCompilerOptions, registerRealFile, removeRealFile, removeVirtualFile } from '@xaendar/language-core';
+import { createShim, disposeLanguageService, getLanguageService, loadCompilerOptions, registerRealFile, removeRealFile, removeVirtualFile } from '@xaendar/language-core';
+import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { CompilerOptions, Diagnostic } from 'typescript';
+import { ClassDeclaration, ClassStaticBlockDeclaration, createSourceFile, Diagnostic, forEachChild, isCallExpression, isClassDeclaration, isClassStaticBlockDeclaration, isExpressionStatement, isIdentifier, Node, ScriptKind, ScriptTarget, SourceFile } from 'typescript';
 import type { Logger, Plugin } from 'vite';
+import { extractComponentsMetadataFromSourceFile } from '../../../../../compiler/src/utils/metadata.utils';
 import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex';
 import { clearImportRegistry, clearImportsForParent, findParentsForImport, registerImportMapping } from '../import-registry';
 import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model';
@@ -38,7 +40,7 @@ import { clearTemplateRegistry, findComponentForTemplate, registerTemplateMappin
  */
 export function xaendarPlugin(): Plugin {
   const host = new NodeCompilerHost;
-  let compilerOptions: CompilerOptions | undefined;
+  const compilerOptions = loadCompilerOptions(import.meta.url);
   let logger: Logger | undefined;
 
   const logError = (message: string): void => {
@@ -50,102 +52,118 @@ export function xaendarPlugin(): Plugin {
     name: 'xaendar',
     async transform(code, id) {
       if (!COMPONENT_FILE_RE.test(id)) {
-        return null;
+        return code;
       }
 
-      try {
-        assertValidCustomElementName(code, id);
-      } catch (err) {
-        if (typeof err === 'string') {
-          logError(err);
+      const tsSource = createSourceFile(id, await readFile(id, 'utf8'), ScriptTarget.Latest, true);
+      const metadatas = await extractComponentsMetadataFromSourceFile(tsSource);
+      if (!metadatas?.size) {
+        /*
+          The file match a xendar component file but no component metadata could be extracted.
+          We can safely return the original code as no operation should be performed
+        */
+        return code;
+      }
+
+      for (const [className, metadata] of metadatas.entries()) {
+        if (!metadata) {
+          logError(`Failed to extract metadata for component ${className} in file ${id}`);
+          return null;
         }
-        return null;
-      }
 
-      const className = extractClassName(code);
-      const { templatePath, stylePath } = extractDecoratorPaths(code, dirname(id));
-      if (!templatePath || !host.fileExists(templatePath)) {
-        this.warn(`Could not find template at ${templatePath}`);
-        return null;
-      }
-
-      this.addWatchFile(templatePath);
-      registerTemplateMapping(templatePath, id);
-      const templateSource = host.readFile(templatePath);
-      if (templateSource === undefined) {
-        this.warn(`Could not read template at ${templatePath}`);
-        return null;
-      }
-
-      clearImportsForParent(id);
-      for (const importedPath of extractImportedComponentPaths(templateSource, dirname(templatePath))) {
-        if (host.fileExists(importedPath)) {
-          this.addWatchFile(importedPath);
-          registerImportMapping(importedPath, id);
+        const { selectors, styleUrl, templateUrl } = metadata;
+        for (let i = 0; i < selectors.length; i++) {
+          const selector = selectors[i];
+          if (!isValidCustomElementName(selector)) {
+            logError(`Invalid custom element name "${selector}" in component ${id}`);
+            return null;
+          }
         }
-      }
 
-      let cssContent: string | undefined;
-
-      if (stylePath && host.fileExists(stylePath)) {
-        this.addWatchFile(stylePath);
-        cssContent = host.readFile(stylePath);
-      }
-
-      let compiledMethods: string | undefined;
-      let typecheckBody: TypeCheckResult | undefined;
-      const varName = cssContent ? `__${className}_sheet` : undefined;
-
-      try {
-        // Todo Create a dedicated cache to store signal values metadata otherwise this will be done every time file is saved
-        const signals = extractSignalMembers(code, className, id);
-        const result = await compile(templateSource, { baseDir: dirname(templatePath), cssVariableName: varName, signals });
-        compiledMethods = result.javascript;
-        typecheckBody = result.typescript;
-      } catch (err) {
-        logError(`Failed to compile template - ${templatePath}\n${err instanceof Error ? err.message : err}`);
-        return null;
-      }
-
-      let transformed: string | undefined;
-
-      try {
-        transformed = fixDecoratorExport(injectRenderMethods(code, compiledMethods, varName, cssContent));
-      } catch (err) {
-        if (typeof err === 'string') {
-          logError(err);
+        // qui non stiamo gestendo la possibiltia di avere piu di un componente per file
+        // controllo debole su regex, sarebbe otimale estender
+        const folder = dirname(id);
+        const templatePath = resolve(folder, templateUrl);
+        if (!templatePath || !host.fileExists(templatePath)) {
+          this.warn(`Could not find template at ${templatePath}`);
+          return null;
         }
-        return null;
-      }
-
-      compilerOptions ??= loadCompilerOptions(dirname(id));
-      registerRealFile(id);
-
-      // Questo nbon funziona cosi, era stato scritto solo per far compilare
-      const shim = createShim(new Map([[id, [className]]]), typecheckBody);
-      const languageService = getLanguageService(compilerOptions);
-      const diagnostics = languageService.getSemanticDiagnostics(shim.path);
-
-      for (let i = 0; i < diagnostics.length; i++) {
-        logError(`Failed to compile template - ${templatePath}\n${describeDiagnostic(templateSource, diagnostics[i], shim.bodyLineOffset, typecheckBody.mappingTable)}`);
-      }
-
-      // After logging every diagnostics we have to return null to raise an error
-      if (diagnostics.length) {
-        return null;
+  
+        this.addWatchFile(templatePath);
+        registerTemplateMapping(templatePath, id);
+        // ! is a safe assertion because we check if the fileExists before reading it
+        const templateSource = host.readFile(templatePath)!;
+  
+        clearImportsForParent(id);
+        for (const importedPath of extractImportedComponentPaths(templateSource, dirname(templatePath))) {
+          if (host.fileExists(importedPath)) {
+            this.addWatchFile(importedPath);
+            registerImportMapping(importedPath, id);
+          }
+        }
+  
+        let cssContent: string | undefined;
+  
+        if (styleUrl) {
+          const stylePath = resolve(folder, styleUrl);
+          if (host.fileExists(stylePath)) {
+            this.addWatchFile(stylePath);
+            cssContent = host.readFile(stylePath);
+          }
+        }
+  
+        let compiledMethods: string | undefined;
+        let typecheckBody: TypeCheckResult | undefined;
+        const varName = cssContent ? `__${className}_sheet` : undefined;
+  
+        try {
+          // Todo Create a dedicated cache to store signal values metadata otherwise this will be done every time file is saved
+          const signals = extractSignalMembers(tsSource, metadata.typescriptNodes.klass);
+          const result = await compile(templateSource, { baseDir: dirname(templatePath), cssVariableName: varName, signals });
+          compiledMethods = result.javascript;
+          typecheckBody = result.typescript;
+        } catch (err) {
+          logError(`Failed to compile template - ${templatePath}\n${err instanceof Error ? err.message : err}`);
+          return null;
+        }
+  
+        try {
+          code = injectFunctions(code, compiledMethods, className, varName, cssContent);
+        } catch (err) {
+          if (typeof err === 'string') {
+            logError(err);
+          }
+          return null;
+        }
+  
+        registerRealFile(id);
+  
+        const shim = createShim(new Map([[id, [className]]]), typecheckBody);
+        const languageService = getLanguageService(compilerOptions);
+        const diagnostics = languageService.getSemanticDiagnostics(shim.path);
+  
+        for (let i = 0; i < diagnostics.length; i++) {
+          logError(`Failed to compile template - ${templatePath}\n${describeDiagnostic(templateSource, diagnostics[i], shim.bodyLineOffset, typecheckBody.mappingTable)}`);
+        }
+  
+        // After logging every diagnostics we have to return null to raise an error
+        if (diagnostics.length) {
+          return null;
+        }
       }
 
       return {
-        code: transformed
+        code: fixDecoratorExport(code)
       };
     },
     watchChange(id, change) {
+      // Questo non ha funzionato, ritestare
       if (change.event === 'delete') {
         if (COMPONENT_FILE_RE.test(id)) {
           removeVirtualFile(`${id}.__typecheck__.ts`);
           removeRealFile(id);
           removeAllMappingsForComponent(id);
-          
+
           const parents = findParentsForImport(id);
           for (const parentId of parents) {
             removeVirtualFile(`${parentId}.__typecheck__.ts`);
@@ -172,37 +190,6 @@ export function xaendarPlugin(): Plugin {
       });
     },
   };
-}
-
-/**
- * Asserts that every selector declared in the `@WebComponent` decorator of
- * the given source file is a valid custom-element name according to the HTML
- * spec (must contain a hyphen and satisfy other naming constraints).
- *
- * @param code - The raw TypeScript source of the component file.
- * @param id - The resolved file path, used only for error messages.
- * @throws When no selector is found, or when any selector is not a
- *   valid custom-element name.
- */
-function assertValidCustomElementName(code: string, id: string): void {
-  const selectorRegex = /selector:\s*('[^']*'|"[^"]*"|\[[^\]]*\])/;
-  const match = code.match(selectorRegex);
-
-  if (!match) {
-    throw `No selector found in component ${id}\nMake sure the class has a @WebComponent decorator with a valid selector property`;
-  }
-
-  const raw = match[1];
-  const selectors = raw.startsWith('[')
-    ? [...raw.matchAll(/'([^']*)'|"([^"]*)"/g)].map(match => (match[1] ?? match[2])!)
-    : [slice(raw, 1, -1)];
-
-  for (let i = 0; i < selectors.length; i++) {
-    const selector = selectors[i];
-    if (!isValidCustomElementName(selector)) {
-      throw `Invalid custom element name "${selector}" in component ${id}`;
-    }
-  }
 }
 
 /**
@@ -234,47 +221,94 @@ function extractImportedComponentPaths(templateSource: string, templateDir: stri
 }
 
 /**
- * Injects the compiled render methods into the original component component code
- * by replacing the placeholder static block scaffolded by the CLI. The block
- * is guaranteed to be present added by the Babel plugin, so if it's not found
- * the function throws an error indicating a misconfiguration in the component
- * file. 
- * 
- * The compiled methods are inserted before the static block, which is
- * preserved to maintain the correct execution order: the methods must be
- * defined before the initializer function runs, as the latter may reference them
- * to register the component with the framework.
+ * Compiles and injects a component's generated template code end-to-end:
+ * parses the transpiled source once, then applies the three required
+ * mutations — template render methods, scoped CSS stylesheet, and missing
+ * runtime imports — each in its own dedicated function.
  *
- * @param compiledCode - The original TypeScript source of the component file.
- * @param compiledMethods - The raw output of the compiler, already
- *   formatted as class method bodies (no `function` keyword, no standalone
- *   context parameter).
- * @param varName - The variable name to use for the shared `CSSStyleSheet`
- *   declaration, if any CSS content is provided.
- * @param cssContent - The raw CSS content read from disk, to be injected as a
- *   shared `CSSStyleSheet` if not empty.
- * @returns The transformed TypeScript source with the placeholder replaced
- *   by the compiled methods.
- * @throws When the placeholder is not found in the source — this
- *   means the component file was not scaffolded correctly by the CLI.
+ * Mutation order matters and must not be changed carelessly: template
+ * methods are inserted first (at `blockStart`, the deepest position in the
+ * class body), then the style snippet (at `classStart`, before the class
+ * declaration). Both offsets are computed once from the ORIGINAL,
+ * unmodified `sourceFile` — this stays valid across both edits only because
+ * `classStart < blockStart`, so inserting text at `blockStart` never shifts
+ * the still-unused `classStart` offset. Required imports are inserted last,
+ * via textual regex scanning of the file's current top rather than AST
+ * positions, so it's insensitive to any offset shifting caused by the two
+ * prior edits.
+ *
+ * @param jsSource - The transpiled JS source of the component file (post
+ *   oxc + the stage-3 decorators babel plugin), before xaendar injection.
+ * @param compiledMethods - The raw output of the template compiler.
+ * @param className - The name of the target class in this file.
+ * @param varName - Variable name for the shared `CSSStyleSheet`, if any CSS is provided.
+ * @param cssContent - Raw CSS content to inject as a shared `CSSStyleSheet`, if not empty.
+ * @returns The fully transformed source.
+ * @throws When `className` isn't found, or its decorator finalizer static
+ *   block isn't found — meaning the component file wasn't scaffolded
+ *   correctly, or the babel decorators plugin didn't run before xaendarPlugin().
  */
-function injectRenderMethods(jsSource: string, compiledMethods: string, varName?: string, cssContent?: string): string {
-  const styleSnippet = cssContent?.trim().length ? buildStyleSnippet(varName!, cssContent) : '';
+function injectFunctions(jsSource: string, compiledMethods: string, className: string, varName?: string, cssContent?: string): string {
+  const sourceFile = createSourceFile('component.js', jsSource, ScriptTarget.Latest, true, ScriptKind.JS);
+  const classDecl = findClassDeclarationByName(sourceFile, className);
 
-  let result = jsSource;
-
-  if (styleSnippet) {
-    result = result.replace(/^(class\s+\w+\s+extends)/m, `${styleSnippet}$1`);
+  if (!classDecl) {
+    throw `Could not find class "${className}" in the transpiled output.`;
   }
 
-  const lastStaticBlock = /static\s*\{\s*\n(\s*)(\w+)\(\);\s*\n\s*\}/;
+  let result = insertTemplateMethods(jsSource, sourceFile, classDecl, compiledMethods);
+  result = insertStyleSnippet(result, sourceFile, classDecl, varName, cssContent);
+  result = insertRequiredImports(result);
 
-  if (!lastStaticBlock.test(result)) {
-    throw 'Could not find the static initializer block in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.';
+  return result;
+}
+
+/**
+ * Inserts the compiled template render methods right before the target
+ * class's decorator finalizer static block (`static { _initClass(); }`),
+ * scoped to `classDecl` rather than "the first static block in the file",
+ * since a single compiled file can contain more than one class.
+ *
+ * @throws When the finalizer static block isn't found on `classDecl`.
+ */
+function insertTemplateMethods(jsSource: string, sourceFile: SourceFile, classDecl: ClassDeclaration, compiledMethods: string): string {
+  const placeholderBlock = classDecl.members.find(isDecoratorInitStaticBlock);
+
+  if (!placeholderBlock) {
+    throw `Could not find the static initializer block for class "${classDecl.name?.text}" in the transpiled output. Make sure @rolldown/plugin-babel with @babel/plugin-proposal-decorators runs before xaendarPlugin() in your Vite config.`;
   }
 
+  const blockStart = placeholderBlock.getStart(sourceFile);
+  return `${jsSource.slice(0, blockStart)}${compiledMethods}\n\n  ${jsSource.slice(blockStart)}`;
+}
+
+/**
+ * Inserts the shared `CSSStyleSheet` declaration snippet right before the
+ * target class's declaration, scoped to `classDecl` rather than "the first
+ * `class ... extends` in the file", so each class in a multi-component file
+ * gets its own stylesheet in the right place. No-op if no CSS was provided.
+ */
+function insertStyleSnippet(jsSource: string, sourceFile: SourceFile, classDecl: ClassDeclaration, varName?: string, cssContent?: string): string {
+  if (!cssContent?.trim().length) {
+    return jsSource;
+  }
+
+  const styleSnippet = buildStyleSnippet(varName!, cssContent);
+  const classStart = classDecl.getStart(sourceFile);
+
+  return `${jsSource.slice(0, classStart)}${styleSnippet}${jsSource.slice(classStart)}`;
+}
+
+/**
+ * Ensures every runtime helper the generated template code depends on
+ * (`_renderElement`, `Context`, `_if`, etc.) is imported from
+ * `@xaendar/core`, adding any missing ones as new import statements
+ * prepended to the file. Operates via textual regex scanning of existing
+ * imports rather than AST positions, so it's safe to run after prior
+ * AST-position-based edits regardless of how much they shifted offsets.
+ */
+function insertRequiredImports(jsSource: string): string {
   const requiredImports = [
-    { value: 'effect', source: '@xaendar/core/signals' },
     { value: '_if', source: '@xaendar/core' },
     { value: '_switch', source: '@xaendar/core' },
     { value: '_for', source: '@xaendar/core' },
@@ -293,7 +327,7 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
   const alreadyImported = new Array<{ value: string; source: string }>();
   const importRegex = /import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g;
   let match: RegExpExecArray | null;
-  while ((match = importRegex.exec(result)) !== null) {
+  while ((match = importRegex.exec(jsSource)) !== null) {
     const parts = match[1]?.split(',');
     const source = match[2];
     if (parts) {
@@ -308,15 +342,43 @@ function injectRenderMethods(jsSource: string, compiledMethods: string, varName?
 
   const missingImports = requiredImports.filter(requiredImport => !alreadyImported.some(imported => imported.value === requiredImport.value && imported.source === requiredImport.source));
 
-  if (missingImports.length) {
-    const importsBySource = Map.groupBy(missingImports, missingImport => missingImport.source);
-    const importStatements = Array.from(importsBySource, ([source, imports]) => `import { ${imports.map(importItem => importItem.value).join(', ')} } from '${source}';`).join('\n');
-    result = `${importStatements}
-
-${result}`;
+  if (!missingImports.length) {
+    return jsSource;
   }
 
-  return result.replace(lastStaticBlock, (_, indent, initFn) => `${compiledMethods}\n  static {\n${indent}${initFn}();\n  }`);;
+  const importsBySource = Map.groupBy(missingImports, missingImport => missingImport.source);
+  const importStatements = Array.from(importsBySource, ([source, imports]) => `import { ${imports.map(importItem => importItem.value).join(', ')} } from '${source}';`).join('\n');
+
+  return `${importStatements}\n\n${jsSource}`;
+}
+
+function findClassDeclarationByName(sourceFile: SourceFile, name: string): ClassDeclaration | undefined {
+  let found: ClassDeclaration | undefined;
+  forEachChild(sourceFile, node => {
+    if (!found && isClassDeclaration(node) && node.name?.text === name) {
+      found = node;
+    }
+  });
+  return found;
+}
+
+function isDecoratorInitStaticBlock(node: Node): node is ClassStaticBlockDeclaration {
+  if (!isClassStaticBlockDeclaration(node)) {
+    return false;
+  }
+
+  const statements = node.body.statements;
+  if (statements.length !== 1) {
+    return false;
+  }
+
+  const statement = statements[0];
+  if (!isExpressionStatement(statement) || !isCallExpression(statement.expression)) {
+    return false;
+  }
+
+  const { expression: callee, arguments: args } = statement.expression;
+  return args.length === 0 && isIdentifier(callee) && /^_initClass\d*$/.test(callee.text);
 }
 
 /**

@@ -4,7 +4,7 @@ import { resolveExpression } from '../../generator/utils/generator.utils';
 import { ElementNode } from '../../parser/types/nodes/element-node.type';
 import { TypeCheckContext } from '../models/type-checker-context';
 import { Line } from '../types/generated-line.type';
-import { TypeCheckContextComponentImport } from '../types/type-checker-context-imports/type-check-context-component-import.type';
+import { ComponentMetadata } from '../../types/component-metadata.type';
 import { ProcessNode } from '../types/type-checker-process-node.type';
 import { indentLines, line, mapped, plain } from '../utils/line-builder.utils';
 
@@ -30,7 +30,7 @@ export function typeCheckElement(node: ElementNode, processNode: ProcessNode, co
   return lines;
 }
 
-function typeCheckComponentBindings(node: ElementNode, metadata: TypeCheckContextComponentImport, context: TypeCheckContext): Line[] {
+function typeCheckComponentBindings(node: ElementNode, metadata: ComponentMetadata, context: TypeCheckContext): Line[] {
   const lines = new Array<Line>();
   const requiredProperties = new Set(metadata.properties.entries().filter(([_, value]) => value.required).map(([key]) => key));
 

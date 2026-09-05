@@ -14,7 +14,9 @@ import { Line, LineMapping } from './types/generated-line.type.js';
 import { TypeCheckResult } from './types/type-checker-result.type.js';
 import { TypeCheckerStates } from './types/type-checker-states.type.js';
 import { indentLines, plain } from './utils/line-builder.utils.js';
-import { extractComponentMetadata } from './utils/metadata-extractor.utils.js';
+import { extractComponentsMetadataFromSourceFile, resolveModulePath } from '../utils/metadata.utils.js';
+import { createSourceFile, ScriptTarget } from 'typescript';
+import { readFile } from 'fs/promises';
 
 /**
  * Generates a single, flat TypeScript function body ("shim") from a
@@ -71,7 +73,7 @@ export class TypeChecker {
    *
    * @param baseDir - Absolute path used to resolve relative import paths.
    */
-  public async populateImportMetadata(baseDir?: string): Promise<void> {
+  public async populateImportMetadata(baseDir: string): Promise<void> {
     const importNodes = this._ast.filter((node): node is ImportNode => node.type === ASTNodeType.Import);
 
     await Promise.all(
@@ -83,7 +85,9 @@ export class TypeChecker {
             // TODO Non è conveniente estrarre i metadati tutte le volte. Piu template potrebbero aver bisogno
             // degli stessi metadata, sarebbe meglio una cache globale a livello di compilatore per evitare il ricalcolo
             // ad ogni template
-            const metadata = await extractComponentMetadata(node.path, symbolName, baseDir);
+            const sourceFile = createSourceFile('', await readFile(resolveModulePath(node.path, baseDir)!, 'utf-8'), ScriptTarget.Latest, true);
+            const metadatas = await extractComponentsMetadataFromSourceFile(sourceFile);
+            const metadata = metadatas?.get(symbolName)
             if (metadata) {
               this._context.addImport(metadata);
             }
@@ -127,10 +131,10 @@ export class TypeChecker {
         const cause = err.cause
         span = !!cause && typeof cause === 'object' && 'start' in cause && 'end' in cause ? cause as Span : undefined;
         message = err.message;
+        console.log(err.stack)
       } else {
         message = err;
       }
-
       throw span
         ? `${new Cursor(this._input).getPositionFromCharacterIndex(span.start + 1)} - ${message}\n ---> ${slice(this._input, span.start, span.end)}}`
         : message;

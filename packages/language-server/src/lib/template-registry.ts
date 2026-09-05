@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import fg from 'fast-glob';
 import { resolve } from 'node:path';
-import { extractClassName, extractDecoratorPaths } from '@xaendar/language-core';
 
 // TODO: Instead of extracting the class name from the related .ts file on each
 // compilation, read the file and use a regular expression on its contents.
@@ -33,7 +32,7 @@ export async function buildComponentIndex(workspaceRoots: string[]): Promise<voi
     });
 
     for (let j = 0; j < componentFiles.length; j++) {
-      indexComponent(componentFiles[j]);
+      // indexComponent(componentFiles[j]);
     }
   }
 }
@@ -45,19 +44,19 @@ export async function buildComponentIndex(workspaceRoots: string[]): Promise<voi
  */
 export function indexComponent(componentPath: string): void {
   try {
-    const source = readFileSync(componentPath, 'utf-8');
-    const { templatePath } = extractDecoratorPaths(source, componentPath.replace(/[^/\\]+$/, ''));
-    if (!templatePath) {
-      return;
-    }
+    // const source = readFileSync(componentPath, 'utf-8');
+    // const { templatePath } = extractDecoratorPaths(source, componentPath.replace(/[^/\\]+$/, ''));
+    // if (!templatePath) {
+    //   return;
+    // }
 
-    const className = extractClassName(source);
-    const resolvedTemplate = resolve(templatePath);
-    const associatedComponentsPaths = templateToComponent.get(resolvedTemplate) ?? new Map;
-    const associatedComponentsAtPaths = associatedComponentsPaths.get(componentPath);
-    associatedComponentsAtPaths ? associatedComponentsAtPaths.push(className) : associatedComponentsPaths.set(componentPath, [className]);
-    templateToComponent.set(resolvedTemplate, associatedComponentsPaths);
-    componentToTemplate.set(componentPath, resolvedTemplate);
+    // const className = extractClassName(source);
+    // const resolvedTemplate = resolve(templatePath);
+    // const associatedComponentsPaths = templateToComponent.get(resolvedTemplate) ?? new Map;
+    // const associatedComponentsAtPaths = associatedComponentsPaths.get(componentPath);
+    // associatedComponentsAtPaths ? associatedComponentsAtPaths.push(className) : associatedComponentsPaths.set(componentPath, [className]);
+    // templateToComponent.set(resolvedTemplate, associatedComponentsPaths);
+    // componentToTemplate.set(componentPath, resolvedTemplate);
   } catch (err) {
     console.warn(err);
   }

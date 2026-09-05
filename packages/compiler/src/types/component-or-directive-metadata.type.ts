@@ -1,5 +1,5 @@
-import { TypeCheckContextComponentImport } from './type-check-context-component-import.type';
-import { TypeCheckContextDirectiveImport } from './type-check-context-directive-import.type';
+import { ComponentMetadata } from './component-metadata.type';
+import { DirectiveMetadata } from './directive-metadata.type';
 
 /**
  * Union type of context import types for type-checker.
@@ -9,6 +9,6 @@ import { TypeCheckContextDirectiveImport } from './type-check-context-directive-
  * they're made available directly in the generated type-check scope via
  * typed variable declarations.
  */
-export type TypeCheckContextImport =
-  | TypeCheckContextComponentImport
-  | TypeCheckContextDirectiveImport;
+export type ComponentOrDirectiveMetadata =
+  | ComponentMetadata
+  | DirectiveMetadata;

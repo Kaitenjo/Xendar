@@ -1,5 +1,5 @@
-import { TypeCheckResult } from '@xaendar/compiler';
-import { basename, extname, resolve } from 'node:path';
+import type { TypeCheckResult } from '@xaendar/compiler';
+import { basename, extname } from 'node:path';
 import { upsertVirtualFile } from '../language-service';
 
 export function createShim(componentData: Map<string, string[]>, typecheckBody: TypeCheckResult): { code: string, bodyLineOffset: number, path: string, classNames: string[] } {
@@ -45,26 +45,5 @@ function buildTypecheckShim(componentData: [string, string[]][], shimPath: strin
     bodyLineOffset: prefixLinesLength,
     path: shimPath,
     classNames
-  };
-}
-
-/**
- * Extracts the `templateUrl` and `styleUrl` values from the `@WebComponent`
- * decorator in the component source and resolves them to absolute paths.
- *
- * @param jsSource - The raw TypeScript source of the component file.
- * @param componentDir - The directory containing the component file, used as
- *   base for resolving relative decorator paths.
- * @returns An object with the resolved `templatePath` and `stylePath`.
- *   Either field may be `undefined` when the corresponding decorator
- *   property is absent.
- */
-export function extractDecoratorPaths(jsSource: string, componentDir: string): { templatePath?: string, stylePath?: string } {
-  const templateUrl = jsSource.match(/templateUrl\s*:\s*["'](.+?)["']/)?.[1];
-  const styleUrl = jsSource.match(/styleUrl\s*:\s*["'](.+?)["']/)?.[1];
-
-  return {
-    templatePath: templateUrl ? resolve(componentDir, templateUrl) : undefined,
-    stylePath: styleUrl ? resolve(componentDir, styleUrl) : undefined
   };
 }

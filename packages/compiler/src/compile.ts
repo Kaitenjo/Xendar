@@ -1,10 +1,11 @@
+import type { CompileOptions } from './compile-options.type';
 import { Generator } from './generator/generator';
 import { Lexer } from './lexer/lexer';
 import { Parser } from './parser/parser';
-import { ASTNode } from './parser/types/ast.type';
+import type { ASTNode } from './parser/types/ast.type';
+import type { TypeCheckerCache } from './public-api';
 import { TypeChecker } from './type-checker/type-checker';
-import { TypeCheckResult } from './type-checker/types/type-checker-result.type';
-import type { CompileOptions } from './compile-options.type';
+import type { TypeCheckResult } from './type-checker/types/type-checker-result.type';
 
 /**
  * Compiles a template string into a Javascript render function body.
@@ -43,11 +44,26 @@ export async function compile(input: string, options: CompileOptions): Promise<s
     return generateJavascriptCode(input, nodes, cssVariableName, signals!);
   }
 }
-
+/**
+ * Generates the Javascript render method body from the parsed AST nodes.
+ * @param input - The raw HTML-like template source to compile.
+ * @param nodes - The parsed AST nodes from the template.
+ * @param cssVariableName - Optional name of the CSS variable to inject into the generated `adoptedStyleSheets` assignment.
+ * @param signals - Array of signal names to be used in the generated render function.
+ * @returns A string containing the compiled Javascript render method body.
+ */
 function generateJavascriptCode(input: string, nodes: ASTNode[], cssVariableName: string | undefined, signals: string[]): string {
   return new Generator(input, nodes).generate(cssVariableName, signals);
 }
 
-async function generateTypecheckResult(input: string, nodes: ASTNode[], baseDir: string, cache?: CompileOptions['cache']): Promise<TypeCheckResult> {
-  return await new TypeChecker(input, nodes).generate(baseDir, cache);
+/**
+ * Generates the type-checking result for the parsed AST nodes using the TypeChecker.
+ * @param input - The raw HTML-like template source to compile.
+ * @param nodes - The parsed AST nodes from the template.
+ * @param baseDir - Absolute path used to resolve relative import paths for `@import` nodes.
+ * @param cache - Optional cache for storing previously computed type-checking results to improve performance.
+ * @returns A promise that resolves to the type-checking result.
+ */
+async function generateTypecheckResult(input: string, nodes: ASTNode[], baseDir: string, cache?: TypeCheckerCache): Promise<TypeCheckResult> {
+  return await new TypeChecker(input, nodes, cache).generate(baseDir);
 }

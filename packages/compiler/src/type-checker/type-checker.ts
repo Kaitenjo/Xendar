@@ -1,24 +1,23 @@
 import { slice } from '@xaendar/common';
+import { readFile } from 'fs/promises';
+import { createSourceFile, ScriptTarget } from 'typescript';
 import { Cursor } from '../models/cursor.js';
-import { ASTNode } from '../parser/types/ast.type.js';
+import type { ASTNode } from '../parser/types/ast.type.js';
 import { ASTNodeType } from '../parser/types/node.enum.js';
-import { ImportNode } from '../parser/types/nodes/import-node.type.js';
-import { Span } from '../types/span.type.js';
+import type { ImportNode } from '../parser/types/nodes/import-node.type.js';
+import type { Span } from '../types/span.type.js';
+import { extractComponentsMetadataFromSourceFile, resolveModulePath } from '../utils/metadata.utils.js';
 import { TypeCheckContext } from './models/type-checker-context.js';
 import { typeCheckElement } from './states/type-check-element.state.js';
 import { typeCheckFor } from './states/type-check-for.state.js';
 import { typeCheckIf } from './states/type-check-if.state.js';
 import { typeCheckSwitch } from './states/type-check-switch.state.js';
 import { typeCheckTextAndInterpolation } from './states/type-check-text-and-interpolation.state.js';
-import { Line, LineMapping } from './types/generated-line.type.js';
-import { TypeCheckResult } from './types/type-checker-result.type.js';
-import { TypeCheckerStates } from './types/type-checker-states.type.js';
+import type { Line, LineMapping } from './types/generated-line.type.js';
+import type { TypeCheckResult } from './types/type-checker-result.type.js';
+import type { TypeCheckerStates } from './types/type-checker-states.type.js';
+import type { TypeCheckerCache } from './types/typechecker-cache.type.js';
 import { indentLines, plain } from './utils/line-builder.utils.js';
-import { extractComponentsMetadataFromSourceFile, resolveModulePath } from '../utils/metadata.utils.js';
-import { createSourceFile, ScriptTarget } from 'typescript';
-import { readFile } from 'fs/promises';
-import { CompileOptions } from '../compile-options.type.js';
-import { TypeCheckerCache } from './types/typechecker-cache.type.js';
 
 /**
  * Generates a single, flat TypeScript function body ("shim") from a
@@ -43,7 +42,6 @@ import { TypeCheckerCache } from './types/typechecker-cache.type.js';
  * one single `typeCheck()` function.
  */
 export class TypeChecker {
-  private _cache?: TypeCheckerCache;
   /** 
    * Shared mutable state threaded through all state functions during a single `generate()` call. 
    */
@@ -64,8 +62,13 @@ export class TypeChecker {
   /**
    * @param _input - Raw template source string, used only to slice diagnostic spans into error messages.
    * @param _ast   - Parsed AST produced by the `Parser` for this template.
+   * @param _cache - Optional cache for storing previously computed type-checking results to improve performance.
    */
-  constructor(private _input: string, private _ast: ASTNode[]) { }
+  constructor(
+    private _input: string, 
+    private _ast: ASTNode[],
+    private _cache?: TypeCheckerCache
+  ) { }
 
   /**
    * Pre-populates the shared context with component and directive metadata
@@ -85,9 +88,6 @@ export class TypeChecker {
           .filter(({ imported }) => imported !== '*')
           .map(async ({ imported, local }) => {
             const symbolName = imported === 'default' ? local : imported;
-            // TODO Non è conveniente estrarre i metadati tutte le volte. Piu template potrebbero aver bisogno
-            // degli stessi metadata, sarebbe meglio una cache globale a livello di compilatore per evitare il ricalcolo
-            // ad ogni template
             let metadata = this._cache?.get(symbolName);
             if (!metadata) {
               const sourceFile = createSourceFile('', await readFile(resolveModulePath(node.path, baseDir)!, 'utf-8'), ScriptTarget.Latest, true);
@@ -96,7 +96,8 @@ export class TypeChecker {
               if (!metadata) {
                 throw new Error(`Metadata for symbol "${symbolName}" not found.`);
               }
-              this._cache?.set(symbolName, metadata);
+              // Definire un criterio per il quale si cacha oppure no, non possiamo cachare tutto, troppa memoria!!!
+              // this._cache?.set(symbolName, metadata);
             }
             
             this._context.addImport(metadata);
@@ -117,12 +118,8 @@ export class TypeChecker {
    * 
    * @param baseDir - Absolute path used to resolve relative import paths
    */
-  public async generate(baseDir: string, cache?: TypeCheckerCache): Promise<TypeCheckResult> {
+  public async generate(baseDir: string): Promise<TypeCheckResult> {
     try {
-      if (cache) {
-        this._cache = cache;
-      }
-
       await this.populateImportMetadata(baseDir);
       const body = this._ast.flatMap(node => this._processNode(node, this._context));
 
@@ -153,6 +150,11 @@ export class TypeChecker {
     }
   }
 
+  /**
+   * Builds a mapping table that correlates each generated line to its original source span.
+   * @param lines - Array of lines generated for the type-checking shim.
+   * @returns A mapping table correlating generated lines to their original source spans.
+   */
   private buildMappingTable(lines: Line[]): TypeCheckResult['mappingTable'] {
     const table = new Map<number, readonly LineMapping[]>();
     lines.forEach((line, index) => {
@@ -162,6 +164,7 @@ export class TypeChecker {
     });
     return table;
   }
+
   /**
    * Dispatches a single AST node to its state function, passing itself
    * back down as `processNode` so state functions can recurse into their

@@ -85,7 +85,7 @@ export class Context {
    */
   public getEventHandler(handler: string): VoidFunction {
     // We do not check if the property exists beacuse it'll be done by TCB
-    return (this._root[handler] as VoidFunction).bind(this._root)
+    return (this._root[handler as keyof BaseWebComponent] as VoidFunction).bind(this._root)
   }
 
   /**

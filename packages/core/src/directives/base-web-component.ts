@@ -1,7 +1,6 @@
-import { NoArgsVoidFunction } from "@xaendar/types";
-import { isInputSignal } from "../signals/input/input-instance.symbol";
-import { INPUT_SIGNAL_SET_SYMBOL } from "../signals/input/input-set.symbol";
-import { Context } from "../utils";
+import { isInputSignal } from '../signals/input/input-instance.symbol';
+import { INPUT_SIGNAL_SET_SYMBOL } from '../signals/input/input-set.symbol';
+import { Context } from '../utils';
 
 /**
  * Base class for all web components in the framework.
@@ -15,9 +14,6 @@ import { Context } from "../utils";
  * it is present at runtime.
  */
 export class BaseWebComponent extends HTMLElement {
-
-  [key: string]: unknown;
-  
   /**
    * The active template execution context for this component instance,
    * holding all identifier bindings and registered cleanup functions.
@@ -43,8 +39,9 @@ export class BaseWebComponent extends HTMLElement {
    *
    * @internal
    */
-  private _render(): NoArgsVoidFunction[] { 
-    return [];
+  private _render(): Context {
+    // Ignore, the actual render body is injected by the compiler 
+    return {} as Context;
   }
 
   /**
@@ -88,7 +85,7 @@ export class BaseWebComponent extends HTMLElement {
    * Shadow DOM tree and sets up reactive signal subscriptions.
    */
   private connectedCallback(): void {
-    this.unwatchFns = this._render();
+    this.context = this._render();
   }
 
   /**

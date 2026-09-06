@@ -1,67 +1,67 @@
 /**
- * Tracks which parent component files (`.xd.component.ts`) import which
- * child component files, so that deleting a child can invalidate the
- * parents that reference it.
+ * Tracks which component files (`.xd.component.ts`) import which
+ * other component files, so that deleting a component can invalidate the
+ * components that import it.
  *
  * Mirrors the shape of `template-registry`, but keyed on imported
  * component paths rather than template paths, and supports multiple
- * parents per child (a component can be imported by several templates).
+ * components per import (a component can be imported by several templates).
  */
-const importToParents = new Map<string, Set<string>>();
-const parentToImports = new Map<string, Set<string>>();
+const importToComponents = new Map<string, Set<string>>();
+const componentToImports = new Map<string, Set<string>>();
 
 /**
- * Registers that `parentId` imports the component at `importedPath`.
+ * Registers that `componentId` imports the component at `importedPath`.
  *
  * @param importedPath - Absolute path of the imported `.xd.component.ts` file.
- * @param parentId - Absolute path of the parent component file that imports it.
+ * @param componentId - Absolute path of the component file that imports it.
  */
-export function registerImportMapping(importedPath: string, parentId: string): void {
-  const importedPathSet = importToParents.getOrInsert(importedPath, new Set())
-  importedPathSet.add(parentId);
+export function registerImportMapping(importedPath: string, componentId: string): void {
+  const importedPathSet = importToComponents.getOrInsert(importedPath, new Set())
+  importedPathSet.add(componentId);
 
-  const importedParentToImportsSet = parentToImports.getOrInsert(parentId, new Set())
-  importedParentToImportsSet.add(importedPath);
+  const importedComponentToImportsSet = componentToImports.getOrInsert(componentId, new Set())
+  importedComponentToImportsSet.add(importedPath);
 }
 
 /**
- * Returns the set of parent ids that currently import the given path.
+ * Returns the set of component ids that currently import the given path.
  *
  * @param importedPath - Absolute path of the imported component file.
  */
-export function findParentsForImport(importedPath: string): Set<string> {
-  return importToParents.get(importedPath) ?? new Set();
+export function findComponentsForImport(importedPath: string): Set<string> {
+  return importToComponents.get(importedPath) ?? new Set();
 }
 
 /**
- * Clears all import mappings previously registered for `parentId`.
+ * Clears all import mappings previously registered for `componentId`.
  *
- * Must be called before re-registering a parent's imports on each
+ * Must be called before re-registering a component's imports on each
  * transform, since a template's `@import` list may change between edits
  * and stale entries would otherwise leak.
  *
- * @param parentId - Absolute path of the parent component file.
+ * @param componentId - Absolute path of the component file.
  */
-export function clearImportsForParent(parentId: string): void {
-  const previousImports = parentToImports.get(parentId);
+export function clearImportsForComponent(componentId: string): void {
+  const previousImports = componentToImports.get(componentId);
   if (previousImports) {
     for (const importedPath of previousImports) {
-      const parents = importToParents.get(importedPath);
-      if (parents) {
-        parents.delete(parentId);
-        if (!parents.size) {
-          importToParents.delete(importedPath);
+      const components = importToComponents.get(importedPath);
+      if (components) {
+        components.delete(componentId);
+        if (!components.size) {
+          importToComponents.delete(importedPath);
         }
       }
     }
   }
-  parentToImports.delete(parentId);
+  componentToImports.delete(componentId);
 }
 
 /**
  * Resets the entire import registry. Called on dev server shutdown.
  */
 export function clearImportRegistry(): void {
-  importToParents.clear();
-  parentToImports.clear();
+  importToComponents.clear();
+  componentToImports.clear();
 }

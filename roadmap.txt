@@ -1,11 +1,3 @@
-- Creazione di una Cache per l'estrazione metadati dei componenti (Property, Events e WebComponent):
-  Si evita ricalcolo ad ogni salvataggio
-  Se più template importano lo stesso Componente X e i metadati sono già disponibili essi non vengono ricalcolati
-  Va ricalcolata ogni volta che il file .ts viene modificato
-  HIGH priority. Pesa molto a livello di scalabilità delle applicazioni.
-
-- Il plugin supporta soltanto un WebComponent per file, va esteso
-
 - Creazione di una cache per l'estrazione dei Signals da una classe X:
   Si evita ricalcolo ad ogni salvataggio
   Va invalidata se:

@@ -6,7 +6,7 @@ import { ClassDeclarationWithName } from '../types/component-metadata.type';
 
 const SIGNAL_MODULE_SPECIFIERS: ReadonlySet<string> = new Set(['@xaendar/core/signals']);
 
-interface SignalImportBindings {
+type SignalImportBindings = {
   named: Set<string>;
   namespaces: Set<string>;
 }
@@ -43,8 +43,7 @@ export function extractSignalMembers(sourceFile: SourceFile, classDeclaration: C
   const inherited = resolveInheritedSignalMembers(sourceFile, classDeclaration, dirname(filePath), new Set([resolvePath(filePath)]));
   const ownBindings = collectSignalImportBindings(sourceFile);
   const own = extractOwnSignalMembers(classDeclaration, ownBindings);
-
-  return [...inherited, ...own]; // own entries override inherited ones with the same key
+  return [...inherited, ...own];
 }
 
 /**

@@ -17,6 +17,8 @@ import { indentLines, plain } from './utils/line-builder.utils.js';
 import { extractComponentsMetadataFromSourceFile, resolveModulePath } from '../utils/metadata.utils.js';
 import { createSourceFile, ScriptTarget } from 'typescript';
 import { readFile } from 'fs/promises';
+import { CompileOptions } from '../compile-options.type.js';
+import { TypeCheckerCache } from './types/typechecker-cache.type.js';
 
 /**
  * Generates a single, flat TypeScript function body ("shim") from a
@@ -41,6 +43,7 @@ import { readFile } from 'fs/promises';
  * one single `typeCheck()` function.
  */
 export class TypeChecker {
+  private _cache?: TypeCheckerCache;
   /** 
    * Shared mutable state threaded through all state functions during a single `generate()` call. 
    */
@@ -85,12 +88,18 @@ export class TypeChecker {
             // TODO Non è conveniente estrarre i metadati tutte le volte. Piu template potrebbero aver bisogno
             // degli stessi metadata, sarebbe meglio una cache globale a livello di compilatore per evitare il ricalcolo
             // ad ogni template
-            const sourceFile = createSourceFile('', await readFile(resolveModulePath(node.path, baseDir)!, 'utf-8'), ScriptTarget.Latest, true);
-            const metadatas = await extractComponentsMetadataFromSourceFile(sourceFile);
-            const metadata = metadatas?.get(symbolName)
-            if (metadata) {
-              this._context.addImport(metadata);
+            let metadata = this._cache?.get(symbolName);
+            if (!metadata) {
+              const sourceFile = createSourceFile('', await readFile(resolveModulePath(node.path, baseDir)!, 'utf-8'), ScriptTarget.Latest, true);
+              const metadatas = await extractComponentsMetadataFromSourceFile(sourceFile);
+              metadata = metadatas?.get(symbolName);
+              if (!metadata) {
+                throw new Error(`Metadata for symbol "${symbolName}" not found.`);
+              }
+              this._cache?.set(symbolName, metadata);
             }
+            
+            this._context.addImport(metadata);
           }
         )
       )
@@ -108,8 +117,12 @@ export class TypeChecker {
    * 
    * @param baseDir - Absolute path used to resolve relative import paths
    */
-  public async generate(baseDir: string): Promise<TypeCheckResult> {
+  public async generate(baseDir: string, cache?: TypeCheckerCache): Promise<TypeCheckResult> {
     try {
+      if (cache) {
+        this._cache = cache;
+      }
+
       await this.populateImportMetadata(baseDir);
       const body = this._ast.flatMap(node => this._processNode(node, this._context));
 
@@ -131,7 +144,6 @@ export class TypeChecker {
         const cause = err.cause
         span = !!cause && typeof cause === 'object' && 'start' in cause && 'end' in cause ? cause as Span : undefined;
         message = err.message;
-        console.log(err.stack)
       } else {
         message = err;
       }

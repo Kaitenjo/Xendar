@@ -7,9 +7,10 @@ import { ClassDeclaration, ClassStaticBlockDeclaration, createSourceFile, Diagno
 import type { Logger, Plugin } from 'vite';
 import { extractComponentsMetadataFromSourceFile } from '../../../../../compiler/src/utils/metadata.utils';
 import { COMPONENT_FILE_RE } from '../../costants/component-filename-regex';
-import { clearImportRegistry, clearImportsForParent, findParentsForImport, registerImportMapping } from '../import-registry';
+import { clearImportRegistry, clearImportsForComponent, findComponentsForImport, registerImportMapping } from '../import-registry';
 import { NodeCompilerHost } from '../node-compiler-host/node-compiler-host.model';
 import { clearTemplateRegistry, findComponentForTemplate, registerTemplateMapping, removeAllMappingsForComponent, removeTemplateMapping } from '../template-registry';
+import { getMetadataMapping, registerMetadataMapping } from '../metadata-registry';
 
 /**
  * Vite plugin that compiles Xaendar DSL template files (`.xd.component.html`)
@@ -66,10 +67,8 @@ export function xaendarPlugin(): Plugin {
       }
 
       for (const [className, metadata] of metadatas.entries()) {
-        if (!metadata) {
-          logError(`Failed to extract metadata for component ${className} in file ${id}`);
-          return null;
-        }
+        // TODO className is not unique, we can't use it as a key for the metadata cache
+        registerMetadataMapping(className, metadata);
 
         const { selectors, styleUrl, templateUrl } = metadata;
         for (let i = 0; i < selectors.length; i++) {
@@ -94,7 +93,7 @@ export function xaendarPlugin(): Plugin {
         // ! is a safe assertion because we check if the fileExists before reading it
         const templateSource = host.readFile(templatePath)!;
   
-        clearImportsForParent(id);
+        clearImportsForComponent(id);
         for (const importedPath of extractImportedComponentPaths(templateSource, dirname(templatePath))) {
           if (host.fileExists(importedPath)) {
             this.addWatchFile(importedPath);
@@ -119,7 +118,15 @@ export function xaendarPlugin(): Plugin {
         try {
           // Todo Create a dedicated cache to store signal values metadata otherwise this will be done every time file is saved
           const signals = extractSignalMembers(tsSource, metadata.typescriptNodes.klass);
-          const result = await compile(templateSource, { baseDir: dirname(templatePath), cssVariableName: varName, signals });
+          const result = await compile(templateSource, { 
+            baseDir: dirname(templatePath), 
+            cssVariableName: varName, 
+            signals, 
+            cache: { 
+              get: getMetadataMapping, 
+              set: registerMetadataMapping 
+            } 
+          });
           compiledMethods = result.javascript;
           typecheckBody = result.typescript;
         } catch (err) {
@@ -164,12 +171,12 @@ export function xaendarPlugin(): Plugin {
           removeRealFile(id);
           removeAllMappingsForComponent(id);
 
-          const parents = findParentsForImport(id);
-          for (const parentId of parents) {
-            removeVirtualFile(`${parentId}.__typecheck__.ts`);
-            logError(`Component "${id}" was deleted but is still imported by "${parentId}". Update its @import statement.`);
+          const components = findComponentsForImport(id);
+          for (const componentId of components) {
+            removeVirtualFile(`${componentId}.__typecheck__.ts`);
+            logError(`Component "${id}" was deleted but is still imported by "${componentId}". Update its @import statement.`);
           }
-          clearImportsForParent(id);
+          clearImportsForComponent(id);
         } else if (id.endsWith('.html')) {
           const componentId = findComponentForTemplate(id);
           if (componentId) {
